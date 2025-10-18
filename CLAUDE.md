@@ -2,9 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation Overview
+
+This repository contains three key documentation files:
+
+- **[README.md](README.md)** - Quick start guide, feature overview, and basic setup instructions
+- **[PROJECT.md](PROJECT.md)** - Comprehensive project documentation including all user stories, architecture details, database schema, implementation status, and project principles
+- **[CLAUDE.md](CLAUDE.md)** - This file - Development guide for Claude Code with commands, architecture patterns, and troubleshooting
+
+For detailed information about user stories, requirements, database schema, and implementation status, refer to [PROJECT.md](PROJECT.md).
+
 ## Project Overview
 
 Festival Timeline Management App - A collaborative event planning tool for managing festival tasks with visual timeline organization by category. Built with TypeScript full-stack: React 18 + Vite frontend, Express.js backend, PostgreSQL 16 database.
+
+**Status**: Production ready - 136 of 150 tasks complete (90.7%). All 7 user stories implemented and tested.
 
 ## Development Commands
 
@@ -228,3 +240,28 @@ npm run dev
 - Props interfaces defined inline or exported if shared
 - Event handlers prefixed with `handle` (e.g., `handleEditEvent`)
 - Zustand stores follow pattern: `const { data, actions } = useStore()`
+
+## Additional Resources
+
+- **[PROJECT.md](PROJECT.md)** - Complete project documentation with:
+  - All 7 user stories and acceptance criteria
+  - Detailed architecture and technology decisions
+  - Full database schema with relationships
+  - Implementation status and remaining tasks
+  - Constitution and quality standards
+  - Security measures and performance optimizations
+  - Future enhancement roadmap
+
+- **[README.md](README.md)** - Quick reference for:
+  - Fast setup commands
+  - Feature checklist
+  - Common development tasks
+  - Basic troubleshooting
+
+- **[.specify/memory/constitution.md](.specify/memory/constitution.md)** - Project principles:
+  - User-First Design
+  - Performance at Scale
+  - Mobile-First Responsive Design
+  - Data Portability
+
+When working on new features or debugging, consult PROJECT.md for complete context on user stories, requirements, and architectural decisions.
