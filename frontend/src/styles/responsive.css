@@ -1,0 +1,229 @@
+/**
+ * Mobile-First Responsive Design
+ * Constitutional requirement: 375px minimum width
+ */
+
+/* Ensure minimum width is respected */
+@layer base {
+  html {
+    min-width: 375px;
+  }
+
+  body {
+    font-size: 16px; /* Base font size for readability on mobile */
+    line-height: 1.5;
+  }
+}
+
+/* Base mobile styles (375px+) */
+@media (min-width: 375px) {
+  .timeline-container {
+    @apply w-full overflow-x-auto;
+  }
+
+  .event-card {
+    @apply min-w-full;
+  }
+
+  /* Responsive container padding */
+  .container {
+    @apply px-4;
+  }
+}
+
+/* Tablet styles (640px+) */
+@media (min-width: 640px) {
+  .timeline-container {
+    @apply px-4;
+  }
+
+  .event-card {
+    @apply min-w-0;
+  }
+
+  .container {
+    @apply px-6;
+  }
+}
+
+/* Desktop styles (1024px+) */
+@media (min-width: 1024px) {
+  .timeline-container {
+    @apply px-8;
+  }
+
+  .container {
+    @apply px-8;
+  }
+}
+
+/* Touch-optimized interactions for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .btn-primary,
+  .btn-secondary {
+    @apply min-h-[44px] min-w-[44px]; /* Minimum tap target size */
+  }
+
+  .event-card {
+    @apply cursor-pointer active:bg-gray-50;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Responsive Utility Classes */
+@layer utilities {
+  /* Mobile-friendly touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Stack on mobile, flex on larger screens */
+  .stack-mobile {
+    @apply flex flex-col gap-2;
+  }
+
+  @media (min-width: 640px) {
+    .stack-mobile {
+      @apply flex-row items-center gap-4;
+    }
+  }
+
+  /* Full width on mobile, auto on larger screens */
+  .responsive-width {
+    @apply w-full;
+  }
+
+  @media (min-width: 768px) {
+    .responsive-width {
+      width: auto;
+    }
+  }
+
+  /* Responsive grid utilities */
+  .grid-responsive {
+    @apply grid grid-cols-1 gap-4;
+  }
+
+  @media (min-width: 640px) {
+    .grid-responsive {
+      @apply grid-cols-2;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid-responsive {
+      @apply grid-cols-3;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .grid-responsive {
+      @apply grid-cols-4;
+    }
+  }
+
+  /* Hide on mobile, show on larger screens */
+  .hide-mobile {
+    @apply hidden;
+  }
+
+  @media (min-width: 768px) {
+    .hide-mobile {
+      @apply block;
+    }
+  }
+
+  /* Show on mobile, hide on larger screens */
+  .show-mobile {
+    @apply block;
+  }
+
+  @media (min-width: 768px) {
+    .show-mobile {
+      @apply hidden;
+    }
+  }
+
+  /* Responsive horizontal scrolling for timelines */
+  .scroll-x-mobile {
+    @apply overflow-x-auto -mx-4 px-4;
+    scrollbar-width: thin;
+  }
+
+  @media (min-width: 640px) {
+    .scroll-x-mobile {
+      @apply mx-0 px-0;
+    }
+  }
+
+  /* Mobile-friendly button sizing */
+  .btn-mobile {
+    @apply touch-target px-4 py-2 text-sm;
+  }
+
+  @media (min-width: 640px) {
+    .btn-mobile {
+      @apply px-6 py-2.5 text-base;
+    }
+  }
+
+  /* Responsive card padding */
+  .card-mobile {
+    @apply rounded-lg p-4;
+  }
+
+  @media (min-width: 640px) {
+    .card-mobile {
+      @apply p-6;
+    }
+  }
+
+  /* Responsive typography for headings */
+  .heading-xl {
+    @apply text-2xl font-bold;
+  }
+
+  @media (min-width: 640px) {
+    .heading-xl {
+      @apply text-3xl;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .heading-xl {
+      @apply text-4xl;
+    }
+  }
+
+  .heading-lg {
+    @apply text-xl font-bold;
+  }
+
+  @media (min-width: 640px) {
+    .heading-lg {
+      @apply text-2xl;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .heading-lg {
+      @apply text-3xl;
+    }
+  }
+
+  /* Safe area padding for mobile devices with notches */
+  .safe-area-padding {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}

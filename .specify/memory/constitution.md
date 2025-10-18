@@ -1,50 +1,166 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report - Constitution Update
+=========================================
+Version Change: [initial] → 1.0.0
+Rationale: Initial constitution creation for Festival Timeline Management App
+
+Modified Principles:
+- All principles newly established (first version)
+
+Added Sections:
+- Core Principles (5 principles defined)
+- Quality Standards
+- Development Workflow
+- Governance
+
+Removed Sections:
+- None (initial creation)
+
+Templates Status:
+✅ .specify/templates/plan-template.md - reviewed, compatible with new constitution
+✅ .specify/templates/spec-template.md - reviewed, compatible with new constitution
+✅ .specify/templates/tasks-template.md - reviewed, compatible with new constitution
+
+Follow-up TODOs:
+- None
+
+Notes:
+This is the initial constitution version based on the Festival Timeline Management App specification.
+The principles are derived from the functional requirements, success criteria, and user stories
+defined in spec.md.
+-->
+
+# Festival Timeline Management App Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. User-First Design
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Every feature MUST be validated through user scenarios before implementation. Features MUST:
+- Map to specific user stories with clear acceptance criteria
+- Be independently testable against real user workflows
+- Deliver measurable value (defined in success criteria)
+- Support the core use case: festival event organization with visual timeline
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: The app's value is determined by how effectively it helps festival organizers
+manage complex, multi-category event planning. User-first design ensures we build what users
+actually need, not what we think they need.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Performance at Scale
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+The application MUST maintain responsiveness as data grows. Performance requirements:
+- Timeline visualization loads in under 2 seconds with 200+ events (SC-004)
+- Event list sorting/filtering completes in under 1 second (SC-005)
+- Support smooth zooming and scrolling for large timelines
+- Optimize rendering for category lanes with varying event densities
+- Support at least 10 concurrent users without data loss (SC-002)
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: Festival timelines can become complex quickly. Poor performance would
+undermine the app's core value proposition of providing quick visual understanding.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Mobile-First Responsive Design
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+The UI MUST work seamlessly across all device sizes. Requirements:
+- Support screen widths down to 375px (SC-007)
+- Maintain full functionality on desktop, tablet, and mobile
+- Touch-optimized interactions for mobile devices
+- Responsive timeline visualization that adapts to viewport
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: Festival organizers work in various contexts - office desks, on-site venues,
+and mobile situations. The app must be accessible wherever planning happens.
+
+### IV. Data Portability
+
+Users MUST be able to export their data in standard formats. Export capabilities:
+- Event list to CSV/Excel with 100% data accuracy (SC-006)
+- Exports include all visible events with complete metadata
+- Generated files are compatible with standard tools (Excel, Google Sheets)
+
+**Rationale**: Festival planning integrates with existing workflows and stakeholder
+communication. Users must be able to share and analyze data outside the app.
+
+## Quality Standards
+
+### Usability Requirements
+
+- **Intuitive Interaction**: 90% of users MUST successfully add, edit, and delete events
+  on first attempt without instructions (SC-003)
+- **Quick Task Completion**: Users MUST create and view events on timeline in under
+  30 seconds (SC-001)
+- **Clear Visual Indicators**: Status and priority MUST be immediately distinguishable
+  through visual design (colors, icons, styling)
+- **Accessible Forms**: All form fields MUST have clear labels, validation, and error messages
+
+### Browser Compatibility
+
+The application MUST function correctly in:
+- Chrome (latest 2 versions)
+- Firefox (latest 2 versions)
+- Safari (latest 2 versions)
+- Edge (latest 2 versions)
+
+### Data Integrity
+
+- All required fields MUST be validated before save
+- Event data MUST persist reliably to cloud storage
+- Deletion MUST require explicit confirmation
+- System MUST handle edge cases gracefully (unscheduled events, empty categories, etc.)
+
+## Development Workflow
+
+### Feature Implementation Process
+
+1. **Specification First**: Every feature MUST have user scenarios, functional requirements,
+   and success criteria documented before implementation begins
+2. **Priority-Driven Development**: Implement P1 user stories before P2, P2 before P3
+3. **Independent Delivery**: Each user story MUST be independently testable and deliverable
+4. **Checkpoint Validation**: Test each user story independently before proceeding to next
+
+### Code Organization
+
+- **Clear Separation**: Frontend and backend code MUST be clearly separated
+- **Component Modularity**: UI components MUST be reusable and single-purpose
+- **Service Layer**: Business logic MUST be separated from presentation and data access
+- **Consistent Naming**: Follow established naming conventions for files, functions, and variables
+
+### Testing Strategy (when tests requested)
+
+- **Test Coverage**: All user acceptance scenarios MUST be covered by tests
+- **Integration Testing**: Multi-user collaboration scenarios MUST have integration tests
+- **Performance Testing**: Success criteria metrics (load times, sync latency) MUST be verified
+- **Edge Case Testing**: All documented edge cases MUST have test coverage
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+### Constitution Authority
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+This constitution defines the non-negotiable requirements for the Festival Timeline
+Management App. All implementation decisions MUST align with these principles.
+
+### Amendment Process
+
+1. Proposed changes MUST be documented with rationale
+2. Impact on existing features and templates MUST be assessed
+3. Version number MUST be incremented according to semantic versioning:
+   - MAJOR: Backward-incompatible principle changes or removals
+   - MINOR: New principles added or significant expansions
+   - PATCH: Clarifications, wording improvements, non-semantic updates
+4. All dependent templates MUST be reviewed for consistency
+5. Changes MUST be approved before implementation begins
+
+### Compliance Review
+
+- All feature specifications MUST reference relevant constitutional principles
+- Implementation plans MUST include constitution check gates
+- Code reviews MUST verify adherence to principles
+- Success criteria MUST be validated against constitutional requirements
+
+### Complexity Justification
+
+Any deviation from constitutional principles MUST be:
+- Documented with specific technical rationale
+- Approved with evidence that simpler alternatives were considered
+- Tracked in the implementation plan's Complexity Tracking table
+- Reviewed for potential refactoring in future iterations
+
+**Version**: 1.0.0 | **Ratified**: 2025-10-18 | **Last Amended**: 2025-10-18
