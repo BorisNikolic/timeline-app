@@ -8,7 +8,7 @@ function Layout() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto px-2 py-4 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">Festival Timeline</h1>
             {user && (
@@ -27,13 +27,13 @@ function Layout() {
       </header>
 
       {/* Main content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto px-2 py-8 sm:px-4 lg:px-6">
         <Outlet />
       </main>
 
       {/* Footer */}
       <footer className="mt-auto border-t border-gray-200 bg-white py-4">
-        <div className="mx-auto max-w-7xl px-4 text-center text-sm text-gray-500 sm:px-6 lg:px-8">
+        <div className="mx-auto px-2 text-center text-sm text-gray-500 sm:px-4 lg:px-6">
           &copy; {new Date().getFullYear()} Festival Timeline. All rights reserved.
         </div>
       </footer>
