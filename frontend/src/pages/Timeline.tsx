@@ -2,9 +2,52 @@ import { useState } from 'react';
 import Timeline from '../components/timeline/Timeline';
 import EventModal from '../components/events/EventModal';
 import ExportMenu from '../components/export/ExportMenu';
+import { ViewToggle } from '../components/timeline/ViewToggle';
+import { ChronologicalTimeline } from '../components/timeline/ChronologicalTimeline';
+import { useTimelineViewState } from '../hooks/useTimelineViewState';
+import { useEvents } from '../hooks/useEvents';
+import { useCategories } from '../hooks/useCategories';
+import EventDetailView from '../components/events/EventDetailView';
+import DeleteConfirmDialog from '../components/shared/DeleteConfirmDialog';
+import { useDeleteEvent } from '../hooks/useEvents';
+import { EventWithDetails } from '../types/Event';
 
 function TimelinePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Timeline view state
+  const { viewMode, setViewMode } = useTimelineViewState();
+
+  // Data hooks
+  const { data: events = [], isLoading } = useEvents();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const deleteEvent = useDeleteEvent();
+
+  const handleEditEvent = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (selectedEvent) {
+      await deleteEvent.mutateAsync(selectedEvent.id);
+      setIsDeleteDialogOpen(false);
+      setSelectedEvent(null);
+    }
+  };
+
+  const handleEventClick = (eventId: string) => {
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      setSelectedEvent(event);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -24,11 +67,55 @@ function TimelinePage() {
         </div>
       </div>
 
-      {/* Timeline Component */}
-      <Timeline />
+      {/* View Toggle */}
+      <ViewToggle
+        currentView={viewMode}
+        onViewChange={setViewMode}
+      />
 
-      {/* Event Modal */}
+      {/* Conditional Timeline View */}
+      {viewMode === 'category' ? (
+        <Timeline />
+      ) : (
+        <ChronologicalTimeline
+          events={events}
+          categories={categories}
+          onEventClick={handleEventClick}
+        />
+      )}
+
+      {/* Event Modal for adding new events */}
       <EventModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      {/* Event detail modal */}
+      {selectedEvent && !isEditModalOpen && (
+        <EventDetailView
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteClick}
+        />
+      )}
+
+      {/* Edit event modal */}
+      <EventModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        event={selectedEvent || undefined}
+      />
+
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="Delete Event"
+        message={`Are you sure you want to delete "${selectedEvent?.title}"? This action cannot be undone.`}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+        isLoading={deleteEvent.isPending}
+      />
     </div>
   );
 }

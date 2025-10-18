@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://festival-timeline-app.example/schemas/timeline-view-state.json",
+  "title": "Timeline View State Schema",
+  "description": "Client-side state for chronological timeline view configuration, persisted in localStorage",
+  "type": "object",
+  "properties": {
+    "viewMode": {
+      "type": "string",
+      "enum": ["category", "timeline"],
+      "default": "category",
+      "description": "Selected view mode: category (vertical lanes) or timeline (chronological swimlanes)"
+    },
+    "zoomLevel": {
+      "type": "string",
+      "enum": ["day", "week", "month", "quarter"],
+      "default": "month",
+      "description": "Time range zoom level determining date axis granularity"
+    },
+    "visualScale": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 2.0,
+      "default": 1.0,
+      "description": "Visual scaling factor for event cards and spacing (0.5x to 2.0x)"
+    },
+    "scrollPosition": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0,
+      "description": "Horizontal scroll offset in pixels from timeline start"
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "Last update timestamp in milliseconds since Unix epoch (for cache invalidation)"
+    }
+  },
+  "required": ["viewMode", "zoomLevel", "visualScale", "scrollPosition", "timestamp"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "viewMode": "timeline",
+      "zoomLevel": "month",
+      "visualScale": 1.0,
+      "scrollPosition": 2500,
+      "timestamp": 1729260000000
+    },
+    {
+      "viewMode": "category",
+      "zoomLevel": "week",
+      "visualScale": 1.5,
+      "scrollPosition": 0,
+      "timestamp": 1729260123456
+    }
+  ]
+}

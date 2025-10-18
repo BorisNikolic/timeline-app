@@ -1,0 +1,52 @@
+// TimelineAxis Component
+// Horizontal date ruler with ticks based on zoom level
+
+import React, { useMemo } from 'react';
+import { format } from 'date-fns';
+import type { TimelineAxisProps } from '../../types/timeline';
+import { generateAxisTicks, ZOOM_TO_GRANULARITY } from '../../utils/timelineCalculations';
+
+export const TimelineAxis: React.FC<TimelineAxisProps> = ({
+  startDate,
+  endDate,
+  zoomLevel,
+  visualScale,
+  pixelsPerDay
+}) => {
+  // Generate ticks based on zoom level
+  const ticks = useMemo(() => {
+    const granularity = ZOOM_TO_GRANULARITY[zoomLevel];
+    return generateAxisTicks(startDate, endDate, granularity, pixelsPerDay);
+  }, [startDate, endDate, zoomLevel, pixelsPerDay]);
+
+  return (
+    <div className="relative h-16 bg-gray-50 border-b border-gray-200">
+      {/* Tick marks and labels */}
+      {ticks.map((tick, index) => (
+        <div
+          key={`tick-${index}-${tick.date.getTime()}`}
+          className="absolute top-0 flex flex-col items-center"
+          style={{ left: `${tick.x}px` }}
+        >
+          {/* Tick mark */}
+          <div
+            className={`
+              w-px bg-gray-400
+              ${tick.isPrimary ? 'h-8' : 'h-4'}
+            `}
+          />
+
+          {/* Date label */}
+          <span
+            className={`
+              text-xs mt-1 whitespace-nowrap
+              ${tick.isPrimary ? 'font-semibold text-gray-900' : 'text-gray-600'}
+            `}
+          >
+            {tick.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};

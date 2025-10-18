@@ -1,0 +1,46 @@
+/* Timeline View Animations */
+/* CSS keyframes for TODAY line pulse and glow effects */
+
+@keyframes today-line-pulse {
+  0%, 100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleX(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes today-line-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 107, 107, 0.9);
+  }
+}
+
+/* Timeline NOW line styling */
+.timeline-today-line {
+  animation:
+    today-line-pulse 2s ease-in-out infinite,
+    today-line-glow 2s ease-in-out infinite;
+  will-change: transform, opacity, box-shadow;
+}
+
+/* Timeline Event Card animations */
+.timeline-event-card {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.timeline-event-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  will-change: transform, box-shadow;
+}
+
+/* Smooth scrolling for timeline container */
+.timeline-scroll-container {
+  scroll-behavior: smooth;
+}
