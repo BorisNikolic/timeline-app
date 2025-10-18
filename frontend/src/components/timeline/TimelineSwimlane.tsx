@@ -11,6 +11,7 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
   events,
   startDate,
   endDate,
+  zoomLevel,
   visualScale,
   pixelsPerDay,
   onEventClick
@@ -23,20 +24,37 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
       categoryColor: category.color
     }));
 
-    return calculateEventPositions(eventsWithColor, startDate, endDate, pixelsPerDay);
-  }, [events, startDate, endDate, pixelsPerDay, category.color]);
+    return calculateEventPositions(eventsWithColor, startDate, endDate, pixelsPerDay, zoomLevel);
+  }, [events, startDate, endDate, pixelsPerDay, zoomLevel, category.color]);
+
+  // Helper function to convert hex color to rgba with opacity
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
   return (
-    <div className="relative border-b border-gray-200">
+    <div
+      className="relative border-b-2 border-gray-300"
+      style={{
+        backgroundColor: hexToRgba(category.color, 0.03)
+      }}
+    >
       {/* Category header */}
       <div
-        className="sticky left-0 z-20 bg-white px-4 py-3 border-r border-gray-200 w-48"
-        style={{ float: 'left' }}
+        className="sticky left-0 z-20 px-4 py-3 border-r-4 w-48"
+        style={{
+          float: 'left',
+          backgroundColor: hexToRgba(category.color, 0.1),
+          borderRightColor: category.color
+        }}
       >
         <div className="flex items-center gap-2">
           {/* Category color indicator */}
           <div
-            className="w-4 h-4 rounded"
+            className="w-5 h-5 rounded-md shadow-sm"
             style={{ backgroundColor: category.color }}
             aria-hidden="true"
           />
@@ -54,7 +72,10 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
       </div>
 
       {/* Swimlane content area (for event cards) */}
-      <div className="relative h-48 md:h-56 lg:h-64 ml-48">
+      <div
+        className="relative h-48 md:h-56 lg:h-64"
+        style={{ marginLeft: 'var(--category-header-width, 192px)' }}
+      >
         {/* Centerline */}
         <div
           className="absolute top-1/2 left-0 right-0 h-px bg-gray-300"
@@ -64,7 +85,14 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
 
         {/* Event cards */}
         {eventPositions.map((eventPos) => {
-          const originalEvent = events.find(e => e.id === eventPos.eventId);
+          // Check if this is an overflow indicator
+          const isOverflow = eventPos.eventId.startsWith('overflow-');
+
+          // Find original event, or use the position data for overflow indicators
+          const originalEvent = isOverflow
+            ? eventPos
+            : events.find(e => e.id === eventPos.eventId);
+
           if (!originalEvent) return null;
 
           return (
@@ -75,7 +103,15 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
               xPosition={eventPos.xPosition}
               yPosition={eventPos.yPosition}
               categoryColor={category.color}
-              onClick={() => onEventClick(eventPos.eventId)}
+              stackIndex={eventPos.stackIndex}
+              zIndex={eventPos.zIndex}
+              width={eventPos.width}
+              onClick={() => {
+                // Don't trigger click for overflow indicators
+                if (!isOverflow) {
+                  onEventClick(eventPos.eventId);
+                }
+              }}
             />
           );
         })}

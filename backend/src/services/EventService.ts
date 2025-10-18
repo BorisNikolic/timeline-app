@@ -16,6 +16,8 @@ export class EventService {
     const {
       title,
       date,
+      time,
+      endTime,
       description,
       categoryId,
       assignedPerson,
@@ -24,10 +26,10 @@ export class EventService {
     } = data;
 
     const result = await query(
-      `INSERT INTO events (title, date, description, categoryId, assignedPerson, status, priority, createdBy)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO events (title, date, time, endTime, description, categoryId, assignedPerson, status, priority, createdBy)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [title, date, description, categoryId, assignedPerson, status, priority, userId]
+      [title, date, time, endTime, description, categoryId, assignedPerson, status, priority, userId]
     );
 
     return this.mapRowToEvent(result.rows[0]);
@@ -163,6 +165,14 @@ export class EventService {
       fields.push(`date = $${paramCount++}`);
       values.push(data.date);
     }
+    if (data.time !== undefined) {
+      fields.push(`time = $${paramCount++}`);
+      values.push(data.time);
+    }
+    if (data.endTime !== undefined) {
+      fields.push(`endTime = $${paramCount++}`);
+      values.push(data.endTime);
+    }
     if (data.description !== undefined) {
       fields.push(`description = $${paramCount++}`);
       values.push(data.description);
@@ -223,6 +233,8 @@ export class EventService {
       id: row.id,
       title: row.title,
       date: new Date(row.date),
+      time: row.time, // HH:MM string from database
+      endTime: row.endtime, // HH:MM string from database
       description: row.description,
       categoryId: row.categoryid,
       assignedPerson: row.assignedperson,
@@ -242,6 +254,8 @@ export class EventService {
       id: row.id,
       title: row.title,
       date: new Date(row.date),
+      time: row.time, // HH:MM string from database
+      endTime: row.endtime, // HH:MM string from database
       description: row.description,
       categoryId: row.categoryid,
       assignedPerson: row.assignedperson,

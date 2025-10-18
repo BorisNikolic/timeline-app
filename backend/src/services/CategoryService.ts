@@ -106,19 +106,15 @@ export class CategoryService {
   }
 
   /**
-   * Delete a category
+   * Delete a category and cascade delete all events in that category
    */
   async deleteCategory(id: string): Promise<boolean> {
-    try {
-      const result = await query('DELETE FROM categories WHERE id = $1 RETURNING id', [id]);
-      return result.rows.length > 0;
-    } catch (error: any) {
-      // Foreign key constraint violation
-      if (error.code === '23503') {
-        throw new Error('Cannot delete category that has events assigned to it');
-      }
-      throw error;
-    }
+    // Delete all events in this category first (cascade delete)
+    await query('DELETE FROM events WHERE categoryId = $1', [id]);
+
+    // Then delete the category
+    const result = await query('DELETE FROM categories WHERE id = $1 RETURNING id', [id]);
+    return result.rows.length > 0;
   }
 
   /**

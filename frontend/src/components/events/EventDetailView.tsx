@@ -64,6 +64,7 @@ function EventDetailView({ event, onClose, onEdit, onDelete }: EventDetailViewPr
             <label className="block text-sm font-medium text-gray-700">Date</label>
             <p className="mt-1 text-base text-gray-900">
               {format(new Date(event.date), 'EEEE, MMMM dd, yyyy')}
+              {event.time && <span className="ml-2 text-indigo-600">at {event.time}</span>}
             </p>
           </div>
 

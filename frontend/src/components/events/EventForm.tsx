@@ -15,6 +15,8 @@ function EventForm({ onSubmit, onCancel, isLoading = false, initialData }: Event
   const [formData, setFormData] = useState<CreateEventDto>({
     title: initialData?.title || '',
     date: initialData?.date || new Date().toISOString().split('T')[0],
+    time: initialData?.time || '',
+    endTime: initialData?.endTime || '',
     description: initialData?.description || '',
     categoryId: initialData?.categoryId || '',
     assignedPerson: initialData?.assignedPerson || '',
@@ -24,7 +26,17 @@ function EventForm({ onSubmit, onCancel, isLoading = false, initialData }: Event
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Clean up empty optional fields - send undefined instead of empty strings
+    const cleanedData: CreateEventDto = {
+      ...formData,
+      time: formData.time || undefined,
+      endTime: formData.endTime || undefined,
+      description: formData.description || undefined,
+      assignedPerson: formData.assignedPerson || undefined,
+    };
+
+    onSubmit(cleanedData);
   };
 
   const handleChange = (
@@ -68,6 +80,39 @@ function EventForm({ onSubmit, onCancel, isLoading = false, initialData }: Event
           onChange={handleChange}
           className="input-field mt-1"
         />
+      </div>
+
+      {/* Time */}
+      <div>
+        <label htmlFor="time" className="block text-sm font-medium text-gray-700">
+          Start Time (optional)
+        </label>
+        <input
+          type="time"
+          id="time"
+          name="time"
+          value={formData.time}
+          onChange={handleChange}
+          className="input-field mt-1"
+        />
+      </div>
+
+      {/* End Time */}
+      <div>
+        <label htmlFor="endTime" className="block text-sm font-medium text-gray-700">
+          End Time (optional)
+        </label>
+        <input
+          type="time"
+          id="endTime"
+          name="endTime"
+          value={formData.endTime}
+          onChange={handleChange}
+          className="input-field mt-1"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Duration will be shown as card width in timeline view
+        </p>
       </div>
 
       {/* Description */}

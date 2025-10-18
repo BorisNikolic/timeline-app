@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 import EventForm from './EventForm';
 import { CreateEventDto, EventWithDetails, UpdateEventDto } from '../../types/Event';
 import { useCreateEvent, useUpdateEvent } from '../../hooks/useEvents';
@@ -13,6 +13,23 @@ function EventModal({ isOpen, onClose, event }: EventModalProps) {
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
   const isEditMode = !!event;
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, onClose]);
 
   const handleSubmit = async (data: CreateEventDto) => {
     if (isEditMode) {
@@ -45,6 +62,8 @@ function EventModal({ isOpen, onClose, event }: EventModalProps) {
             initialData={isEditMode ? {
               title: event.title,
               date: event.date,
+              time: event.time,
+              endTime: event.endTime,
               description: event.description,
               categoryId: event.categoryId,
               assignedPerson: event.assignedPerson,

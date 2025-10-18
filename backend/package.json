@@ -14,6 +14,7 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write 'src/**/*.ts'",
     "db:migrate": "node -r ts-node/register src/db/migrate.ts",
+    "db:migrate:time": "node -r ts-node/register src/db/migrate-add-time.ts",
     "db:reset": "node -r ts-node/register src/db/reset.ts",
     "db:seed": "node -r ts-node/register src/db/seed.ts",
     "docs:generate": "swagger-jsdoc -d src/api/swagger.ts -o swagger.json",

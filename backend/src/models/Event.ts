@@ -18,6 +18,8 @@ export interface Event {
   id: string;
   title: string;
   date: Date;
+  time?: string; // Optional time in HH:MM format (24-hour)
+  endTime?: string; // Optional end time in HH:MM format (24-hour)
   description?: string;
   categoryId: string;
   assignedPerson?: string;
@@ -32,6 +34,8 @@ export interface Event {
 export interface CreateEventDto {
   title: string;
   date: Date | string;
+  time?: string; // Optional time in HH:MM format (24-hour)
+  endTime?: string; // Optional end time in HH:MM format (24-hour)
   description?: string;
   categoryId: string;
   assignedPerson?: string;
@@ -43,6 +47,8 @@ export interface CreateEventDto {
 export interface UpdateEventDto {
   title?: string;
   date?: Date | string;
+  time?: string; // Optional time in HH:MM format (24-hour)
+  endTime?: string; // Optional end time in HH:MM format (24-hour)
   description?: string;
   categoryId?: string;
   assignedPerson?: string;

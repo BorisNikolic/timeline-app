@@ -10,12 +10,12 @@ import { TimelineSwimlane } from './TimelineSwimlane';
 import { ZoomControls } from './ZoomControls';
 import { JumpToTodayButton } from './JumpToTodayButton';
 import { useTimelineViewState } from '../../hooks/useTimelineViewState';
-import { useScrollRestoration } from '../../hooks/useScrollRestoration';
 import {
-  calculateDefaultDateRange,
+  calculateEventBasedDateRange,
   getPixelsPerDay,
   calculateTimelineWidth,
-  calculateEventX
+  calculateEventX,
+  CATEGORY_HEADER_WIDTH_PX
 } from '../../utils/timelineCalculations';
 import '../../styles/timeline-animations.css';
 
@@ -27,6 +27,7 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const todayLineRef = useRef<HTMLDivElement>(null);
   const [todayLineVisible, setTodayLineVisible] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Timeline view state (persisted in localStorage)
   const {
@@ -36,10 +37,10 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
     setVisualScale
   } = useTimelineViewState();
 
-  // Calculate date range (2 weeks before, 2 months after today)
-  const { startDate, endDate } = useMemo(() => {
-    return calculateDefaultDateRange();
-  }, []);
+  // Calculate date range based on actual events
+  const dateRange = useMemo(() => {
+    return calculateEventBasedDateRange(events);
+  }, [events]);
 
   // Calculate scale and timeline width
   const pixelsPerDay = useMemo(() => {
@@ -47,14 +48,16 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
   }, [zoomLevel, visualScale]);
 
   const timelineWidth = useMemo(() => {
-    return calculateTimelineWidth(startDate, endDate, pixelsPerDay);
-  }, [startDate, endDate, pixelsPerDay]);
+    if (!dateRange) return 0;
+    return calculateTimelineWidth(dateRange.startDate, dateRange.endDate, pixelsPerDay);
+  }, [dateRange, pixelsPerDay]);
 
   // Calculate TODAY line position
   const todayPosition = useMemo(() => {
+    if (!dateRange) return 0;
     const today = startOfDay(new Date());
-    return calculateEventX(today, startDate, endDate, pixelsPerDay);
-  }, [startDate, endDate, pixelsPerDay]);
+    return calculateEventX(today, dateRange.startDate, dateRange.endDate, pixelsPerDay);
+  }, [dateRange, pixelsPerDay]);
 
   // Default scroll position (center on TODAY line)
   const defaultScrollPosition = useMemo(() => {
@@ -63,34 +66,55 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
     return Math.max(0, todayPosition - containerWidth / 2);
   }, [todayPosition]);
 
-  // Scroll restoration (persist scroll position)
-  useScrollRestoration(scrollContainerRef, {
-    storageKey: 'timeline-scroll-position',
-    enabled: events.length > 0, // Only enable after data loads
-    defaultPosition: defaultScrollPosition
-  });
+  // Scroll to TODAY on mount
+  useEffect(() => {
+    if (!scrollContainerRef.current || events.length === 0 || todayPosition === 0) return;
+
+    // Center on TODAY with a slight delay to ensure layout is ready
+    const timer = setTimeout(() => {
+      if (!scrollContainerRef.current) return;
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      const targetScroll = Math.max(0, todayPosition - containerWidth / 2);
+      scrollContainerRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [events.length, todayPosition]); // Run when events load or today position changes
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // 768px = md breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // IntersectionObserver for "Jump to Today" button visibility
   useEffect(() => {
-    if (!todayLineRef.current || !scrollContainerRef.current) return;
+    if (!todayLineRef.current || !scrollContainerRef.current || events.length === 0) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          setTodayLineVisible(entry.isIntersecting);
+          // Consider TODAY visible only if it's mostly in view (at least 80%)
+          setTodayLineVisible(entry.intersectionRatio > 0.8);
         });
       },
       {
         root: scrollContainerRef.current,
-        rootMargin: '100px',
-        threshold: [0, 1]
+        rootMargin: '-20% 0px', // Shrink the viewport area to require better centering
+        threshold: [0, 0.5, 1.0] // Check at different intersection levels
       }
     );
 
     observer.observe(todayLineRef.current);
 
     return () => observer.disconnect();
-  }, []);
+  }, [events.length]); // Re-observe when events load
 
   // Jump to TODAY handler
   const handleJumpToToday = () => {
@@ -118,6 +142,23 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
   // Calculate total height for NOW line
   const totalHeight = swimlanes.length * 256 + 64; // swimlane height + axis height
 
+  // Extract dates early (before empty state check), but safely handle null case
+  const startDate = dateRange?.startDate;
+  const endDate = dateRange?.endDate;
+
+  // Handle empty state
+  if (!dateRange || !startDate || !endDate) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 bg-white border border-gray-200 rounded-lg">
+        <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <p className="text-lg font-medium text-gray-700 mb-2">No events to display</p>
+        <p className="text-sm text-gray-500">Add events to see them in the timeline view</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {/* Zoom Controls */}
@@ -131,10 +172,17 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
       {/* Timeline Container */}
       <div
         ref={scrollContainerRef}
-        className="timeline-scroll-container overflow-x-auto overflow-y-visible border border-gray-200 rounded-lg bg-white"
-        style={{ maxHeight: '70vh' }}
+        className="timeline-scroll-container overflow-x-auto overflow-y-auto border border-gray-200 rounded-lg bg-white"
+        style={{ maxHeight: '80vh' }}
       >
-        <div className="relative" style={{ width: `${timelineWidth}px`, minWidth: '100%' }}>
+        <div
+          className="relative"
+          style={{
+            width: `${timelineWidth}px`,
+            minWidth: '100%',
+            '--category-header-width': '192px'
+          } as React.CSSProperties}
+        >
           {/* Timeline Axis */}
           <TimelineAxis
             startDate={startDate}
@@ -152,6 +200,7 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
               events={categoryEvents}
               startDate={startDate}
               endDate={endDate}
+              zoomLevel={zoomLevel}
               visualScale={visualScale}
               pixelsPerDay={pixelsPerDay}
               onEventClick={onEventClick}
@@ -159,7 +208,7 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
           ))}
 
           {/* TODAY Line */}
-          <div ref={todayLineRef} style={{ position: 'absolute', left: `${todayPosition}px`, top: 0, width: '1px', height: `${totalHeight}px` }}>
+          <div ref={todayLineRef} style={{ position: 'absolute', left: `${todayPosition + CATEGORY_HEADER_WIDTH_PX}px`, top: 0, width: '1px', height: `${totalHeight}px` }}>
             <TimelineNowLine
               xPosition={0}
               height={totalHeight}
@@ -168,19 +217,11 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
         </div>
       </div>
 
-      {/* Jump to Today Button */}
+      {/* Jump to Today Button - Always visible on mobile, conditional on desktop */}
       <JumpToTodayButton
-        isVisible={!todayLineVisible}
+        isVisible={isMobile || !todayLineVisible}
         onJumpToToday={handleJumpToToday}
       />
-
-      {/* Empty state */}
-      {events.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <p className="text-lg font-medium">No events to display</p>
-          <p className="text-sm mt-2">Add events to see them in the timeline view</p>
-        </div>
-      )}
     </div>
   );
 };

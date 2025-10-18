@@ -1,7 +1,7 @@
 // useTimelineViewState Hook
 // Manages timeline view state with localStorage persistence
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { TimelineViewState, ViewMode, ZoomLevel } from '../types/timeline';
 
 const STORAGE_KEY = 'timeline-view-state';
@@ -39,16 +39,17 @@ export function useTimelineViewState() {
   });
 
   // Throttled save to localStorage
-  const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const saveToLocalStorage = useCallback((newState: TimelineViewState) => {
-    if (saveTimeout) {
-      clearTimeout(saveTimeout);
+  // Update state and persist
+  useEffect(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
 
-    const timeout = setTimeout(() => {
+    saveTimeoutRef.current = setTimeout(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (error) {
         console.warn('Failed to save timeline view state to localStorage:', error);
 
@@ -57,7 +58,7 @@ export function useTimelineViewState() {
           try {
             // Clear old state and retry
             localStorage.removeItem(STORAGE_KEY);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           } catch (retryError) {
             console.error('Failed to save after clearing storage:', retryError);
           }
@@ -65,13 +66,12 @@ export function useTimelineViewState() {
       }
     }, SAVE_THROTTLE_MS);
 
-    setSaveTimeout(timeout);
-  }, [saveTimeout]);
-
-  // Update state and persist
-  useEffect(() => {
-    saveToLocalStorage(state);
-  }, [state, saveToLocalStorage]);
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [state]);
 
   // Setter functions
   const setViewMode = useCallback((viewMode: ViewMode) => {
@@ -91,8 +91,8 @@ export function useTimelineViewState() {
   }, []);
 
   const setVisualScale = useCallback((visualScale: number) => {
-    // Clamp visual scale between 0.5 and 2.0
-    const clampedScale = Math.max(0.5, Math.min(2.0, visualScale));
+    // Clamp visual scale between 0.5 and 10.0
+    const clampedScale = Math.max(0.5, Math.min(10.0, visualScale));
     setState(prev => ({
       ...prev,
       visualScale: clampedScale,
@@ -146,7 +146,7 @@ function isValidState(obj: any): obj is TimelineViewState {
     validZoomLevels.includes(obj.zoomLevel) &&
     typeof obj.visualScale === 'number' &&
     obj.visualScale >= 0.5 &&
-    obj.visualScale <= 2.0 &&
+    obj.visualScale <= 10.0 &&
     typeof obj.scrollPosition === 'number' &&
     obj.scrollPosition >= 0
   );

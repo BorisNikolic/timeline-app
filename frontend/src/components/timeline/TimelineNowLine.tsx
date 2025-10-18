@@ -11,7 +11,7 @@ export const TimelineNowLine: React.FC<TimelineNowLineProps> = ({
 }) => {
   return (
     <div
-      className="timeline-today-line absolute top-0 z-10"
+      className="timeline-today-line absolute top-0 z-40"
       style={{
         left: `${xPosition}px`,
         width: '3px',
@@ -23,7 +23,7 @@ export const TimelineNowLine: React.FC<TimelineNowLineProps> = ({
     >
       {/* TODAY label */}
       <div
-        className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded whitespace-nowrap"
+        className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded whitespace-nowrap z-50"
         style={{ boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)' }}
       >
         TODAY

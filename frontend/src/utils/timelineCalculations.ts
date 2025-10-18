@@ -7,23 +7,49 @@ import type { ZoomLevel, Granularity, EventPosition, TimelineEventCard } from '.
 // Constants
 export const EVENT_CARD_HEIGHT = 80; // pixels
 export const STACK_SPACING = 8; // pixels between stacked cards
+export const MAX_STACK_COUNT = 10; // Maximum events to stack before showing overflow indicator
+export const CATEGORY_HEADER_WIDTH_PX = 192; // Match Tailwind w-48 (12rem = 192px)
 
 // Zoom level to granularity mapping
 export const ZOOM_TO_GRANULARITY: Record<ZoomLevel, Granularity> = {
-  day: 'hour',      // Day view shows hourly ticks
   week: 'day',      // Week view shows daily ticks
   month: 'week',    // Month view shows weekly ticks
   quarter: 'month'  // Quarter view shows monthly ticks
 };
 
 /**
- * Calculate default date range for timeline
- * Default: 2 weeks before today, 2 months after today
+ * Parse a date-only string (YYYY-MM-DD) as local midnight
+ * Avoids timezone shifts by forcing local timezone interpretation
+ * @param dateString Date string in YYYY-MM-DD format or ISO string
+ * @returns Date object at local midnight
  */
-export function calculateDefaultDateRange(): { startDate: Date; endDate: Date } {
-  const today = startOfDay(new Date());
-  const startDate = subWeeks(today, 2);
-  const endDate = addMonths(today, 2);
+function parseLocalDate(dateString: string): Date {
+  // If it's already an ISO string with time, extract just the date part
+  const dateOnly = dateString.split('T')[0];
+
+  // Append T00:00:00 to force local timezone interpretation
+  // "2024-12-18" -> "2024-12-18T00:00:00" -> local midnight (not UTC)
+  return new Date(dateOnly + 'T00:00:00');
+}
+
+/**
+ * Calculate date range for timeline based on actual events
+ * Padding: 2 weeks before earliest event, 1 month after latest event
+ * Returns null if no events exist
+ */
+export function calculateEventBasedDateRange(events: any[]): { startDate: Date; endDate: Date } | null {
+  if (!events || events.length === 0) {
+    return null; // Signal empty state
+  }
+
+  // Find earliest and latest event dates (parse as local midnight to avoid timezone shifts)
+  const eventDates = events.map(e => parseLocalDate(e.date));
+  const earliestDate = new Date(Math.min(...eventDates.map(d => d.getTime())));
+  const latestDate = new Date(Math.max(...eventDates.map(d => d.getTime())));
+
+  // Add padding: 2 weeks before first, 1 month after last
+  const startDate = subWeeks(startOfDay(earliestDate), 2);
+  const endDate = addMonths(startOfDay(latestDate), 1);
 
   return { startDate, endDate };
 }
@@ -49,19 +75,22 @@ export function getPixelsPerDay(zoomLevel: ZoomLevel, visualScale: number = 1.0)
 
 /**
  * Calculate total timeline width in pixels
+ * Uses millisecond-based calculation for consistency with event positioning
  */
 export function calculateTimelineWidth(
   startDate: Date,
   endDate: Date,
   pixelsPerDay: number
 ): number {
-  const dayCount = differenceInDays(endDate, startDate);
-  return dayCount * pixelsPerDay;
+  const totalMs = endDate.getTime() - startDate.getTime();
+  const totalDays = totalMs / (1000 * 60 * 60 * 24);
+  return totalDays * pixelsPerDay;
 }
 
 /**
  * Calculate X position for an event based on its date
  * Uses linear interpolation with UTC millisecond timestamps
+ * Consistent millisecond-based calculation for precise alignment
  */
 export function calculateEventX(
   eventDate: Date,
@@ -76,31 +105,78 @@ export function calculateEventX(
   // Clamp event to timeline boundaries
   const clampedEventMs = Math.max(startMs, Math.min(eventMs, endMs));
 
-  // Calculate position as fraction of total range
-  const normalizedPosition = (clampedEventMs - startMs) / (endMs - startMs);
+  // Calculate using consistent millisecond-based math
+  const totalMs = endMs - startMs;
+  const eventOffset = clampedEventMs - startMs;
+  const totalDays = totalMs / (1000 * 60 * 60 * 24);
+  const totalWidth = totalDays * pixelsPerDay;
 
-  // Convert to pixels
-  const dayCount = differenceInDays(endDate, startDate);
-  const totalWidth = dayCount * pixelsPerDay;
-
-  return normalizedPosition * totalWidth;
+  return (eventOffset / totalMs) * totalWidth;
 }
 
 /**
- * Calculate event positions with stacking logic
- * Groups events by date, alternates above/below, stacks same-date events
+ * Calculate event card width based on duration (start time to end time)
+ * Returns width in pixels based on the current timeline scale
+ */
+export function calculateEventWidth(
+  startTime?: string,
+  endTime?: string,
+  pixelsPerDay: number = 20
+): number {
+  const DEFAULT_WIDTH = 120; // Default width for events without duration
+  const MIN_WIDTH = 80; // Minimum width to ensure title readability
+
+  // If no start or end time, use default width
+  if (!startTime || !endTime) {
+    return DEFAULT_WIDTH;
+  }
+
+  // Parse times (HH:MM format)
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+
+  // Convert to minutes since midnight
+  const startMinutes = startHour * 60 + startMinute;
+  const endMinutes = endHour * 60 + endMinute;
+
+  // Calculate duration in hours
+  const durationHours = (endMinutes - startMinutes) / 60;
+
+  // If duration is invalid or negative, use default
+  if (durationHours <= 0) {
+    return DEFAULT_WIDTH;
+  }
+
+  // Calculate width based on duration
+  // pixelsPerDay / 24 = pixelsPerHour
+  const pixelsPerHour = pixelsPerDay / 24;
+  const calculatedWidth = durationHours * pixelsPerHour;
+
+  // Ensure minimum width for readability
+  return Math.max(MIN_WIDTH, calculatedWidth);
+}
+
+/**
+ * Calculate event positions with cascading stack layout
+ * Groups events by date and positions them with diagonal cascading
  */
 export function calculateEventPositions(
   events: any[],
   startDate: Date,
   endDate: Date,
-  pixelsPerDay: number
+  pixelsPerDay: number,
+  zoomLevel: ZoomLevel = 'month'
 ): TimelineEventCard[] {
+  // Performance monitoring (development only)
+  if (process.env.NODE_ENV !== 'production') {
+    performance.mark('calc-positions-start');
+  }
+
   // Group events by date (YYYY-MM-DD format)
   const eventsByDate = new Map<string, any[]>();
 
   events.forEach(event => {
-    const eventDate = new Date(event.date);
+    const eventDate = parseLocalDate(event.date);
     const dateKey = eventDate.toISOString().split('T')[0];
 
     if (!eventsByDate.has(dateKey)) {
@@ -113,25 +189,45 @@ export function calculateEventPositions(
 
   // Process each date group
   eventsByDate.forEach((dateEvents, dateKey) => {
-    const eventDate = new Date(dateKey);
-    const xPosition = calculateEventX(eventDate, startDate, endDate, pixelsPerDay);
+    // Parse as local midnight to ensure consistent timezone handling
+    const eventDate = parseLocalDate(dateEvents[0].date);
+    const centerX = calculateEventX(eventDate, startDate, endDate, pixelsPerDay);
 
-    // Sort by time (earliest at bottom - per clarification requirement)
+    // Sort by time (earliest first)
     const sortedEvents = [...dateEvents].sort((a, b) => {
       const timeA = a.time || '';
       const timeB = b.time || '';
       return timeA.localeCompare(timeB);
     });
 
-    // Calculate positions for each event in the group
-    sortedEvents.forEach((event, index) => {
-      // Alternate above/below centerline
-      const isAbove = index % 2 === 0;
-      const position: EventPosition = isAbove ? 'above' : 'below';
+    const eventCount = sortedEvents.length;
+    const maxVisible = 10; // Maximum events to show before overflow
 
-      // Stack index determines vertical offset
-      const stackIndex = Math.floor(index / 2);
-      const yOffset = stackIndex * (EVENT_CARD_HEIGHT + STACK_SPACING);
+    // Position events with overlapping vertical stacks
+    const eventsToShow = sortedEvents.slice(0, maxVisible);
+
+    const totalCardsInStack = eventsToShow.length;
+
+    eventsToShow.forEach((event, index) => {
+      // Cascading stack: BOTTOM card is in FRONT (highest z-index)
+      // Each card above it is positioned higher but with LOWER z-index (behind)
+      const stackIndex = index; // First card = 0 (bottom/front), last card = 3 (top/back)
+
+      // Diagonal cascade: each card shifts right AND up from previous card
+      const HORIZONTAL_OFFSET = 15; // pixels to shift right per card
+      const VISIBLE_HEIGHT = 30; // Height visible per card in stack (enough to read title only)
+
+      const xPosition = centerX + (stackIndex * HORIZONTAL_OFFSET);
+      const yOffset = stackIndex * VISIBLE_HEIGHT; // Higher cards offset more
+
+      // Reverse z-index: bottom card (index 0) has highest z-index
+      const zIndex = 10 + (totalCardsInStack - stackIndex);
+
+      // All cards positioned above centerline for cascading downward effect
+      const position: EventPosition = 'above';
+
+      // Calculate card width based on duration
+      const width = calculateEventWidth(event.time, event.endTime, pixelsPerDay);
 
       positions.push({
         eventId: event.id,
@@ -141,13 +237,60 @@ export function calculateEventPositions(
         priority: event.priority,
         status: event.status,
         categoryColor: event.categoryColor || '#6366f1', // fallback color
-        xPosition,
+        xPosition, // Left edge aligned with date position
         yPosition: yOffset,
         position,
-        stackIndex
+        stackIndex,
+        zIndex,
+        width
       });
     });
+
+    // Add overflow indicator if there are more events than maxVisible
+    if (sortedEvents.length > maxVisible) {
+      const overflowCount = sortedEvents.length - maxVisible;
+
+      // Position overflow at top of cascade
+      const stackIndex = maxVisible; // Top of stack (highest)
+      const VISIBLE_HEIGHT = 30;
+      const HORIZONTAL_OFFSET = 15;
+      const yOffset = stackIndex * VISIBLE_HEIGHT;
+      const xOffset = centerX + (stackIndex * HORIZONTAL_OFFSET);
+      const isAbove = true; // Above centerline
+
+      // Overflow should have lowest z-index (furthest back)
+      const zIndex = 10 + (totalCardsInStack + 1 - stackIndex);
+
+      // Overflow indicator uses default width
+      const width = 120;
+
+      positions.push({
+        eventId: `overflow-${dateKey}`,
+        title: `+${overflowCount} more...`,
+        date: eventDate,
+        time: undefined,
+        priority: 'Low' as const,
+        status: 'Not Started' as const,
+        categoryColor: '#9CA3AF', // Gray color for overflow
+        xPosition: xOffset, // Left edge aligned with date position
+        yPosition: yOffset,
+        position: 'above',
+        stackIndex,
+        zIndex,
+        width
+      });
+    }
   });
+
+  // Performance measurement (development only)
+  if (process.env.NODE_ENV !== 'production') {
+    performance.mark('calc-positions-end');
+    performance.measure('calc-positions', 'calc-positions-start', 'calc-positions-end');
+    const measure = performance.getEntriesByName('calc-positions')[0];
+    if (measure && measure.duration > 100) {
+      console.warn(`⚠️ Position calculation took ${measure.duration.toFixed(2)}ms (target: <100ms)`);
+    }
+  }
 
   return positions;
 }
@@ -159,48 +302,137 @@ export function generateAxisTicks(
   startDate: Date,
   endDate: Date,
   granularity: Granularity,
-  pixelsPerDay: number
-): Array<{ date: Date; label: string; x: number; isPrimary: boolean }> {
-  const ticks: Array<{ date: Date; label: string; x: number; isPrimary: boolean }> = [];
+  pixelsPerDay: number,
+  visualScale: number = 1.0
+): Array<{ date: Date; label: string; monthLabel?: string; x: number; isPrimary: boolean }> {
+  const ticks: Array<{ date: Date; label: string; monthLabel?: string; x: number; isPrimary: boolean }> = [];
   let currentDate = new Date(startDate);
+  let previousMonth: number | null = null; // Track previous tick's month
+
+  // For Day view (hour granularity), use 6-hour intervals when visualScale <= 7.5
+  const useReducedHourly = granularity === 'hour' && visualScale <= 7.5;
+  const hourIncrement = useReducedHourly ? 6 : 1;
 
   // Determine increment function based on granularity
   const incrementFn = {
-    hour: (date: Date) => new Date(date.getTime() + 60 * 60 * 1000),
+    hour: (date: Date) => new Date(date.getTime() + (hourIncrement * 60 * 60 * 1000)),
     day: (date: Date) => addDays(date, 1),
     week: (date: Date) => addWeeks(date, 1),
     month: (date: Date) => addMonths(date, 1)
   }[granularity];
+
+  // Align start to appropriate boundary for cleaner ticks
+  if (useReducedHourly) {
+    // Align to nearest 6-hour mark (0, 6, 12, 18)
+    const hours = currentDate.getHours();
+    const alignedHour = Math.floor(hours / 6) * 6;
+    currentDate = new Date(currentDate);
+    currentDate.setHours(alignedHour, 0, 0, 0);
+  }
 
   while (currentDate <= endDate) {
     const x = calculateEventX(currentDate, startDate, endDate, pixelsPerDay);
 
     // Format label based on granularity
     let label: string;
+    let monthLabel: string | undefined;
     let isPrimary = true;
 
     switch (granularity) {
       case 'hour':
         label = currentDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
-        isPrimary = currentDate.getHours() % 6 === 0; // Mark 6-hour intervals
+        if (useReducedHourly) {
+          // In 6-hour mode, mark midnight and noon as primary
+          isPrimary = currentDate.getHours() === 0 || currentDate.getHours() === 12;
+        } else {
+          // In hourly mode, mark 6-hour intervals as primary
+          isPrimary = currentDate.getHours() % 6 === 0;
+        }
         break;
       case 'day':
-        label = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        isPrimary = currentDate.getDate() === 1; // Mark first of month
+        // Always show day number
+        label = currentDate.getDate().toString();
+        // Show month name below on 1st
+        if (currentDate.getDate() === 1) {
+          monthLabel = currentDate.toLocaleDateString('en-US', { month: 'short' });
+          isPrimary = true;
+        } else {
+          isPrimary = false;
+        }
         break;
       case 'week':
-        label = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        isPrimary = currentDate.getDate() <= 7; // Mark first week of month
+        // Always show day number
+        label = currentDate.getDate().toString();
+
+        // Check if we've entered a new month (first tick of the month)
+        const currentMonth = currentDate.getMonth();
+        if (previousMonth === null || currentMonth !== previousMonth) {
+          // This is the first tick in a new month, show month name below
+          monthLabel = currentDate.toLocaleDateString('en-US', { month: 'short' });
+          isPrimary = true;
+          previousMonth = currentMonth;
+        } else {
+          isPrimary = currentDate.getDate() <= 7; // Mark first week of month
+        }
         break;
       case 'month':
-        label = currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        // Show just the month abbreviation
+        label = currentDate.toLocaleDateString('en-US', { month: 'short' });
         isPrimary = currentDate.getMonth() % 3 === 0; // Mark quarters
         break;
     }
 
-    ticks.push({ date: currentDate, label, x, isPrimary });
+    ticks.push({ date: currentDate, label, monthLabel, x, isPrimary });
     currentDate = incrementFn(currentDate);
   }
 
   return ticks;
+}
+
+/**
+ * Development-only alignment validation
+ * Logs console warnings when axis tick positions don't match event positions
+ * @param axisTicks Array of axis tick objects with date and x position
+ * @param eventPositions Array of timeline event cards with calculated positions
+ * @param tolerance Acceptable pixel difference (default: 2px per SC-001)
+ */
+export function validateAxisEventAlignment(
+  axisTicks: Array<{ date: Date; x: number }>,
+  eventPositions: TimelineEventCard[],
+  tolerance: number = 2
+): void {
+  if (process.env.NODE_ENV === 'production') return;
+
+  // Group events by date
+  const eventsByDate = new Map<string, TimelineEventCard[]>();
+  eventPositions.forEach(event => {
+    const dateKey = event.date.toISOString().split('T')[0];
+    if (!eventsByDate.has(dateKey)) {
+      eventsByDate.set(dateKey, []);
+    }
+    eventsByDate.get(dateKey)!.push(event);
+  });
+
+  // Check each axis tick against events on that date
+  axisTicks.forEach(tick => {
+    const dateKey = tick.date.toISOString().split('T')[0];
+    const eventsOnDate = eventsByDate.get(dateKey);
+
+    if (eventsOnDate && eventsOnDate.length > 0) {
+      // Check bottom-most event (stackIndex 0)
+      const bottomEvent = eventsOnDate.find(e => e.stackIndex === 0);
+      if (bottomEvent) {
+        const drift = Math.abs(tick.x - bottomEvent.xPosition);
+        if (drift > tolerance) {
+          console.warn(
+            `⚠️ Alignment drift detected on ${dateKey}:`,
+            `\n  Axis tick X: ${tick.x.toFixed(2)}px`,
+            `\n  Event X: ${bottomEvent.xPosition.toFixed(2)}px`,
+            `\n  Drift: ${drift.toFixed(2)}px (tolerance: ±${tolerance}px)`,
+            `\n  Event:`, bottomEvent.title
+          );
+        }
+      }
+    }
+  });
 }

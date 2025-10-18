@@ -1,7 +1,7 @@
 // Timeline View Type Definitions
 // Derived from specs/001-timeline-view/contracts/component-props.interface.ts
 
-export type ZoomLevel = 'day' | 'week' | 'month' | 'quarter';
+export type ZoomLevel = 'week' | 'month' | 'quarter';
 export type Granularity = 'hour' | 'day' | 'week' | 'month';
 export type EventPosition = 'above' | 'below';
 export type ViewMode = 'category' | 'timeline';
@@ -38,6 +38,8 @@ export interface TimelineEventCard {
   yPosition: number;
   position: EventPosition;
   stackIndex: number;
+  zIndex: number;
+  width: number;
 }
 
 // AxisTick - Date marker with label and position
@@ -90,6 +92,7 @@ export interface TimelineSwimlaneProps {
   events: any[]; // Use existing Event type
   startDate: Date;
   endDate: Date;
+  zoomLevel: ZoomLevel;
   visualScale: number;
   pixelsPerDay: number;
   onEventClick: (eventId: string) => void;
@@ -101,6 +104,9 @@ export interface TimelineEventCardProps {
   xPosition: number;
   yPosition: number;
   categoryColor: string;
+  stackIndex: number;
+  zIndex: number;
+  width: number;
   onClick: () => void;
 }
 
@@ -119,4 +125,14 @@ export interface JumpToTodayButtonProps {
 export interface TimelineNowLineProps {
   xPosition: number;
   height: number;
+}
+
+// CSS Custom Properties Type Extension
+// Allows TypeScript to recognize custom CSS properties in inline styles
+declare module 'react' {
+  interface CSSProperties {
+    '--category-header-width'?: string;
+    '--timeline-origin-x'?: string;
+    '--timeline-width'?: string;
+  }
 }

@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
   title: string;
@@ -19,6 +21,23 @@ function DeleteConfirmDialog({
   onCancel,
   isLoading = false,
 }: DeleteConfirmDialogProps) {
+  // Handle ESC key to cancel dialog
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isLoading) {
+        onCancel();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, isLoading, onCancel]);
+
   if (!isOpen) return null;
 
   return (

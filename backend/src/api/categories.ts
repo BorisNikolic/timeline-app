@@ -98,26 +98,19 @@ router.put(
 
 /**
  * DELETE /api/categories/:id
- * Delete a category
+ * Delete a category and cascade delete all its events
  */
 router.delete(
   '/:id',
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
-    try {
-      const deleted = await CategoryService.deleteCategory(req.params.id);
+    const deleted = await CategoryService.deleteCategory(req.params.id);
 
-      if (!deleted) {
-        return res.status(404).json({ error: 'Category not found' });
-      }
-
-      res.status(204).send();
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Cannot delete category that has events assigned to it') {
-        return res.status(409).json({ error: error.message });
-      }
-      throw error;
+    if (!deleted) {
+      return res.status(404).json({ error: 'Category not found' });
     }
+
+    res.status(204).send();
   })
 );
 

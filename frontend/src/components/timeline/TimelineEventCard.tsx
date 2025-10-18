@@ -11,47 +11,40 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
   xPosition,
   yPosition,
   categoryColor,
+  stackIndex,
+  zIndex,
+  width,
   onClick
 }) => {
   const isAbove = position === 'above';
+  const [isHovered, setIsHovered] = React.useState(false);
 
   return (
     <div
-      className="timeline-event-card absolute"
+      className={`timeline-event-card absolute ${isHovered ? 'transition-all duration-200' : ''}`}
       style={{
-        left: `${xPosition - 90}px`, // Center card on date (180px width / 2)
-        [isAbove ? 'bottom' : 'top']: `${yPosition + 60}px` // Offset from centerline
+        left: `${xPosition}px`, // Position card start at xPosition
+        [isAbove ? 'bottom' : 'top']: `${yPosition + 60}px`, // Offset from centerline
+        zIndex: isHovered ? 9999 : zIndex, // Bring to front on hover
+        width: `${width}px` // Dynamic width based on duration
       }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Connector line (vertical dotted line to axis) */}
-      <div
-        className="absolute left-1/2 transform -translate-x-1/2"
-        style={{
-          width: '2px',
-          height: `${yPosition + 40}px`,
-          background: `repeating-linear-gradient(
-            to bottom,
-            ${categoryColor}80,
-            ${categoryColor}80 4px,
-            transparent 4px,
-            transparent 8px
-          )`,
-          [isAbove ? 'top' : 'bottom']: '100%'
-        }}
-        aria-hidden="true"
-      />
-
       {/* Event Card */}
       <div
         onClick={onClick}
-        className="
-          cursor-pointer bg-white border-2 rounded-lg shadow-md
-          hover:shadow-lg transition-all duration-200
-          w-[180px] p-3
-        "
+        className={`
+          cursor-pointer bg-white border-2 rounded-lg
+          transition-all duration-200
+          p-2 md:p-3
+          min-h-[44px]
+          ${isHovered ? 'shadow-2xl scale-105' : 'shadow-md hover:shadow-lg'}
+        `}
         style={{
           borderLeftColor: categoryColor,
-          borderLeftWidth: '4px'
+          borderLeftWidth: '4px',
+          width: '100%' // Use full width of parent container
         }}
         role="button"
         tabIndex={0}
