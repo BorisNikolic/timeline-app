@@ -33,7 +33,8 @@ export function validateQuery(schema: ZodSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const validatedData = schema.parse(req.query);
-      req.query = validatedData as any;
+      // Use Object.assign for Bun compatibility (req.query is readonly)
+      Object.assign(req.query, validatedData);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -57,7 +58,8 @@ export function validateParams(schema: ZodSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const validatedData = schema.parse(req.params);
-      req.params = validatedData as any;
+      // Use Object.assign for Bun compatibility (req.params is readonly)
+      Object.assign(req.params, validatedData);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

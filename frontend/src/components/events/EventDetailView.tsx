@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { EventWithDetails } from '../../types/Event';
 import { format } from 'date-fns';
 
@@ -9,6 +10,20 @@ interface EventDetailViewProps {
 }
 
 function EventDetailView({ event, onClose, onEdit, onDelete }: EventDetailViewProps) {
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [onClose]);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Not Started':
