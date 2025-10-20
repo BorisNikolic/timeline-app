@@ -22,38 +22,38 @@ Festival Timeline Management App - A collaborative event planning tool for manag
 
 ### Backend (from `/backend`)
 ```bash
-npm run dev              # Start development server (ts-node-dev, auto-reload)
-npm run build            # Compile TypeScript to /dist
-npm start                # Run compiled production build
-npm test                 # Run tests with Vitest
-npm run lint             # Check code with ESLint
-npm run type-check       # TypeScript compilation check (no emit)
+bun run dev              # Start development server (ts-node-dev, auto-reload)
+bun run build            # Compile TypeScript to /dist
+bun start                # Run compiled production build
+bun run test                 # Run tests with Vitest
+bun run lint             # Check code with ESLint
+bun run type-check       # TypeScript compilation check (no emit)
 
 # Database management
-npm run db:migrate       # Run database migrations
-npm run db:seed          # Seed initial data (categories + admin user)
-npm run db:reset         # Drop and recreate database schema
+bun run db:migrate       # Run database migrations
+bun run db:seed          # Seed initial data (categories + admin user)
+bun run db:reset         # Drop and recreate database schema
 ```
 
 ### Frontend (from `/frontend`)
 ```bash
-npm run dev              # Start Vite dev server (HMR enabled)
-npm run build            # TypeScript compile + Vite production build
-npm run preview          # Preview production build locally
-npm test                 # Run Vitest unit tests
-npm run test:e2e         # Run Playwright E2E tests
-npm run lint             # Check code with ESLint
-npm run type-check       # TypeScript compilation check (no emit)
+bun run dev              # Start Vite dev server (HMR enabled)
+bun run build            # TypeScript compile + Vite production build
+bun run preview          # Preview production build locally
+bun run test                 # Run Vitest unit tests
+bun run test:e2e         # Run Playwright E2E tests
+bun run lint             # Check code with ESLint
+bun run type-check       # TypeScript compilation check (no emit)
 ```
 
 ### Full-Stack Development
 Start both servers concurrently:
 ```bash
 # Terminal 1 - Backend
-cd backend && npm run dev    # Runs on http://localhost:3000
+cd backend && bun run dev    # Runs on http://localhost:3000
 
 # Terminal 2 - Frontend
-cd frontend && npm run dev   # Runs on http://localhost:5173
+cd frontend && bun run dev   # Runs on http://localhost:5173
 ```
 
 ## Architecture
@@ -130,13 +130,20 @@ GET  /api/export/events-excel
 ## Environment Setup
 
 ### Prerequisites
-- Node.js 20.x LTS
+- Bun 1.3+ (JavaScript runtime)
 - PostgreSQL 16
-- npm 9.0+
+- 
 
 ### First-Time Setup
 
-1. **PostgreSQL setup** (macOS with Homebrew):
+1. **Install Bun**:
+```bash
+brew install oven-sh/bun/bun
+# Verify installation
+bun --version  # Should show 1.3.0 or later
+```
+
+2. **PostgreSQL setup** (macOS with Homebrew):
 ```bash
 brew install postgresql@16
 brew services start postgresql@16
@@ -144,27 +151,27 @@ export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"
 createdb festival_timeline
 ```
 
-2. **Backend setup**:
+3. **Backend setup**:
 ```bash
 cd backend
-npm install
+bun install
 cp .env.example .env
 # Edit .env with your DATABASE_URL and JWT_SECRET
-npm run db:migrate    # Create schema
-npm run db:seed       # Load initial data
-npm run dev
+bun run db:migrate    # Create schema
+bun run db:seed       # Load initial data
+bun run dev
 ```
 
-3. **Frontend setup**:
+4. **Frontend setup**:
 ```bash
 cd frontend
-npm install
+bun install
 cp .env.example .env
 # VITE_API_URL should point to backend (default: http://localhost:3000)
-npm run dev
+bun run dev
 ```
 
-4. **Access the app**: http://localhost:5173/auth
+5. **Access the app**: http://localhost:5173/auth
    - Demo credentials: `admin@festival.app` / `admin123` (from seed data)
 
 ## Critical Implementation Details
@@ -200,12 +207,12 @@ npm run dev
 ### Backend Tests
 - Unit tests: Services with mocked database queries
 - Integration tests: Full API endpoints with test database
-- Run with `npm test` (Vitest)
+- Run with `bun run test` (Vitest)
 
 ### Frontend Tests
 - Component tests: React Testing Library with happy-dom
 - E2E tests: Playwright for full user flows
-- Run with `npm test` (Vitest) or `npm run test:e2e` (Playwright)
+- Run with `bun run test` (Vitest) or `bun run test:e2e` (Playwright)
 
 ## Common Troubleshooting
 

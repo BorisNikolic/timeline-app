@@ -4,7 +4,7 @@
   "description": "Backend for Festival Timeline Management App",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "bun --watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest",
@@ -13,10 +13,10 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write 'src/**/*.ts'",
-    "db:migrate": "node -r ts-node/register src/db/migrate.ts",
-    "db:migrate:time": "node -r ts-node/register src/db/migrate-add-time.ts",
-    "db:reset": "node -r ts-node/register src/db/reset.ts",
-    "db:seed": "node -r ts-node/register src/db/seed.ts",
+    "db:migrate": "bun run src/db/migrate.ts",
+    "db:migrate:time": "bun run src/db/migrate-add-time.ts",
+    "db:reset": "bun run src/db/reset.ts",
+    "db:seed": "bun run src/db/seed.ts",
     "docs:generate": "swagger-jsdoc -d src/api/swagger.ts -o swagger.json",
     "type-check": "tsc --noEmit"
   },
@@ -68,7 +68,6 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3",
     "vitest": "^1.1.0"
   },

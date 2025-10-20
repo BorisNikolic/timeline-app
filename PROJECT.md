@@ -287,21 +287,21 @@ createdb festival_timeline
 **2. Backend Setup**:
 ```bash
 cd backend
-npm install
+bun install
 cp .env.example .env
 # Edit .env with DATABASE_URL and JWT_SECRET
-npm run db:migrate    # Run schema migrations
-npm run db:seed       # Load initial data (admin user + categories)
-npm run dev           # Start on http://localhost:3000
+bun run db:migrate    # Run schema migrations
+bun run db:seed       # Load initial data (admin user + categories)
+bun run dev           # Start on http://localhost:3000
 ```
 
 **3. Frontend Setup**:
 ```bash
 cd frontend
-npm install
+bun install
 cp .env.example .env
 # VITE_API_URL=http://localhost:3000
-npm run dev           # Start on http://localhost:5173
+bun run dev           # Start on http://localhost:5173
 ```
 
 **4. Access App**:
@@ -312,22 +312,22 @@ npm run dev           # Start on http://localhost:5173
 
 **Backend**:
 ```bash
-npm run dev              # Development server (auto-reload)
-npm run build            # Compile TypeScript
-npm test                 # Run Vitest tests
-npm run lint             # ESLint check
-npm run db:migrate       # Run database migrations
-npm run db:seed          # Seed initial data
-npm run db:reset         # Drop and recreate database
+bun run dev              # Development server (auto-reload)
+bun run build            # Compile TypeScript
+bun run test                 # Run Vitest tests
+bun run lint             # ESLint check
+bun run db:migrate       # Run database migrations
+bun run db:seed          # Seed initial data
+bun run db:reset         # Drop and recreate database
 ```
 
 **Frontend**:
 ```bash
-npm run dev              # Vite dev server with HMR
-npm run build            # Production build
-npm test                 # Vitest component tests
-npm run test:e2e         # Playwright E2E tests
-npm run lint             # ESLint check
+bun run dev              # Vite dev server with HMR
+bun run build            # Production build
+bun run test                 # Vitest component tests
+bun run test:e2e         # Playwright E2E tests
+bun run lint             # ESLint check
 ```
 
 ### Troubleshooting

@@ -3,33 +3,36 @@
 A collaborative web application for managing festival events with visual timeline organization by category.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
+[![Bun](https://img.shields.io/badge/Bun-1.3+-orange.svg)](https://bun.sh/)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://reactjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
 
 ## Quick Start
 
 ```bash
-# 1. Setup PostgreSQL
+# 1. Install Bun
+brew install oven-sh/bun/bun
+
+# 2. Setup PostgreSQL
 brew install postgresql@16
 brew services start postgresql@16
 createdb festival_timeline
 
-# 2. Backend setup
+# 3. Backend setup
 cd backend
-npm install
+bun install
 cp .env.example .env
-npm run db:migrate
-npm run db:seed
-npm run dev  # Runs on http://localhost:3000
+bun run db:migrate
+bun run db:seed
+bun run dev  # Runs on http://localhost:3000
 
-# 3. Frontend setup (new terminal)
+# 4. Frontend setup (new terminal)
 cd frontend
-npm install
+bun install
 cp .env.example .env
-npm run dev  # Runs on http://localhost:5173
+bun run dev  # Runs on http://localhost:5173
 
-# 4. Access the app
+# 5. Access the app
 # URL: http://localhost:5173/auth
 # Login: admin@festival.app / admin123
 ```
@@ -53,7 +56,7 @@ npm run dev  # Runs on http://localhost:5173
 
 **Frontend**: React 18, TypeScript, Vite, TailwindCSS, Zustand, React Query, react-window
 
-**Backend**: Node.js 20, Express, TypeScript, PostgreSQL 16, Passport.js, JWT, bcrypt
+**Backend**: Bun 1.3+, Express, TypeScript, PostgreSQL 16, Passport.js, JWT, bcrypt
 
 **Testing**: Vitest, Playwright, React Testing Library, Supertest
 
@@ -84,20 +87,20 @@ timeline_app/
 
 **Backend**:
 ```bash
-npm run dev           # Start development server
-npm test              # Run tests
-npm run db:migrate    # Run database migrations
-npm run db:seed       # Seed initial data
-npm run lint          # Check code quality
+bun run dev           # Start development server (hot reload with bun --watch)
+bun run test          # Run tests
+bun run db:migrate    # Run database migrations
+bun run db:seed       # Seed initial data
+bun run lint          # Check code quality
 ```
 
 **Frontend**:
 ```bash
-npm run dev           # Start Vite dev server
-npm test              # Run component tests
-npm run test:e2e      # Run E2E tests
-npm run build         # Production build
-npm run lint          # Check code quality
+bun run dev           # Start Vite dev server (HMR enabled)
+bun run test          # Run component tests
+bun run test:e2e      # Run E2E tests
+bun run build         # Production build
+bun run lint          # Check code quality
 ```
 
 ## Environment Variables
@@ -133,13 +136,13 @@ VITE_API_URL=http://localhost:3000
 
 ```bash
 # Backend tests
-cd backend && npm test
+cd backend && bun run test
 
 # Frontend tests
-cd frontend && npm test
+cd frontend && bun run test
 
 # E2E tests (requires both servers running)
-cd frontend && npm run test:e2e
+cd frontend && bun run test:e2e
 ```
 
 ## Troubleshooting
@@ -164,7 +167,7 @@ See [CLAUDE.md](CLAUDE.md) for detailed troubleshooting guide.
 2. Use parameterized SQL queries for security
 3. Write tests for new features
 4. Ensure mobile responsiveness (375px+)
-5. Run `npm run lint` before committing
+5. Run `bun run lint` before committing
 
 ## License
 
