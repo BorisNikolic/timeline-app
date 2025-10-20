@@ -37,10 +37,11 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
 
   return (
     <div
-      className="relative border-b-2 border-gray-300"
+      className="relative border-b-2 border-gray-300 timeline-swimlane-bg"
       style={{
-        backgroundColor: hexToRgba(category.color, 0.03)
-      }}
+        '--swimlane-bg-color': hexToRgba(category.color, 0.03),
+        minWidth: '100%'
+      } as React.CSSProperties}
     >
       {/* Category header */}
       <div
@@ -74,7 +75,11 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
       {/* Swimlane content area (for event cards) */}
       <div
         className="relative h-48 md:h-56 lg:h-64"
-        style={{ marginLeft: 'var(--category-header-width, 192px)' }}
+        style={{
+          marginLeft: 'var(--category-header-width, 192px)',
+          minWidth: '100%',
+          zIndex: 1
+        }}
       >
         {/* Centerline */}
         <div

@@ -44,3 +44,18 @@
 .timeline-scroll-container {
   scroll-behavior: smooth;
 }
+
+/* Swimlane background that extends to fill viewport without affecting scroll width */
+.timeline-swimlane-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--swimlane-bg-color);
+  z-index: -1;
+  /* Extend to the right to ensure full viewport coverage */
+  min-width: 100vw;
+  pointer-events: none;
+}
