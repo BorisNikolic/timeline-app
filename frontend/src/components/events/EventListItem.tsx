@@ -4,9 +4,18 @@ import { format } from 'date-fns';
 interface EventListItemProps {
   event: EventWithDetails;
   onClick: () => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: () => void;
 }
 
-function EventListItem({ event, onClick }: EventListItemProps) {
+function EventListItem({
+  event,
+  onClick,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelection,
+}: EventListItemProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Not Started':
@@ -33,11 +42,32 @@ function EventListItem({ event, onClick }: EventListItemProps) {
     }
   };
 
+  // Handle checkbox change separately from row click
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation(); // Prevent event detail modal from opening
+    onToggleSelection?.();
+  };
+
   return (
     <div
-      onClick={onClick}
-      className="flex cursor-pointer items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md"
+      onClick={isSelectionMode ? undefined : onClick}
+      className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all ${
+        isSelected
+          ? 'border-blue-500 bg-blue-50 shadow-md'
+          : 'border-gray-200 bg-white hover:shadow-md'
+      }`}
     >
+      {/* Checkbox (T070) - 24px minimum for mobile touch targets */}
+      {isSelectionMode && (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={handleCheckboxChange}
+          className="h-6 w-6 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
+          aria-label={`Select ${event.title}`}
+        />
+      )}
+
       {/* Category Indicator */}
       <div
         className="h-12 w-1 flex-shrink-0 rounded-full"

@@ -100,14 +100,14 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          // Consider TODAY visible only if it's mostly in view (at least 80%)
-          setTodayLineVisible(entry.intersectionRatio > 0.8);
+          // Consider TODAY visible if it's reasonably in view (>30% visible)
+          setTodayLineVisible(entry.isIntersecting && entry.intersectionRatio > 0.3);
         });
       },
       {
         root: scrollContainerRef.current,
-        rootMargin: '-20% 0px', // Shrink the viewport area to require better centering
-        threshold: [0, 0.5, 1.0] // Check at different intersection levels
+        rootMargin: '-100px 0px', // Only consider visible if not too close to edges
+        threshold: [0, 0.3, 0.5, 1.0]
       }
     );
 

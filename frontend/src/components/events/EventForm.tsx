@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { EventStatus, EventPriority, CreateEventDto } from '../../types/Event';
 import { useCategories } from '../../hooks/useCategories';
+import QuickDatePresets from './QuickDatePresets';
 
 interface EventFormProps {
   onSubmit: (data: CreateEventDto) => void;
@@ -79,6 +80,9 @@ function EventForm({ onSubmit, onCancel, isLoading = false, initialData }: Event
           value={formData.date}
           onChange={handleChange}
           className="input-field mt-1"
+        />
+        <QuickDatePresets
+          onDateSelect={(date) => setFormData(prev => ({ ...prev, date }))}
         />
       </div>
 

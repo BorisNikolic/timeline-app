@@ -126,6 +126,25 @@ router.put(
 );
 
 /**
+ * PATCH /api/events/:id
+ * Partially update an event (used for bulk status updates)
+ */
+router.patch(
+  '/:id',
+  authenticate,
+  validate(updateEventSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const event = await EventService.updateEvent(req.params.id, req.body);
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    res.json(event);
+  })
+);
+
+/**
  * DELETE /api/events/:id
  * Delete an event
  */

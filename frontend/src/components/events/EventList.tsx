@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import { EventWithDetails, EventStatus, EventPriority } from '../../types/Event';
 import EventListItem from './EventListItem';
+import { BulkSelectionControls } from './BulkSelectionControls';
+import { useBulkEventUpdate } from '../../hooks/useBulkEventUpdate';
 
 interface EventListProps {
   events: EventWithDetails[];
@@ -14,6 +16,13 @@ function EventList({ events, onEventClick }: EventListProps) {
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [filterStatus, setFilterStatus] = useState<EventStatus | 'all'>('all');
   const [filterPriority, setFilterPriority] = useState<EventPriority | 'all'>('all');
+
+  // Bulk selection hook (User Story 8)
+  const {
+    isSelectionMode,
+    selectedEventIds,
+    toggleEventSelection,
+  } = useBulkEventUpdate();
 
   // Apply filters
   let filteredEvents = [...events];
@@ -47,6 +56,14 @@ function EventList({ events, onEventClick }: EventListProps) {
 
   return (
     <div className="mt-8">
+      {/* Bulk Selection Controls (T073) */}
+      <div className="mb-4">
+        <BulkSelectionControls
+          visibleEventIds={sortedEvents.map(e => e.id)}
+          isAvailable={true}
+        />
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <h2 className="text-xl font-bold text-gray-900">Event List</h2>
 
@@ -127,6 +144,9 @@ function EventList({ events, onEventClick }: EventListProps) {
                 <EventListItem
                   event={sortedEvents[index]}
                   onClick={() => onEventClick(sortedEvents[index])}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedEventIds.has(sortedEvents[index].id)}
+                  onToggleSelection={() => toggleEventSelection(sortedEvents[index].id)}
                 />
               </div>
             )}
@@ -137,6 +157,9 @@ function EventList({ events, onEventClick }: EventListProps) {
               key={event.id}
               event={event}
               onClick={() => onEventClick(event)}
+              isSelectionMode={isSelectionMode}
+              isSelected={selectedEventIds.has(event.id)}
+              onToggleSelection={() => toggleEventSelection(event.id)}
             />
           ))
         )}

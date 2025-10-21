@@ -6,18 +6,27 @@ import EventDetailView from '../events/EventDetailView';
 import EventModal from '../events/EventModal';
 import EventList from '../events/EventList';
 import DeleteConfirmDialog from '../shared/DeleteConfirmDialog';
-import { EventWithDetails } from '../../types/Event';
+import { EventWithDetails, CreateEventDto } from '../../types/Event';
 import { useEvents } from '../../hooks/useEvents';
 import { useCategories } from '../../hooks/useCategories';
 import { useDeleteEvent } from '../../hooks/useEvents';
 
-function Timeline() {
-  const { data: events = [], isLoading, error } = useEvents();
+interface TimelineProps {
+  events?: EventWithDetails[];
+}
+
+function Timeline({ events: propsEvents }: TimelineProps) {
+  const { data: fetchedEvents = [], isLoading, error } = useEvents();
   const { categories, isLoading: categoriesLoading } = useCategories();
+
+  // Use props events if provided (for search filtering), otherwise use fetched events
+  const events = propsEvents || fetchedEvents;
   const deleteEvent = useDeleteEvent();
   const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [duplicateEventData, setDuplicateEventData] = useState<CreateEventDto | null>(null);
 
   const handleEditEvent = () => {
     setIsEditModalOpen(true);
@@ -33,6 +42,12 @@ function Timeline() {
       setIsDeleteDialogOpen(false);
       setSelectedEvent(null);
     }
+  };
+
+  const handleDuplicate = (eventData: CreateEventDto) => {
+    setDuplicateEventData(eventData);
+    setSelectedEvent(null); // Close the detail view
+    setIsModalOpen(true); // Open modal with duplicated data
   };
 
   // Group events by category
@@ -129,6 +144,7 @@ function Timeline() {
           onClose={() => setSelectedEvent(null)}
           onEdit={handleEditEvent}
           onDelete={handleDeleteClick}
+          onDuplicate={handleDuplicate}
         />
       )}
 
@@ -150,6 +166,16 @@ function Timeline() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setIsDeleteDialogOpen(false)}
         isLoading={deleteEvent.isPending}
+      />
+
+      {/* Duplicate event modal */}
+      <EventModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setDuplicateEventData(null);
+        }}
+        duplicateData={duplicateEventData || undefined}
       />
 
       {/* Event List View */}

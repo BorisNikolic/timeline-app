@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
-import { EventWithDetails } from '../../types/Event';
+import { EventWithDetails, CreateEventDto } from '../../types/Event';
 import { format } from 'date-fns';
+import EventDuplicateButton from './EventDuplicateButton';
 
 interface EventDetailViewProps {
   event: EventWithDetails;
   onClose: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onDuplicate?: (duplicatedEventData: CreateEventDto) => void;
 }
 
-function EventDetailView({ event, onClose, onEdit, onDelete }: EventDetailViewProps) {
+function EventDetailView({ event, onClose, onEdit, onDelete, onDuplicate }: EventDetailViewProps) {
   // Handle ESC key to close modal
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -152,6 +154,10 @@ function EventDetailView({ event, onClose, onEdit, onDelete }: EventDetailViewPr
             >
               Delete Event
             </button>
+          )}
+          {/* User Story 3: Event Duplication (P2) */}
+          {onDuplicate && (
+            <EventDuplicateButton event={event} onDuplicate={onDuplicate} />
           )}
           {onEdit && (
             <button

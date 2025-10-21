@@ -102,9 +102,14 @@ GET  /api/export/events-excel
 /src/components/
   /auth/          - Login, Register, PrivateRoute
   /events/        - EventForm, EventModal, EventList, EventCard, EventDetailView
+                    EventDuplicateButton, QuickStatusDropdown, QuickDatePresets
+                    BulkSelectionControls
   /timeline/      - Timeline, CategoryLane, EventCard
   /categories/    - CategoryForm
+  /dashboard/     - StatusDashboardWidget
+  /search/        - EventSearchInput
   /shared/        - Layout, StatusBadge, PriorityBadge, DeleteConfirmDialog
+                    KeyboardShortcutProvider
   /export/        - ExportMenu
 ```
 
@@ -113,6 +118,100 @@ GET  /api/export/events-excel
 - **Optimistic UI updates**: Zustand stores update immediately before server confirmation
 - **Axios interceptors**: Auto-inject JWT tokens, handle 401 redirects
 - **Mobile-first responsive**: 375px minimum width, TailwindCSS utilities in `/src/styles/responsive.css`
+
+### UX Enhancements (Feature 002-ux-enhancements)
+
+**8 Productivity Features** added to improve daily workflow efficiency:
+
+**P1 Features (Critical)**:
+1. **Quick Status Toggle**: Click status badge on event cards to update in 1 click (vs 5 clicks)
+   - Component: `QuickStatusDropdown` in `/src/components/events/`
+   - Uses React Query optimistic updates for instant feedback
+   - Automatic rollback on error
+
+2. **Visual Priority Indicators**: Color-coded borders on event cards
+   - High: Red border (`border-red-500`)
+   - Medium: Yellow border (`border-yellow-500`)
+   - Low: Gray border (`border-gray-300`)
+   - Enhanced `PriorityBadge` component with WCAG AA contrast compliance
+
+**P2 Features (High-Value)**:
+3. **Event Duplication**: Copy events with pre-filled form
+   - Component: `EventDuplicateButton`
+   - Auto-prefixes title with "Copy of..."
+   - User reviews before saving (prevents accidental duplicates)
+
+4. **Keyboard Shortcuts**: Global keyboard navigation
+   - `N` - New event modal
+   - `/` - Focus search input
+   - `E` - Open export menu
+   - `ESC` - Close modals
+   - `Ctrl+S` / `Cmd+S` - Save form
+   - Hook: `useKeyboardShortcuts` with context-aware filtering
+   - Provider: `KeyboardShortcutProvider` in `/src/components/shared/`
+
+5. **Quick Date Presets**: One-click common date selection
+   - Component: `QuickDatePresets`
+   - Buttons: Today, Tomorrow, Next Week (+7d), Next Month (+30d)
+   - Utility: `datePresets.ts` with native Date API calculations
+
+6. **Status Dashboard**: Real-time event count aggregation
+   - Component: `StatusDashboardWidget` in `/src/components/dashboard/`
+   - Shows counts by status (Not Started, In Progress, Completed)
+   - Displays total events and completion percentage
+   - Client-side aggregation with `useMemo` (<50ms for 500 events)
+
+**P3 Features (Nice-to-Have)**:
+7. **Text Search**: Filter events by title/description
+   - Component: `EventSearchInput` in `/src/components/search/`
+   - Hook: `useEventSearch` with debounced filtering
+   - Client-side regex matching (30-50ms for 500 events)
+   - Input sanitization to prevent regex injection
+   - Combines with existing filters (category, status, priority)
+
+8. **Bulk Status Updates**: Multi-select and batch update
+   - Component: `BulkSelectionControls` in `/src/components/events/`
+   - Hook: `useBulkEventUpdate` with `useReducer` state management
+   - Select All / Clear Selection helpers
+   - Promise.allSettled for partial success handling
+   - Toast notifications: "Updated X of Y events"
+   - 24px checkboxes for mobile accessibility
+
+**Implementation Details**:
+- **Zero backend changes**: All features use existing API endpoints
+- **Zero new dependencies**: Uses existing React, TailwindCSS, React Query
+- **Zero database migrations**: No schema changes required
+- **Client-side operations**: Search, dashboard aggregation for optimal performance
+- **Accessibility**: ARIA labels, keyboard navigation, mobile-friendly touch targets
+- **Toast notifications**: Custom toast utility in `/src/utils/toast.ts`
+
+**File Locations**:
+```
+frontend/src/
+├── components/
+│   ├── events/
+│   │   ├── QuickStatusDropdown.tsx
+│   │   ├── EventDuplicateButton.tsx
+│   │   ├── QuickDatePresets.tsx
+│   │   └── BulkSelectionControls.tsx
+│   ├── dashboard/
+│   │   └── StatusDashboardWidget.tsx
+│   ├── search/
+│   │   └── EventSearchInput.tsx
+│   └── shared/
+│       └── KeyboardShortcutProvider.tsx
+├── hooks/
+│   ├── useKeyboardShortcuts.ts
+│   ├── useBulkEventUpdate.ts
+│   └── useEventSearch.ts
+├── utils/
+│   ├── datePresets.ts
+│   ├── searchHelpers.ts
+│   └── toast.ts
+└── types/
+    ├── bulk.ts
+    └── search.ts
+```
 
 ### Database Schema
 

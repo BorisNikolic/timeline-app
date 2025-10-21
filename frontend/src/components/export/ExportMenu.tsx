@@ -1,9 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import apiClient from '../../services/api-client';
 
-function ExportMenu() {
+export interface ExportMenuRef {
+  toggle: () => void;
+}
+
+const ExportMenu = forwardRef<ExportMenuRef>((props, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  // Expose toggle method to parent via ref
+  useImperativeHandle(ref, () => ({
+    toggle: () => setIsOpen(prev => !prev)
+  }));
 
   // Handle ESC key to close dropdown
   useEffect(() => {
@@ -126,6 +135,8 @@ function ExportMenu() {
       )}
     </div>
   );
-}
+});
+
+ExportMenu.displayName = 'ExportMenu';
 
 export default ExportMenu;

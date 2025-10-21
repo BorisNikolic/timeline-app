@@ -7,12 +7,14 @@ interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
   event?: EventWithDetails; // If provided, we're in edit mode
+  duplicateData?: CreateEventDto; // If provided, we're duplicating an event
 }
 
-function EventModal({ isOpen, onClose, event }: EventModalProps) {
+function EventModal({ isOpen, onClose, event, duplicateData }: EventModalProps) {
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
   const isEditMode = !!event;
+  const isDuplicateMode = !!duplicateData;
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -53,23 +55,29 @@ function EventModal({ isOpen, onClose, event }: EventModalProps) {
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
           <h2 className="mb-4 text-2xl font-bold text-gray-900">
-            {isEditMode ? 'Edit Event' : 'Create New Event'}
+            {isEditMode ? 'Edit Event' : isDuplicateMode ? 'Duplicate Event' : 'Create New Event'}
           </h2>
           <EventForm
             onSubmit={handleSubmit}
             onCancel={onClose}
             isLoading={isEditMode ? updateEvent.isPending : createEvent.isPending}
-            initialData={isEditMode ? {
-              title: event.title,
-              date: event.date,
-              time: event.time,
-              endTime: event.endTime,
-              description: event.description,
-              categoryId: event.categoryId,
-              assignedPerson: event.assignedPerson,
-              status: event.status,
-              priority: event.priority,
-            } : undefined}
+            initialData={
+              isEditMode
+                ? {
+                    title: event.title,
+                    date: event.date.split('T')[0], // Ensure YYYY-MM-DD format
+                    time: event.time,
+                    endTime: event.endTime,
+                    description: event.description,
+                    categoryId: event.categoryId,
+                    assignedPerson: event.assignedPerson,
+                    status: event.status,
+                    priority: event.priority,
+                  }
+                : isDuplicateMode
+                ? duplicateData
+                : undefined
+            }
           />
         </div>
       </div>
