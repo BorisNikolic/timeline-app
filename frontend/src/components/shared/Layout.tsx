@@ -1,8 +1,24 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import DeleteConfirmDialog from './DeleteConfirmDialog';
 
 function Layout() {
   const { user, logout } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutDialog(false);
+    logout();
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutDialog(false);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-festival-cream">
@@ -22,7 +38,7 @@ function Layout() {
               <div className="flex items-center gap-4">
                 <span className="hidden sm:inline text-sm text-gray-600">Welcome, {user.name}</span>
                 <button
-                  onClick={logout}
+                  onClick={handleLogoutClick}
                   className="rounded-lg border-2 border-festival-coral bg-transparent px-4 py-1.5 text-sm font-semibold text-festival-coral transition-all hover:bg-festival-coral hover:text-white"
                 >
                   Logout
@@ -54,6 +70,17 @@ function Layout() {
           </div>
         </div>
       </footer>
+
+      {/* Logout Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={showLogoutDialog}
+        title="Confirm Logout"
+        message="Are you sure you want to log out? You will need to sign in again to access your events."
+        confirmLabel="Logout"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+      />
     </div>
   );
 }
