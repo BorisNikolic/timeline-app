@@ -25,30 +25,35 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
       {ticks.map((tick, index) => (
         <div
           key={`tick-${index}-${tick.date.getTime()}`}
-          className="absolute top-0 flex flex-col items-center"
+          className="absolute top-0 flex flex-col"
           style={{ left: `${tick.x + CATEGORY_HEADER_WIDTH_PX}px` }}
         >
-          {/* Tick mark */}
+          {/* Tick mark - positioned at exact x coordinate */}
           <div
             className={`
               w-px bg-gray-400
               ${tick.isPrimary ? 'h-8' : 'h-4'}
             `}
+            style={{ position: 'relative', left: 0 }}
           />
 
-          {/* Day number label */}
+          {/* Day number label - centered beneath tick mark */}
           <span
             className={`
               text-xs mt-1 whitespace-nowrap
               ${tick.isPrimary ? 'font-semibold text-gray-900' : 'text-gray-600'}
             `}
+            style={{ position: 'relative', left: '0.5px', transform: 'translateX(-50%)' }}
           >
             {tick.label}
           </span>
 
-          {/* Month label (only for 1st of month) */}
+          {/* Month label (only for 1st of month) - centered beneath tick mark */}
           {tick.monthLabel && (
-            <span className="text-xs font-bold text-gray-900 whitespace-nowrap">
+            <span
+              className="text-xs font-bold text-gray-900 whitespace-nowrap"
+              style={{ position: 'relative', left: '0.5px', transform: 'translateX(-50%)' }}
+            >
               {tick.monthLabel}
             </span>
           )}

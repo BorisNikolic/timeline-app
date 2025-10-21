@@ -176,8 +176,9 @@ export function calculateEventPositions(
   const eventsByDate = new Map<string, any[]>();
 
   events.forEach(event => {
-    const eventDate = parseLocalDate(event.date);
-    const dateKey = eventDate.toISOString().split('T')[0];
+    // Extract date part directly from the original date string to avoid timezone issues
+    // event.date can be "2025-10-21" or "2025-10-21T00:00:00.000Z"
+    const dateKey = event.date.split('T')[0];
 
     if (!eventsByDate.has(dateKey)) {
       eventsByDate.set(dateKey, []);
@@ -191,7 +192,8 @@ export function calculateEventPositions(
   eventsByDate.forEach((dateEvents, dateKey) => {
     // Parse as local midnight to ensure consistent timezone handling
     const eventDate = parseLocalDate(dateEvents[0].date);
-    const centerX = calculateEventX(eventDate, startDate, endDate, pixelsPerDay);
+    // Calculate X position for the date (this is the left edge position, not center)
+    const dateX = calculateEventX(eventDate, startDate, endDate, pixelsPerDay);
 
     // Sort by time (earliest first)
     const sortedEvents = [...dateEvents].sort((a, b) => {
@@ -217,8 +219,24 @@ export function calculateEventPositions(
       const HORIZONTAL_OFFSET = 15; // pixels to shift right per card
       const VISIBLE_HEIGHT = 30; // Height visible per card in stack (enough to read title only)
 
-      const xPosition = centerX + (stackIndex * HORIZONTAL_OFFSET);
+      const xPosition = dateX + (stackIndex * HORIZONTAL_OFFSET);
       const yOffset = stackIndex * VISIBLE_HEIGHT; // Higher cards offset more
+
+      // Debug: Log event position for today's events
+      if (process.env.NODE_ENV !== 'production' && stackIndex === 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (eventDate.getTime() === today.getTime()) {
+          console.log('📍 Event card position (today):', {
+            title: event.title,
+            date: eventDate.toISOString(),
+            dateX: dateX.toFixed(2),
+            stackIndex,
+            horizontalOffset: (stackIndex * HORIZONTAL_OFFSET),
+            finalX: xPosition.toFixed(2)
+          });
+        }
+      }
 
       // Reverse z-index: bottom card (index 0) has highest z-index
       const zIndex = 10 + (totalCardsInStack - stackIndex);
@@ -255,7 +273,7 @@ export function calculateEventPositions(
       const VISIBLE_HEIGHT = 30;
       const HORIZONTAL_OFFSET = 15;
       const yOffset = stackIndex * VISIBLE_HEIGHT;
-      const xOffset = centerX + (stackIndex * HORIZONTAL_OFFSET);
+      const xOffset = dateX + (stackIndex * HORIZONTAL_OFFSET);
       const isAbove = true; // Above centerline
 
       // Overflow should have lowest z-index (furthest back)
