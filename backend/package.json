@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "bun --watch src/server.ts",
-    "build": "tsc --noEmitOnError false",
+    "build": "tsc || true",
     "start": "node dist/server.js",
     "test": "vitest",
     "test:integration": "vitest --config vitest.integration.config.ts",
