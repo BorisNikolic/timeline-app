@@ -1,4 +1,16 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import {
+  EventStatus,
+  EventPriority,
+  Event,
+  EventWithDetails,
+  CreateEventDto,
+  UpdateEventDto
+} from '../types/Event';
+
+// Re-export types for backward compatibility
+export { EventStatus, EventPriority };
+export type { Event, EventWithDetails, CreateEventDto, UpdateEventDto };
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -87,47 +99,6 @@ export const authApi = {
   },
 };
 
-// Event API types
-export interface Event {
-  id: string;
-  title: string;
-  date: string;
-  description?: string;
-  categoryId: string;
-  assignedPerson?: string;
-  status: 'Not Started' | 'In Progress' | 'Completed';
-  priority: 'High' | 'Medium' | 'Low';
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface EventWithDetails extends Event {
-  categoryName: string;
-  categoryColor: string;
-  createdByName: string;
-}
-
-export interface CreateEventDto {
-  title: string;
-  date: string;
-  description?: string;
-  categoryId: string;
-  assignedPerson?: string;
-  status?: 'Not Started' | 'In Progress' | 'Completed';
-  priority?: 'High' | 'Medium' | 'Low';
-}
-
-export interface UpdateEventDto {
-  title?: string;
-  date?: string;
-  description?: string;
-  categoryId?: string;
-  assignedPerson?: string;
-  status?: 'Not Started' | 'In Progress' | 'Completed';
-  priority?: 'High' | 'Medium' | 'Low';
-}
-
 // Category API types
 export interface Category {
   id: string;
@@ -157,17 +128,17 @@ export const eventsApi = {
     return response.data;
   },
 
-  getById: async (id: string): Promise<Event> => {
+  getById: async (id: string): Promise<EventWithDetails> => {
     const response = await apiClient.get(`/api/events/${id}`);
     return response.data;
   },
 
-  create: async (data: CreateEventDto): Promise<Event> => {
+  create: async (data: CreateEventDto): Promise<EventWithDetails> => {
     const response = await apiClient.post('/api/events', data);
     return response.data;
   },
 
-  update: async (id: string, data: UpdateEventDto): Promise<Event> => {
+  update: async (id: string, data: UpdateEventDto): Promise<EventWithDetails> => {
     const response = await apiClient.put(`/api/events/${id}`, data);
     return response.data;
   },

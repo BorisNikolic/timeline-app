@@ -12,7 +12,7 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
   startDate,
   endDate,
   zoomLevel,
-  visualScale,
+  visualScale: _visualScale,
   pixelsPerDay,
   onEventClick
 }) => {

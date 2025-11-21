@@ -2,7 +2,6 @@
 // Horizontal date ruler with ticks based on zoom level
 
 import React, { useMemo } from 'react';
-import { format } from 'date-fns';
 import type { TimelineAxisProps } from '../../types/timeline';
 import { generateAxisTicks, ZOOM_TO_GRANULARITY, CATEGORY_HEADER_WIDTH_PX } from '../../utils/timelineCalculations';
 

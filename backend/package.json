@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "bun --watch src/server.ts",
-    "build": "tsc || true && node dist/db/migrate-add-time.js",
+    "build": "tsc && node dist/db/migrate-add-time.js",
     "start": "node dist/server.js",
     "test": "vitest",
     "test:integration": "vitest --config vitest.integration.config.ts",

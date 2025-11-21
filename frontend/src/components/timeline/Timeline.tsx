@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import EventCard from './EventCard';
 import CategoryLane from './CategoryLane';
 import EventDetailView from '../events/EventDetailView';
 import EventModal from '../events/EventModal';

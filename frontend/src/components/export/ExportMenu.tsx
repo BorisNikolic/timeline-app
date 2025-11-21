@@ -5,7 +5,7 @@ export interface ExportMenuRef {
   toggle: () => void;
 }
 
-const ExportMenu = forwardRef<ExportMenuRef>((props, ref) => {
+const ExportMenu = forwardRef<ExportMenuRef>((_props, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 

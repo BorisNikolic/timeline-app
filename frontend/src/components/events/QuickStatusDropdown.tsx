@@ -77,7 +77,7 @@ function QuickStatusDropdown({ eventId, currentStatus, onStatusChange }: QuickSt
       return { previousEvents };
     },
 
-    onError: (err, newStatus, context) => {
+    onError: (_err, _newStatus, context) => {
       // Rollback on error
       if (context?.previousEvents) {
         queryClient.setQueryData(['events'], context.previousEvents);
@@ -85,7 +85,7 @@ function QuickStatusDropdown({ eventId, currentStatus, onStatusChange }: QuickSt
       toast.error('Failed to update status. Please try again.');
     },
 
-    onSuccess: (data, newStatus) => {
+    onSuccess: (_data, newStatus) => {
       // Notify parent component
       onStatusChange?.(newStatus);
     },

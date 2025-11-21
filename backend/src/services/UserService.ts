@@ -1,7 +1,7 @@
 import { query } from '../db/connection';
 import { hashPassword, comparePassword } from '../auth/password';
 import { generateToken } from '../auth/jwt';
-import { User, UserWithPassword, CreateUserDto, LoginDto, AuthResponse } from '../models/User';
+import { User, CreateUserDto, LoginDto, AuthResponse } from '../models/User';
 
 export class UserService {
   /**

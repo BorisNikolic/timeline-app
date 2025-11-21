@@ -1,7 +1,7 @@
 // Timeline View Calculations
 // Date range, positioning, and scale utility functions
 
-import { startOfDay, subWeeks, addMonths, addDays, addWeeks, differenceInDays } from 'date-fns';
+import { startOfDay, subWeeks, addMonths, addDays, addWeeks } from 'date-fns';
 import type { ZoomLevel, Granularity, EventPosition, TimelineEventCard } from '../types/timeline';
 
 // Constants
@@ -169,10 +169,10 @@ export function calculateEventPositions(
   startDate: Date,
   endDate: Date,
   pixelsPerDay: number,
-  zoomLevel: ZoomLevel = 'month'
+  _zoomLevel: ZoomLevel = 'month'
 ): TimelineEventCard[] {
   // Performance monitoring (development only)
-  if (process.env.NODE_ENV !== 'production') {
+  if (import.meta.env.MODE !== 'production') {
     performance.mark('calc-positions-start');
   }
 
@@ -206,7 +206,6 @@ export function calculateEventPositions(
       return timeA.localeCompare(timeB);
     });
 
-    const eventCount = sortedEvents.length;
     const maxVisible = 10; // Maximum events to show before overflow
 
     // Position events with overlapping vertical stacks
@@ -227,7 +226,7 @@ export function calculateEventPositions(
       const yOffset = stackIndex * VISIBLE_HEIGHT; // Higher cards offset more
 
       // Debug: Log event position for today's events
-      if (process.env.NODE_ENV !== 'production' && stackIndex === 0) {
+      if (import.meta.env.MODE !== 'production' && stackIndex === 0) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (eventDate.getTime() === today.getTime()) {
@@ -278,7 +277,6 @@ export function calculateEventPositions(
       const HORIZONTAL_OFFSET = 15;
       const yOffset = stackIndex * VISIBLE_HEIGHT;
       const xOffset = dateX + (stackIndex * HORIZONTAL_OFFSET);
-      const isAbove = true; // Above centerline
 
       // Overflow should have lowest z-index (furthest back)
       const zIndex = 10 + (totalCardsInStack + 1 - stackIndex);
@@ -305,7 +303,7 @@ export function calculateEventPositions(
   });
 
   // Performance measurement (development only)
-  if (process.env.NODE_ENV !== 'production') {
+  if (import.meta.env.MODE !== 'production') {
     performance.mark('calc-positions-end');
     performance.measure('calc-positions', 'calc-positions-start', 'calc-positions-end');
     const measure = performance.getEntriesByName('calc-positions')[0];
@@ -423,7 +421,7 @@ export function validateAxisEventAlignment(
   eventPositions: TimelineEventCard[],
   tolerance: number = 2
 ): void {
-  if (process.env.NODE_ENV === 'production') return;
+  if (import.meta.env.MODE === 'production') return;
 
   // Group events by date
   const eventsByDate = new Map<string, TimelineEventCard[]>();

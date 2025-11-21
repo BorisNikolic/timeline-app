@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
-// Mock environment variables
-import.meta.env.VITE_API_URL = 'http://localhost:3000';
+// Mock environment variables - use vi.stubEnv for Vitest
+vi.stubEnv('VITE_API_URL', 'http://localhost:3000');
 
 // Mock localStorage
 const localStorageMock = {
@@ -11,4 +12,4 @@ const localStorageMock = {
   clear: vi.fn(),
 };
 
-global.localStorage = localStorageMock as any;
+globalThis.localStorage = localStorageMock as unknown as Storage;

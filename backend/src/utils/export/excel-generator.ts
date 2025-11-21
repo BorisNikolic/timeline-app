@@ -10,7 +10,6 @@ export async function generateExcel(events: EventWithDetails[]): Promise<Buffer>
   events.forEach((event) => {
     const date = new Date(event.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthName = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 
     if (!eventsByMonth.has(monthKey)) {
       eventsByMonth.set(monthKey, []);

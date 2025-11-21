@@ -11,7 +11,7 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
   xPosition,
   yPosition,
   categoryColor,
-  stackIndex,
+  stackIndex: _stackIndex,
   zIndex,
   width,
   onClick

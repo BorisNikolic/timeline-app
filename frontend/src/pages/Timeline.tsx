@@ -31,8 +31,8 @@ function TimelinePage() {
   const { viewMode, setViewMode } = useTimelineViewState();
 
   // Data hooks
-  const { data: events = [], isLoading } = useEvents();
-  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { data: events = [] } = useEvents();
+  const { categories } = useCategories();
   const deleteEvent = useDeleteEvent();
 
   // Search functionality

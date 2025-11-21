@@ -62,13 +62,6 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
     return calculateEventX(today, dateRange.startDate, dateRange.endDate, pixelsPerDay);
   }, [dateRange, pixelsPerDay]);
 
-  // Default scroll position (center on TODAY line)
-  const defaultScrollPosition = useMemo(() => {
-    if (!scrollContainerRef.current) return 0;
-    const containerWidth = scrollContainerRef.current.clientWidth;
-    return Math.max(0, todayPosition - containerWidth / 2);
-  }, [todayPosition]);
-
   // Scroll to TODAY on mount
   useEffect(() => {
     if (!scrollContainerRef.current || events.length === 0 || todayPosition === 0) return;

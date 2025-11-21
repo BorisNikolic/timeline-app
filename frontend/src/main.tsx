@@ -16,9 +16,22 @@ const queryClient = new QueryClient({
   },
 });
 
+// Get base path from Vite's base config (set via VITE_BASE_PATH)
+const basePath = import.meta.env.BASE_URL || '/';
+
+// Handle GitHub Pages SPA redirect
+// 404.html redirects to /?p=/original-path, we restore it here
+const params = new URLSearchParams(window.location.search);
+const redirectPath = params.get('p');
+if (redirectPath) {
+  // Remove the ?p= param and replace with the actual path
+  const cleanPath = basePath.replace(/\/$/, '') + redirectPath;
+  window.history.replaceState(null, '', cleanPath);
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basePath}>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+      // GitHub Pages SPA redirect
+      // Converts path to query string so index.html can handle it
+      // e.g., /timeline-app/timeline -> /timeline-app/?p=/timeline
+      const segment = 1; // Number of path segments to keep (for /timeline-app/)
+      const pathSegments = location.pathname.split('/');
+      const basePath = '/' + pathSegments.slice(1, segment + 1).join('/');
+      const remainingPath = '/' + pathSegments.slice(segment + 1).join('/');
+
+      // Only redirect if there's a remaining path
+      if (remainingPath !== '/') {
+        const redirectUrl = basePath + '/?p=' + encodeURIComponent(remainingPath) + location.search.slice(1) + location.hash;
+        location.replace(redirectUrl);
+      } else {
+        // No remaining path, just go to base
+        location.replace(basePath + '/');
+      }
+    </script>
+  </head>
+  <body>
+    Redirecting...
+  </body>
+</html>

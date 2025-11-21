@@ -74,7 +74,7 @@ export function useBulkEventUpdate() {
               failed++;
               errors.push({
                 eventId: result.value.eventId,
-                error: result.value.error || 'Unknown error',
+                error: 'error' in result.value ? result.value.error : 'Unknown error',
               });
             }
           } else {

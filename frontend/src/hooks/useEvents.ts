@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { eventsApi, handleApiError, EventWithDetails, CreateEventDto, UpdateEventDto } from '../services/api-client';
+import { eventsApi, handleApiError, CreateEventDto, UpdateEventDto } from '../services/api-client';
 
 /**
  * Fetch all events

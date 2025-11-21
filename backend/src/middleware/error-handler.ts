@@ -8,7 +8,7 @@ export interface AppError extends Error {
 /**
  * Global error handling middleware
  */
-export function errorHandler(err: AppError, req: Request, res: Response, next: NextFunction) {
+export function errorHandler(err: AppError, req: Request, res: Response, _next: NextFunction) {
   // Log error
   console.error('Error:', {
     message: err.message,

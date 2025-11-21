@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here-replace-in-production';
-const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
+const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-here-replace-in-production';
+const JWT_EXPIRY: string = process.env.JWT_EXPIRY || '24h';
 
 export interface JWTPayload {
   userId: string;
@@ -17,7 +17,7 @@ export interface JWTPayload {
  */
 export function generateToken(payload: JWTPayload): string {
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRY,
+    expiresIn: JWT_EXPIRY as jwt.SignOptions['expiresIn'],
   });
 }
 
