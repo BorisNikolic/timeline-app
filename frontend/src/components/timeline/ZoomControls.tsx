@@ -10,7 +10,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
   onZoomLevelChange,
   onVisualScaleChange
 }) => {
-  const zoomLevels: ZoomLevel[] = ['week', 'month', 'quarter'];
+  const zoomLevels: ZoomLevel[] = ['day', 'week', 'month', 'quarter', 'year'];
 
   const handleVisualZoomIn = () => {
     const newScale = Math.min(10.0, currentVisualScale + 0.25);

@@ -1,0 +1,31 @@
+services:
+  # Express.js Backend API
+  - type: web
+    name: festival-timeline-api
+    runtime: node
+    env: node
+    region: oregon  # Choose region closest to you: oregon, frankfurt, singapore, ohio, virginia
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false  # Will be set manually in Render dashboard (from Neon)
+      - key: JWT_SECRET
+        generateValue: true  # Render will auto-generate secure secret
+      - key: JWT_EXPIRY
+        value: 24h
+      - key: CORS_ORIGIN
+        sync: false  # Will be set manually (your GitHub Pages URL)
+      - key: ALLOWED_EMAILS
+        sync: false  # Will be set manually (comma-separated list)
+      - key: PORT
+        value: 3000
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+    healthCheckPath: /api/auth/me  # Endpoint to verify service is running
+    autoDeploy: true  # Auto-deploy on git push to main branch

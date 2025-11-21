@@ -13,13 +13,23 @@ dist/
 build/
 *.tsbuildinfo
 
-# Environment variables
+# Environment variables - NEVER COMMIT THESE!
+# Only .env.example and .env.*.example files should be committed
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
 *.env
+!*.env.example
+
+# Credentials - NEVER COMMIT!
+ADMIN_CREDENTIALS.txt
+*CREDENTIALS*
+*.credentials
 
 # Logs
 logs/

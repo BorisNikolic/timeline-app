@@ -39,7 +39,10 @@ apiClient.interceptors.response.use(
 // Helper function to handle errors
 export function handleApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    return error.response?.data?.error || error.message || 'An error occurred';
+    // Prefer detailed message over generic error
+    // For example, whitelist rejection sends both 'error' and 'message' fields
+    const errorData = error.response?.data;
+    return errorData?.message || errorData?.error || error.message || 'An error occurred';
   }
   return 'An unexpected error occurred';
 }

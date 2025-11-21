@@ -1,7 +1,7 @@
 // Timeline View Type Definitions
 // Derived from specs/001-timeline-view/contracts/component-props.interface.ts
 
-export type ZoomLevel = 'week' | 'month' | 'quarter';
+export type ZoomLevel = 'day' | 'week' | 'month' | 'quarter' | 'year';
 export type Granularity = 'hour' | 'day' | 'week' | 'month';
 export type EventPosition = 'above' | 'below';
 export type ViewMode = 'category' | 'timeline';

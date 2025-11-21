@@ -12,8 +12,8 @@ const router = Router();
 const createEventSchema = z.object({
   title: z.string().min(1).max(255),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(), // HH:MM format
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(), // HH:MM format
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).optional(), // HH:MM or HH:MM:SS format
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).optional(), // HH:MM or HH:MM:SS format
   description: z.string().max(10000).optional(),
   categoryId: z.string().uuid(),
   assignedPerson: z.string().max(255).optional(),
@@ -24,8 +24,8 @@ const createEventSchema = z.object({
 const updateEventSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(), // HH:MM format
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(), // HH:MM format
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).optional(), // HH:MM or HH:MM:SS format
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).optional(), // HH:MM or HH:MM:SS format
   description: z.string().max(10000).optional(),
   categoryId: z.string().uuid().optional(),
   assignedPerson: z.string().max(255).optional(),

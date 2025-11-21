@@ -139,7 +139,7 @@ function isValidState(obj: any): obj is TimelineViewState {
   if (!obj || typeof obj !== 'object') return false;
 
   const validViewModes: ViewMode[] = ['category', 'timeline'];
-  const validZoomLevels: ZoomLevel[] = ['day', 'week', 'month', 'quarter'];
+  const validZoomLevels: ZoomLevel[] = ['day', 'week', 'month', 'quarter', 'year'];
 
   return (
     validViewModes.includes(obj.viewMode) &&

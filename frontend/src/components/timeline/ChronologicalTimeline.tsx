@@ -9,6 +9,7 @@ import { TimelineNowLine } from './TimelineNowLine';
 import { TimelineSwimlane } from './TimelineSwimlane';
 import { ZoomControls } from './ZoomControls';
 import { JumpToTodayButton } from './JumpToTodayButton';
+import { ScrollIndicatorBadge } from '../shared/ScrollIndicatorBadge';
 import { useTimelineViewState } from '../../hooks/useTimelineViewState';
 import {
   calculateEventBasedDateRange,
@@ -28,6 +29,8 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
   const todayLineRef = useRef<HTMLDivElement>(null);
   const [todayLineVisible, setTodayLineVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
+  const [hiddenCategoriesCount, setHiddenCategoriesCount] = useState(0);
 
   // Timeline view state (persisted in localStorage)
   const {
@@ -139,6 +142,43 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
       }));
   }, [categories, events]);
 
+  // Scroll indicator tracking
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || swimlanes.length === 0) return;
+
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+      const scrollBottom = scrollTop + clientHeight;
+
+      // Check if near bottom (within 50px)
+      const isNearBottom = scrollHeight - scrollBottom < 50;
+
+      // Calculate visible swimlanes
+      const SWIMLANE_HEIGHT = 256; // Approximate height
+      const visibleCount = Math.ceil(clientHeight / SWIMLANE_HEIGHT);
+      const totalCount = swimlanes.length;
+      const scrolledCount = Math.floor(scrollTop / SWIMLANE_HEIGHT);
+      const hiddenCount = Math.max(0, totalCount - (scrolledCount + visibleCount));
+
+      setHiddenCategoriesCount(hiddenCount);
+      setShowScrollIndicator(!isNearBottom && hiddenCount > 0);
+    };
+
+    // Initial check
+    handleScroll();
+
+    container.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [swimlanes.length]);
+
   // Calculate total height for NOW line
   const totalHeight = swimlanes.length * 256 + 64; // swimlane height + axis height
 
@@ -221,6 +261,13 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
       <JumpToTodayButton
         isVisible={isMobile || !todayLineVisible}
         onJumpToToday={handleJumpToToday}
+      />
+
+      {/* Scroll Indicator Badge */}
+      <ScrollIndicatorBadge
+        count={hiddenCategoriesCount}
+        isVisible={showScrollIndicator}
+        itemType="categories"
       />
     </div>
   );

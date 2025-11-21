@@ -12,9 +12,11 @@ export const CATEGORY_HEADER_WIDTH_PX = 192; // Match Tailwind w-48 (12rem = 192
 
 // Zoom level to granularity mapping
 export const ZOOM_TO_GRANULARITY: Record<ZoomLevel, Granularity> = {
+  day: 'hour',      // Day view shows hourly ticks
   week: 'day',      // Week view shows daily ticks
   month: 'week',    // Month view shows weekly ticks
-  quarter: 'month'  // Quarter view shows monthly ticks
+  quarter: 'month', // Quarter view shows monthly ticks
+  year: 'month'     // Year view shows monthly ticks
 };
 
 /**
@@ -61,13 +63,15 @@ export function calculateEventBasedDateRange(events: any[]): { startDate: Date; 
  * - Week: 20px/day
  * - Month: 5px/day
  * - Quarter: 2px/day
+ * - Year: 1px/day
  */
 export function getPixelsPerDay(zoomLevel: ZoomLevel, visualScale: number = 1.0): number {
   const baseScales: Record<ZoomLevel, number> = {
     day: 100,
     week: 20,
     month: 5,
-    quarter: 2
+    quarter: 2,
+    year: 1
   };
 
   return baseScales[zoomLevel] * visualScale;

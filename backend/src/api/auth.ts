@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { asyncHandler } from '../middleware/error-handler';
+import { checkEmailWhitelist } from '../middleware/emailWhitelist';
 import UserService from '../services/UserService';
 
 const router = Router();
@@ -22,10 +23,12 @@ const loginSchema = z.object({
 /**
  * POST /api/auth/register
  * Register a new user
+ * Requires email to be in ALLOWED_EMAILS whitelist (if configured)
  */
 router.post(
   '/register',
   validate(registerSchema),
+  checkEmailWhitelist, // Check if email is allowed before registration
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const authResponse = await UserService.register(req.body);
