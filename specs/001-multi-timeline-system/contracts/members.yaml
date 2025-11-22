@@ -1,0 +1,271 @@
+# API Contract: Timeline Members Endpoints
+# Feature: 001-multi-timeline-system
+# Version: 1.0.0
+
+openapi: 3.0.3
+info:
+  title: Timeline Members API
+  version: 1.0.0
+
+paths:
+  /api/timelines/{timelineId}/members:
+    parameters:
+      - $ref: '#/components/parameters/timelineId'
+
+    get:
+      summary: List timeline members
+      description: Returns all members with their roles
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemberWithUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      summary: Invite member
+      description: Admin only - add user to timeline with specified role
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteMember'
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberWithUser'
+        '400':
+          description: User already a member or validation error
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Requires Admin role
+        '404':
+          description: User not found
+
+  /api/timelines/{timelineId}/members/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/timelineId'
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    put:
+      summary: Change member role
+      description: Admin only - update member's role
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  $ref: '#/components/schemas/MemberRole'
+              required: [role]
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberWithUser'
+        '400':
+          description: Cannot demote last admin
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Requires Admin role
+        '404':
+          description: Member not found
+
+    delete:
+      summary: Remove member
+      description: Admin only - remove user from timeline
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Member removed
+        '400':
+          description: Cannot remove last admin or timeline owner
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Requires Admin role
+        '404':
+          description: Member not found
+
+  /api/timelines/{timelineId}/leave:
+    parameters:
+      - $ref: '#/components/parameters/timelineId'
+
+    post:
+      summary: Leave timeline
+      description: Current user voluntarily leaves the timeline
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Successfully left timeline
+        '400':
+          description: Cannot leave if you are the last admin
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/users/search:
+    get:
+      summary: Search users for invitation
+      description: Search existing users by email or name (for invite autocomplete)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          description: Search term (email or name)
+        - name: excludeTimelineId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Exclude users already in this timeline
+      responses:
+        '200':
+          description: Matching users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSummary'
+                maxItems: 10
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    timelineId:
+      name: timelineId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        timelineId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        role:
+          $ref: '#/components/schemas/MemberRole'
+        invitedBy:
+          type: string
+          format: uuid
+          nullable: true
+        joinedAt:
+          type: string
+          format: date-time
+      required: [id, timelineId, userId, role, joinedAt]
+
+    MemberWithUser:
+      allOf:
+        - $ref: '#/components/schemas/Member'
+        - type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/UserSummary'
+          required: [user]
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+      required: [id, name, email]
+
+    InviteMember:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        role:
+          $ref: '#/components/schemas/MemberRole'
+          default: Editor
+      required: [userId]
+
+    MemberRole:
+      type: string
+      enum: [Admin, Editor, Viewer]
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string

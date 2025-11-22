@@ -1,23 +1,93 @@
-import { useState, Fragment, useRef } from 'react';
+import { useState, Fragment, useRef, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Timeline from '../components/timeline/Timeline';
 import EventModal from '../components/events/EventModal';
 import ExportMenu, { ExportMenuRef } from '../components/export/ExportMenu';
 import { ViewToggle } from '../components/timeline/ViewToggle';
 import { ChronologicalTimeline } from '../components/timeline/ChronologicalTimeline';
 import { useTimelineViewState } from '../hooks/useTimelineViewState';
-import { useEvents } from '../hooks/useEvents';
+import { useTimelineEvents, useDeleteTimelineEvent } from '../hooks/useEvents';
 import { useCategories } from '../hooks/useCategories';
 import EventDetailView from '../components/events/EventDetailView';
 import DeleteConfirmDialog from '../components/shared/DeleteConfirmDialog';
-import { useDeleteEvent } from '../hooks/useEvents';
 import { EventWithDetails, CreateEventDto } from '../types/Event';
 import CategoryManagement from '../components/categories/CategoryManagement';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import StatusDashboardWidget from '../components/dashboard/StatusDashboardWidget';
 import EventSearchInput from '../components/search/EventSearchInput';
 import { useEventSearch } from '../hooks/useEventSearch';
+import { useTimelineStore } from '../stores/timelineStore';
+import { useTimeline } from '../hooks/useTimelines';
+import { useTimelineRole } from '../hooks/useTimelineRole';
+import axios, { AxiosError } from 'axios';
+
+/**
+ * Helper to check if an error is a 403 Forbidden
+ * Handles both raw Axios errors and wrapped errors from the API client interceptor
+ */
+function isForbiddenError(error: unknown): boolean {
+  // Check direct axios error
+  if (axios.isAxiosError(error)) {
+    return error.response?.status === 403;
+  }
+
+  // Check for wrapped error from API client interceptor
+  const wrappedError = error as Error & { originalError?: AxiosError };
+  if (wrappedError?.originalError && axios.isAxiosError(wrappedError.originalError)) {
+    return wrappedError.originalError.response?.status === 403;
+  }
+
+  // Also check error message for 403 indication
+  if (error instanceof Error && error.message.includes('permission')) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Access Denied Component
+ */
+function AccessDeniedView() {
+  return (
+    <div className="flex flex-col items-center justify-center h-64 space-y-4">
+      <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full">
+        <svg
+          className="w-8 h-8 text-red-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+          />
+        </svg>
+      </div>
+      <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
+      <p className="text-gray-600 text-center max-w-md">
+        You don't have permission to access this timeline. Please contact the timeline owner to request access.
+      </p>
+      <Link
+        to="/dashboard"
+        className="mt-4 inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+      >
+        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Dashboard
+      </Link>
+    </div>
+  );
+}
 
 function TimelinePage() {
+  const { timelineId } = useParams<{ timelineId: string }>();
+  const navigate = useNavigate();
+  const { setCurrentTimeline, currentTimelineId } = useTimelineStore();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -27,16 +97,38 @@ function TimelinePage() {
   const exportMenuRef = useRef<ExportMenuRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Set current timeline in store when URL param changes
+  useEffect(() => {
+    if (timelineId && timelineId !== currentTimelineId) {
+      setCurrentTimeline(timelineId);
+    } else if (!timelineId && currentTimelineId) {
+      // If no timelineId in URL but we have one in store, redirect to it
+      navigate(`/timeline/${currentTimelineId}`, { replace: true });
+    } else if (!timelineId && !currentTimelineId) {
+      // No timeline selected, redirect to dashboard
+      navigate('/dashboard', { replace: true });
+    }
+  }, [timelineId, currentTimelineId, setCurrentTimeline, navigate]);
+
   // Timeline view state
   const { viewMode, setViewMode } = useTimelineViewState();
 
-  // Data hooks
-  const { data: events = [] } = useEvents();
+  // Get the effective timeline ID (from URL or store)
+  const effectiveTimelineId = timelineId || currentTimelineId;
+
+  // Fetch timeline details
+  const { data: timeline, error: timelineError, isLoading: timelineLoading } = useTimeline(effectiveTimelineId || undefined);
+
+  // Data hooks - use timeline-scoped hooks
+  const { data: events = [], isLoading: eventsLoading, error: eventsError } = useTimelineEvents(effectiveTimelineId);
   const { categories } = useCategories();
-  const deleteEvent = useDeleteEvent();
+  const deleteEvent = useDeleteTimelineEvent(effectiveTimelineId || '');
 
   // Search functionality
   const { searchTerm, setSearchTerm, filteredEvents, clearSearch, hasActiveSearch } = useEventSearch(events);
+
+  // Role-based permissions
+  const { canEdit } = useTimelineRole(effectiveTimelineId || undefined);
 
   const handleEditEvent = () => {
     setIsEditModalOpen(true);
@@ -84,6 +176,28 @@ function TimelinePage() {
     },
   });
 
+  // Show loading state while fetching timeline data
+  if (!effectiveTimelineId) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Redirecting to dashboard...</div>
+      </div>
+    );
+  }
+
+  // Check for 403 Forbidden error - show Access Denied page
+  if (isForbiddenError(timelineError) || isForbiddenError(eventsError)) {
+    return <AccessDeniedView />;
+  }
+
+  if (timelineLoading || eventsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Compact Header with Search and Action Buttons */}
@@ -92,10 +206,10 @@ function TimelinePage() {
           {/* Title Section */}
           <div className="flex-shrink-0">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-festival-navy to-primary-600 bg-clip-text text-transparent">
-              Timeline
+              {timeline?.name || 'Timeline'}
             </h1>
             <p className="mt-0.5 text-xs text-gray-600">
-              Manage your festival events
+              {timeline?.description || 'Manage your festival events'}
             </p>
           </div>
 
@@ -113,23 +227,27 @@ function TimelinePage() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={() => setIsCategoryManagementOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg border-2 border-primary-500 bg-transparent px-3 py-1.5 text-sm font-semibold text-primary-600 transition-all hover:bg-primary-500 hover:text-white"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                <span className="hidden sm:inline">Manage Categories</span>
-                <span className="sm:hidden">Categories</span>
-              </button>
+              {canEdit && (
+                <button
+                  onClick={() => setIsCategoryManagementOpen(true)}
+                  className="flex items-center gap-1.5 rounded-lg border-2 border-primary-500 bg-transparent px-3 py-1.5 text-sm font-semibold text-primary-600 transition-all hover:bg-primary-500 hover:text-white"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span className="hidden sm:inline">Manage Categories</span>
+                  <span className="sm:hidden">Categories</span>
+                </button>
+              )}
               <ExportMenu ref={exportMenuRef} />
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-primary-600 hover:to-primary-700 whitespace-nowrap"
-              >
-                + Add Event
-              </button>
+              {canEdit && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-primary-600 hover:to-primary-700 whitespace-nowrap"
+                >
+                  + Add Event
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -146,7 +264,7 @@ function TimelinePage() {
 
       {/* Conditional Timeline View */}
       {viewMode === 'category' ? (
-        <Timeline events={filteredEvents} />
+        <Timeline events={filteredEvents} timelineId={timelineId} timelineStatus={timeline?.status} />
       ) : (
         <ChronologicalTimeline
           events={filteredEvents}
@@ -165,35 +283,43 @@ function TimelinePage() {
       )}
 
       {/* Event Modal for adding new events or duplicating */}
-      <EventModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setDuplicateEventData(null);
-        }}
-        duplicateData={duplicateEventData || undefined}
-      />
+      {timelineId && (
+        <EventModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setDuplicateEventData(null);
+          }}
+          timelineId={timelineId}
+          duplicateData={duplicateEventData || undefined}
+          timelineStatus={timeline?.status}
+        />
+      )}
 
       {/* Event detail modal */}
       {selectedEvent && !isEditModalOpen && (
         <EventDetailView
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
-          onEdit={handleEditEvent}
-          onDelete={handleDeleteClick}
-          onDuplicate={handleDuplicate}
+          onEdit={canEdit ? handleEditEvent : undefined}
+          onDelete={canEdit ? handleDeleteClick : undefined}
+          onDuplicate={canEdit ? handleDuplicate : undefined}
         />
       )}
 
       {/* Edit event modal */}
-      <EventModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedEvent(null);
-        }}
-        event={selectedEvent || undefined}
-      />
+      {timelineId && (
+        <EventModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedEvent(null);
+          }}
+          timelineId={timelineId}
+          event={selectedEvent || undefined}
+          timelineStatus={timeline?.status}
+        />
+      )}
 
       {/* Delete confirmation dialog */}
       <DeleteConfirmDialog

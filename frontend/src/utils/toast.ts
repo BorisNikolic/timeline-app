@@ -63,3 +63,5 @@ export const toast = {
   error: (message: string, options?: ToastOptions) => showToast(message, 'error', options),
   info: (message: string, options?: ToastOptions) => showToast(message, 'info', options),
 };
+
+export { showToast };

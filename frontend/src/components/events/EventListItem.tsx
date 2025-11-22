@@ -1,5 +1,6 @@
 import { EventWithDetails } from '../../types/Event';
 import { format } from 'date-fns';
+import OutcomeTagBadge from '../shared/OutcomeTagBadge';
 
 interface EventListItemProps {
   event: EventWithDetails;
@@ -98,12 +99,37 @@ function EventListItem({
             <span className={`rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(event.priority)}`}>
               {event.priority}
             </span>
+
+            {/* Outcome Tag (US8: Retrospective) */}
+            {event.outcomeTag && (
+              <OutcomeTagBadge tag={event.outcomeTag} size="sm" />
+            )}
           </div>
         </div>
 
         {/* Description */}
         {event.description && (
           <p className="mt-2 text-sm text-gray-700 line-clamp-2">{event.description}</p>
+        )}
+
+        {/* Retro Notes Preview (US8: Retrospective) */}
+        {event.retroNotes && (
+          <div
+            className="mt-2 text-xs text-purple-600 line-clamp-1 cursor-help"
+            title={event.retroNotes}
+          >
+            <span className="inline-flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              {event.retroNotes}
+            </span>
+          </div>
         )}
 
         {/* Assigned Person */}

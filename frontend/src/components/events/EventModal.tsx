@@ -1,18 +1,21 @@
 import { Fragment, useEffect } from 'react';
 import EventForm from './EventForm';
 import { CreateEventDto, EventWithDetails, UpdateEventDto } from '../../types/Event';
-import { useCreateEvent, useUpdateEvent } from '../../hooks/useEvents';
+import { TimelineStatus } from '../../types/timeline';
+import { useCreateTimelineEvent, useUpdateTimelineEvent } from '../../hooks/useEvents';
 
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
+  timelineId: string; // Required - events must belong to a timeline
   event?: EventWithDetails; // If provided, we're in edit mode
   duplicateData?: CreateEventDto; // If provided, we're duplicating an event
+  timelineStatus?: TimelineStatus; // Timeline status for retrospective fields
 }
 
-function EventModal({ isOpen, onClose, event, duplicateData }: EventModalProps) {
-  const createEvent = useCreateEvent();
-  const updateEvent = useUpdateEvent();
+function EventModal({ isOpen, onClose, timelineId, event, duplicateData, timelineStatus }: EventModalProps) {
+  const createEvent = useCreateTimelineEvent(timelineId);
+  const updateEvent = useUpdateTimelineEvent(timelineId);
   const isEditMode = !!event;
   const isDuplicateMode = !!duplicateData;
 
@@ -36,7 +39,7 @@ function EventModal({ isOpen, onClose, event, duplicateData }: EventModalProps) 
   const handleSubmit = async (data: CreateEventDto) => {
     if (isEditMode) {
       // Edit mode - update existing event
-      await updateEvent.mutateAsync({ id: event.id, data: data as UpdateEventDto });
+      await updateEvent.mutateAsync({ eventId: event.id, data: data as UpdateEventDto });
     } else {
       // Create mode - create new event
       await createEvent.mutateAsync(data);
@@ -52,8 +55,8 @@ function EventModal({ isOpen, onClose, event, duplicateData }: EventModalProps) 
       <div className="fixed inset-0 z-40 bg-black bg-opacity-50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
+        <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
           <h2 className="mb-4 text-2xl font-bold text-gray-900">
             {isEditMode ? 'Edit Event' : isDuplicateMode ? 'Duplicate Event' : 'Create New Event'}
           </h2>
@@ -61,6 +64,8 @@ function EventModal({ isOpen, onClose, event, duplicateData }: EventModalProps) 
             onSubmit={handleSubmit}
             onCancel={onClose}
             isLoading={isEditMode ? updateEvent.isPending : createEvent.isPending}
+            mode={isEditMode ? 'edit' : 'create'}
+            timelineStatus={timelineStatus}
             initialData={
               isEditMode
                 ? {
@@ -73,6 +78,8 @@ function EventModal({ isOpen, onClose, event, duplicateData }: EventModalProps) 
                     assignedPerson: event.assignedPerson,
                     status: event.status,
                     priority: event.priority,
+                    retroNotes: event.retroNotes,
+                    outcomeTag: event.outcomeTag,
                   }
                 : isDuplicateMode
                 ? duplicateData

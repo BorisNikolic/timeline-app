@@ -226,4 +226,65 @@
     padding-top: max(1rem, env(safe-area-inset-top));
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+
+  /* Dashboard responsive styles (T114) */
+  .dashboard-grid {
+    @apply grid grid-cols-1 gap-4;
+  }
+
+  @media (min-width: 768px) {
+    .dashboard-grid {
+      @apply grid-cols-2;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .dashboard-grid {
+      @apply grid-cols-3;
+    }
+  }
+
+  /* Timeline switcher responsive */
+  .timeline-switcher-dropdown {
+    @apply w-full max-w-xs;
+  }
+
+  @media (min-width: 640px) {
+    .timeline-switcher-dropdown {
+      @apply w-72;
+    }
+  }
+
+  /* Dashboard stats responsive */
+  .dashboard-stats {
+    @apply grid grid-cols-2 gap-3;
+  }
+
+  @media (min-width: 640px) {
+    .dashboard-stats {
+      @apply grid-cols-4 gap-4;
+    }
+  }
+
+  /* Timeline card responsive adjustments */
+  .timeline-card {
+    @apply p-3;
+  }
+
+  @media (min-width: 640px) {
+    .timeline-card {
+      @apply p-4;
+    }
+  }
+
+  /* Archive page filters responsive */
+  .archive-filters {
+    @apply flex flex-col gap-3;
+  }
+
+  @media (min-width: 640px) {
+    .archive-filters {
+      @apply flex-row gap-4;
+    }
+  }
 }

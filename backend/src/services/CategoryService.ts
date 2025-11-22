@@ -3,7 +3,7 @@ import { Category, CreateCategoryDto, UpdateCategoryDto } from '../models/Catego
 
 export class CategoryService {
   /**
-   * Get all categories
+   * Get all categories (legacy - returns all categories)
    */
   async getAllCategories(): Promise<Category[]> {
     const result = await query(
@@ -11,6 +11,22 @@ export class CategoryService {
        FROM categories c
        JOIN users u ON c.createdBy = u.id
        ORDER BY c.name ASC`
+    );
+
+    return result.rows.map(this.mapRowToCategory);
+  }
+
+  /**
+   * Get categories by timeline ID (T100)
+   */
+  async getByTimeline(timelineId: string): Promise<Category[]> {
+    const result = await query(
+      `SELECT c.*, u.name as createdByName
+       FROM categories c
+       JOIN users u ON c.createdBy = u.id
+       WHERE c.timelineId = $1
+       ORDER BY c.name ASC`,
+      [timelineId]
     );
 
     return result.rows.map(this.mapRowToCategory);
@@ -31,20 +47,37 @@ export class CategoryService {
 
   /**
    * Create a new category
+   * @param userId - User creating the category
+   * @param data - Category data
+   * @param timelineId - Optional timeline ID (for timeline-scoped creation)
    */
-  async createCategory(userId: string, data: CreateCategoryDto): Promise<Category> {
+  async createCategory(userId: string, data: CreateCategoryDto, timelineId?: string): Promise<Category> {
     const { name, color } = data;
 
-    // Check if category with this name already exists
-    const existing = await query(
-      'SELECT id FROM categories WHERE LOWER(name) = LOWER($1)',
-      [name]
-    );
+    // Check if category with this name already exists in the same timeline
+    const existingQuery = timelineId
+      ? 'SELECT id FROM categories WHERE LOWER(name) = LOWER($1) AND timelineId = $2'
+      : 'SELECT id FROM categories WHERE LOWER(name) = LOWER($1)';
+    const existingParams = timelineId ? [name, timelineId] : [name];
+
+    const existing = await query(existingQuery, existingParams);
 
     if (existing.rows.length > 0) {
       throw new Error('Category with this name already exists');
     }
 
+    // For timeline-scoped creation, include timelineId
+    if (timelineId) {
+      const result = await query(
+        `INSERT INTO categories (name, color, createdBy, timelineId)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [name, color, userId, timelineId]
+      );
+      return this.mapRowToCategory(result.rows[0]);
+    }
+
+    // Legacy creation (backward compatibility)
     const result = await query(
       `INSERT INTO categories (name, color, createdBy)
        VALUES ($1, $2, $3)
@@ -64,10 +97,20 @@ export class CategoryService {
     let paramCount = 1;
 
     if (data.name !== undefined) {
-      // Check if another category with this name exists
+      // Get the timelineId for the category being updated
+      const categoryResult = await query(
+        'SELECT timelineId FROM categories WHERE id = $1',
+        [id]
+      );
+      if (categoryResult.rows.length === 0) {
+        return null;
+      }
+      const timelineId = categoryResult.rows[0].timelineid;
+
+      // Check if another category with this name exists in the same timeline
       const existing = await query(
-        'SELECT id FROM categories WHERE LOWER(name) = LOWER($1) AND id != $2',
-        [data.name, id]
+        'SELECT id FROM categories WHERE LOWER(name) = LOWER($1) AND id != $2 AND timelineId = $3',
+        [data.name, id, timelineId]
       );
 
       if (existing.rows.length > 0) {
@@ -125,6 +168,7 @@ export class CategoryService {
       id: row.id,
       name: row.name,
       color: row.color,
+      timelineId: row.timelineid,
       createdBy: row.createdby,
       createdAt: new Date(row.createdat),
     };

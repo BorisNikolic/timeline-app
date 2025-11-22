@@ -1,13 +1,15 @@
 import { EventWithDetails } from '../../types/Event';
 import { format } from 'date-fns';
 import QuickStatusDropdown from '../events/QuickStatusDropdown';
+import OutcomeTagBadge from '../shared/OutcomeTagBadge';
 
 interface EventCardProps {
   event: EventWithDetails;
   onClick?: () => void;
+  canEdit?: boolean;
 }
 
-function EventCard({ event, onClick }: EventCardProps) {
+function EventCard({ event, onClick, canEdit = true }: EventCardProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High':
@@ -83,21 +85,56 @@ function EventCard({ event, onClick }: EventCardProps) {
           {event.categoryName}
         </span>
 
-        {/* Status - Quick Status Toggle (User Story 1) */}
-        <QuickStatusDropdown
-          eventId={event.id}
-          currentStatus={event.status}
-        />
+        {/* Status - Quick Status Toggle (User Story 1) - only for editors */}
+        {canEdit ? (
+          <QuickStatusDropdown
+            eventId={event.id}
+            currentStatus={event.status}
+          />
+        ) : (
+          <span className={`rounded-full px-2 py-1 text-xs font-medium ${
+            event.status === 'Completed' ? 'bg-green-100 text-green-800' :
+            event.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+            'bg-gray-100 text-gray-800'
+          }`}>
+            {event.status}
+          </span>
+        )}
 
         {/* Priority */}
         <span className={`rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(event.priority)}`}>
           {event.priority}
         </span>
+
+        {/* Outcome Tag (US8: Retrospective) */}
+        {event.outcomeTag && (
+          <OutcomeTagBadge tag={event.outcomeTag} size="sm" />
+        )}
       </div>
 
       {/* Assigned Person */}
       {event.assignedPerson && (
         <p className="mt-3 text-xs text-gray-500">Assigned to: {event.assignedPerson}</p>
+      )}
+
+      {/* Retro Notes Preview (US8: Retrospective) */}
+      {event.retroNotes && (
+        <div
+          className="mt-3 text-xs text-purple-600 line-clamp-1 cursor-help"
+          title={event.retroNotes}
+        >
+          <span className="inline-flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            {event.retroNotes}
+          </span>
+        </div>
       )}
     </div>
   );

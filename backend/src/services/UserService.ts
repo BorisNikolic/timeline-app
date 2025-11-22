@@ -113,6 +113,53 @@ export class UserService {
   }
 
   /**
+   * Search users for invite autocomplete
+   * Returns users matching email or name, optionally excluding users already in a timeline
+   */
+  async search(
+    searchTerm: string,
+    excludeTimelineId?: string,
+    limit: number = 10
+  ): Promise<Array<{ id: string; name: string; email: string }>> {
+    const searchPattern = `%${searchTerm.toLowerCase()}%`;
+
+    let sql: string;
+    let params: any[];
+
+    if (excludeTimelineId) {
+      // Exclude users who are already members of the timeline
+      sql = `
+        SELECT u.id, u.name, u.email
+        FROM users u
+        WHERE (LOWER(u.email) LIKE $1 OR LOWER(u.name) LIKE $1)
+          AND u.id NOT IN (
+            SELECT tm.userId FROM timeline_members tm WHERE tm.timelineId = $2
+          )
+        ORDER BY u.name ASC
+        LIMIT $3
+      `;
+      params = [searchPattern, excludeTimelineId, limit];
+    } else {
+      sql = `
+        SELECT id, name, email
+        FROM users
+        WHERE LOWER(email) LIKE $1 OR LOWER(name) LIKE $1
+        ORDER BY name ASC
+        LIMIT $2
+      `;
+      params = [searchPattern, limit];
+    }
+
+    const result = await query(sql, params);
+
+    return result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+    }));
+  }
+
+  /**
    * Map database row to User object
    */
   private mapRowToUser(row: any): User {

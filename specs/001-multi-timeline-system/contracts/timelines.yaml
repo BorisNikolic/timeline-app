@@ -1,0 +1,418 @@
+# API Contract: Timeline Endpoints
+# Feature: 001-multi-timeline-system
+# Version: 1.0.0
+
+openapi: 3.0.3
+info:
+  title: Timeline API
+  version: 1.0.0
+
+paths:
+  /api/timelines:
+    get:
+      summary: List accessible timelines
+      description: Returns all timelines the authenticated user has access to
+      tags: [Timelines]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Planning, Active, Completed, Archived]
+        - name: includeArchived
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of timelines with user's role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimelineWithRole'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create a new timeline
+      description: Creates timeline and assigns creator as Admin
+      tags: [Timelines]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTimeline'
+      responses:
+        '201':
+          description: Timeline created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timeline'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/timelines/{timelineId}:
+    parameters:
+      - $ref: '#/components/parameters/timelineId'
+
+    get:
+      summary: Get timeline details
+      tags: [Timelines]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Timeline details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineWithStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update timeline settings
+      description: Admin only - update name, dates, color, status
+      tags: [Timelines]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTimeline'
+      responses:
+        '200':
+          description: Timeline updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timeline'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Requires Admin role
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete timeline
+      description: Admin only - permanently removes timeline and all contents
+      tags: [Timelines]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Timeline deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Requires Admin role
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/timelines/{timelineId}/copy:
+    parameters:
+      - $ref: '#/components/parameters/timelineId'
+
+    post:
+      summary: Copy timeline with date shifting
+      description: Creates a new timeline based on source with date-shifted events
+      tags: [Timelines]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CopyTimeline'
+      responses:
+        '201':
+          description: New timeline created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timeline'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/timelines/{timelineId}/set-template:
+    parameters:
+      - $ref: '#/components/parameters/timelineId'
+
+    post:
+      summary: Toggle template status
+      description: Admin only - mark timeline as template (visible to all users)
+      tags: [Timelines]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isTemplate:
+                  type: boolean
+              required: [isTemplate]
+      responses:
+        '200':
+          description: Template status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timeline'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Requires Admin role
+
+  /api/templates:
+    get:
+      summary: List available templates
+      description: Returns all timelines marked as templates
+      tags: [Templates]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of template timelines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimelineWithStats'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    timelineId:
+      name: timelineId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Timeline:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        themeColor:
+          type: string
+          enum: [blue, green, purple, red, orange, yellow, pink, teal]
+        status:
+          $ref: '#/components/schemas/TimelineStatus'
+        isTemplate:
+          type: boolean
+        ownerId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, startDate, endDate, themeColor, status, isTemplate, ownerId, createdAt, updatedAt]
+
+    TimelineWithRole:
+      allOf:
+        - $ref: '#/components/schemas/Timeline'
+        - type: object
+          properties:
+            userRole:
+              $ref: '#/components/schemas/MemberRole'
+          required: [userRole]
+
+    TimelineWithStats:
+      allOf:
+        - $ref: '#/components/schemas/TimelineWithRole'
+        - type: object
+          properties:
+            memberCount:
+              type: integer
+            eventCount:
+              type: integer
+            completedEventCount:
+              type: integer
+            completionPercentage:
+              type: number
+              format: float
+          required: [memberCount, eventCount, completedEventCount, completionPercentage]
+
+    CreateTimeline:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        themeColor:
+          type: string
+          enum: [blue, green, purple, red, orange, yellow, pink, teal]
+          default: blue
+        templateId:
+          type: string
+          format: uuid
+          description: Optional template to copy from
+      required: [name, startDate, endDate]
+
+    UpdateTimeline:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        themeColor:
+          type: string
+          enum: [blue, green, purple, red, orange, yellow, pink, teal]
+        status:
+          $ref: '#/components/schemas/TimelineStatus'
+
+    CopyTimeline:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        targetStartDate:
+          type: string
+          format: date
+          description: New timeline start date for date shifting
+        keepAssignedPersons:
+          type: boolean
+          default: true
+        includeRetroNotes:
+          type: boolean
+          default: false
+        themeColor:
+          type: string
+          enum: [blue, green, purple, red, orange, yellow, pink, teal]
+      required: [name, targetStartDate]
+
+    TimelineStatus:
+      type: string
+      enum: [Planning, Active, Completed, Archived]
+
+    MemberRole:
+      type: string
+      enum: [Admin, Editor, Viewer]
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Unauthorized
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Access denied to this timeline
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Timeline not found
+
+    ValidationError:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string

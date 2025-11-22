@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import { EventWithDetails, EventStatus, EventPriority } from '../../types/Event';
+import { EventWithDetails, EventStatus, EventPriority, OutcomeTag, OUTCOME_TAG_CONFIG } from '../../types/Event';
 import EventListItem from './EventListItem';
 import { BulkSelectionControls } from './BulkSelectionControls';
 import { useBulkEventUpdate } from '../../hooks/useBulkEventUpdate';
@@ -8,14 +8,16 @@ import { useBulkEventUpdate } from '../../hooks/useBulkEventUpdate';
 interface EventListProps {
   events: EventWithDetails[];
   onEventClick: (event: EventWithDetails) => void;
+  showOutcomeFilter?: boolean; // Show outcome filter on Completed/Archived timelines
 }
 
 type SortOption = 'date' | 'urgency' | 'priority';
 
-function EventList({ events, onEventClick }: EventListProps) {
+function EventList({ events, onEventClick, showOutcomeFilter = false }: EventListProps) {
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [filterStatus, setFilterStatus] = useState<EventStatus | 'all'>('all');
   const [filterPriority, setFilterPriority] = useState<EventPriority | 'all'>('all');
+  const [filterOutcome, setFilterOutcome] = useState<OutcomeTag | 'all' | 'untagged'>('all');
 
   // Bulk selection hook (User Story 8)
   const {
@@ -33,6 +35,15 @@ function EventList({ events, onEventClick }: EventListProps) {
 
   if (filterPriority !== 'all') {
     filteredEvents = filteredEvents.filter(e => e.priority === filterPriority);
+  }
+
+  // Outcome tag filter (US8: Retrospective)
+  if (filterOutcome !== 'all') {
+    if (filterOutcome === 'untagged') {
+      filteredEvents = filteredEvents.filter(e => !e.outcomeTag);
+    } else {
+      filteredEvents = filteredEvents.filter(e => e.outcomeTag === filterOutcome);
+    }
   }
 
   // Apply sorting
@@ -119,6 +130,29 @@ function EventList({ events, onEventClick }: EventListProps) {
             <option value={EventPriority.Low}>Low</option>
           </select>
         </div>
+
+        {/* Outcome Filter (US8: Retrospective) - Only shown on Completed/Archived timelines */}
+        {showOutcomeFilter && (
+          <div className="flex items-center gap-2">
+            <label htmlFor="outcome" className="text-sm font-medium text-gray-700">
+              Outcome:
+            </label>
+            <select
+              id="outcome"
+              value={filterOutcome}
+              onChange={(e) => setFilterOutcome(e.target.value as OutcomeTag | 'all' | 'untagged')}
+              className="rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+            >
+              <option value="all">All</option>
+              <option value="untagged">Untagged</option>
+              {Object.values(OutcomeTag).map((tag) => (
+                <option key={tag} value={tag}>
+                  {OUTCOME_TAG_CONFIG[tag].label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="ml-auto text-sm text-gray-600">
           Showing {sortedEvents.length} of {events.length} events

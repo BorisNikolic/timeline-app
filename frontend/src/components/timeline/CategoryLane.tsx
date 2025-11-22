@@ -6,9 +6,10 @@ interface CategoryLaneProps {
   categoryColor: string;
   events: EventWithDetails[];
   onEventClick: (event: EventWithDetails) => void;
+  canEdit?: boolean;
 }
 
-function CategoryLane({ categoryName, categoryColor, events, onEventClick }: CategoryLaneProps) {
+function CategoryLane({ categoryName, categoryColor, events, onEventClick, canEdit = true }: CategoryLaneProps) {
   if (events.length === 0) {
     return null;
   }
@@ -33,7 +34,7 @@ function CategoryLane({ categoryName, categoryColor, events, onEventClick }: Cat
               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
               .map((event) => (
                 <div key={event.id} className="w-80 flex-shrink-0">
-                  <EventCard event={event} onClick={() => onEventClick(event)} />
+                  <EventCard event={event} onClick={() => onEventClick(event)} canEdit={canEdit} />
                 </div>
               ))}
           </div>

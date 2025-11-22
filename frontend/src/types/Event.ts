@@ -14,6 +14,20 @@ export enum EventPriority {
   Low = 'Low',
 }
 
+// Outcome tag for retrospective features (US8)
+export enum OutcomeTag {
+  WentWell = 'Went Well',
+  NeedsImprovement = 'Needs Improvement',
+  Failed = 'Failed',
+}
+
+// Outcome tag display configuration
+export const OUTCOME_TAG_CONFIG: Record<OutcomeTag, { label: string; color: string; bgColor: string }> = {
+  [OutcomeTag.WentWell]: { label: 'Went Well', color: 'text-green-700', bgColor: 'bg-green-100' },
+  [OutcomeTag.NeedsImprovement]: { label: 'Needs Improvement', color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
+  [OutcomeTag.Failed]: { label: 'Failed', color: 'text-red-700', bgColor: 'bg-red-100' },
+};
+
 export interface Event {
   id: string;
   title: string;
@@ -22,9 +36,14 @@ export interface Event {
   endTime?: string; // Optional end time in HH:MM format (24-hour)
   description?: string;
   categoryId: string;
+  timelineId?: string; // Multi-timeline support
   assignedPerson?: string;
   status: EventStatus;
   priority: EventPriority;
+  // Retrospective fields (US8) - only editable on Completed/Archived timelines
+  retroNotes?: string;
+  outcomeTag?: OutcomeTag;
+  sourceEventId?: string; // Reference to original event if copied
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -58,4 +77,7 @@ export interface UpdateEventDto {
   assignedPerson?: string;
   status?: EventStatus;
   priority?: EventPriority;
+  // Retrospective fields (US8) - only editable on Completed/Archived timelines
+  retroNotes?: string;
+  outcomeTag?: OutcomeTag | null; // null to clear
 }

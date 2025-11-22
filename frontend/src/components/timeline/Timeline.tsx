@@ -7,21 +7,28 @@ import EventList from '../events/EventList';
 import DeleteConfirmDialog from '../shared/DeleteConfirmDialog';
 import { ScrollIndicatorBadge } from '../shared/ScrollIndicatorBadge';
 import { EventWithDetails, CreateEventDto } from '../../types/Event';
+import { TimelineStatus } from '../../types/timeline';
 import { useEvents } from '../../hooks/useEvents';
 import { useCategories } from '../../hooks/useCategories';
 import { useDeleteEvent } from '../../hooks/useEvents';
+import { useTimelineRole } from '../../hooks/useTimelineRole';
 
 interface TimelineProps {
   events?: EventWithDetails[];
+  timelineId?: string; // Optional - needed for event modal operations
+  timelineStatus?: TimelineStatus; // Optional - needed for retrospective fields
 }
 
-function Timeline({ events: propsEvents }: TimelineProps) {
+function Timeline({ events: propsEvents, timelineId, timelineStatus }: TimelineProps) {
   const { data: fetchedEvents = [], isLoading, error } = useEvents();
   const { categories, isLoading: categoriesLoading } = useCategories();
 
   // Use props events if provided (for search filtering), otherwise use fetched events
   const events = propsEvents || fetchedEvents;
   const deleteEvent = useDeleteEvent();
+
+  // Role-based permissions
+  const { canEdit } = useTimelineRole(timelineId);
   const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -159,6 +166,7 @@ function Timeline({ events: propsEvents }: TimelineProps) {
           categoryColor={category.color}
           events={categoryEvents}
           onEventClick={setSelectedEvent}
+          canEdit={canEdit}
         />
       </div>
     );
@@ -191,6 +199,7 @@ function Timeline({ events: propsEvents }: TimelineProps) {
                 categoryColor={category.color}
                 events={categoryEvents}
                 onEventClick={setSelectedEvent}
+                canEdit={canEdit}
               />
             );
           })}
@@ -202,21 +211,25 @@ function Timeline({ events: propsEvents }: TimelineProps) {
         <EventDetailView
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
-          onEdit={handleEditEvent}
-          onDelete={handleDeleteClick}
-          onDuplicate={handleDuplicate}
+          onEdit={canEdit ? handleEditEvent : undefined}
+          onDelete={canEdit ? handleDeleteClick : undefined}
+          onDuplicate={canEdit ? handleDuplicate : undefined}
         />
       )}
 
       {/* Edit event modal */}
-      <EventModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedEvent(null);
-        }}
-        event={selectedEvent || undefined}
-      />
+      {timelineId && (
+        <EventModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedEvent(null);
+          }}
+          timelineId={timelineId}
+          event={selectedEvent || undefined}
+          timelineStatus={timelineStatus}
+        />
+      )}
 
       {/* Delete confirmation dialog */}
       <DeleteConfirmDialog
@@ -229,20 +242,24 @@ function Timeline({ events: propsEvents }: TimelineProps) {
       />
 
       {/* Duplicate event modal */}
-      <EventModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setDuplicateEventData(null);
-        }}
-        duplicateData={duplicateEventData || undefined}
-      />
+      {timelineId && (
+        <EventModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setDuplicateEventData(null);
+          }}
+          timelineId={timelineId}
+          duplicateData={duplicateEventData || undefined}
+        />
+      )}
 
       {/* Event List View */}
       {events.length > 0 && (
         <EventList
           events={events}
           onEventClick={setSelectedEvent}
+          showOutcomeFilter={timelineStatus === 'Completed' || timelineStatus === 'Archived'}
         />
       )}
 

@@ -1,19 +1,36 @@
 import { useState, FormEvent } from 'react';
-import { EventStatus, EventPriority, CreateEventDto } from '../../types/Event';
+import { EventStatus, EventPriority, CreateEventDto, OutcomeTag } from '../../types/Event';
+import { TimelineStatus } from '../../types/timeline';
 import { useCategories } from '../../hooks/useCategories';
 import QuickDatePresets from './QuickDatePresets';
+import RetroNotesField from './RetroNotesField';
+import OutcomeTagSelector from './OutcomeTagSelector';
 
 interface EventFormProps {
   onSubmit: (data: CreateEventDto) => void;
   onCancel: () => void;
   isLoading?: boolean;
-  initialData?: Partial<CreateEventDto>;
+  initialData?: Partial<CreateEventDto & { retroNotes?: string; outcomeTag?: OutcomeTag }>;
+  timelineStatus?: TimelineStatus; // Show retro fields when Completed or Archived
+  mode?: 'create' | 'edit';
+  onRetroUpdate?: (data: { retroNotes?: string; outcomeTag?: OutcomeTag | null }) => void;
 }
 
-function EventForm({ onSubmit, onCancel, isLoading = false, initialData }: EventFormProps) {
+function EventForm({
+  onSubmit,
+  onCancel,
+  isLoading = false,
+  initialData,
+  timelineStatus,
+  mode = 'create',
+  onRetroUpdate,
+}: EventFormProps) {
   const { categories, isLoading: categoriesLoading } = useCategories();
 
-  const [formData, setFormData] = useState<CreateEventDto>({
+  // Determine if retrospective fields should be shown (only on Completed/Archived timelines in edit mode)
+  const showRetroFields = mode === 'edit' && (timelineStatus === 'Completed' || timelineStatus === 'Archived');
+
+  const [formData, setFormData] = useState<CreateEventDto & { retroNotes?: string; outcomeTag?: OutcomeTag | null }>({
     title: initialData?.title || '',
     date: initialData?.date || new Date().toISOString().split('T')[0],
     time: initialData?.time || '',
@@ -23,21 +40,41 @@ function EventForm({ onSubmit, onCancel, isLoading = false, initialData }: Event
     assignedPerson: initialData?.assignedPerson || '',
     status: initialData?.status || EventStatus.NotStarted,
     priority: initialData?.priority || EventPriority.Medium,
+    retroNotes: initialData?.retroNotes || '',
+    outcomeTag: initialData?.outcomeTag || null,
   });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     // Clean up empty optional fields - send undefined instead of empty strings
-    const cleanedData: CreateEventDto = {
-      ...formData,
+    const cleanedData: CreateEventDto & { retroNotes?: string; outcomeTag?: OutcomeTag | null } = {
+      title: formData.title,
+      date: formData.date,
+      categoryId: formData.categoryId,
+      status: formData.status,
+      priority: formData.priority,
       time: formData.time || undefined,
       endTime: formData.endTime || undefined,
       description: formData.description || undefined,
       assignedPerson: formData.assignedPerson || undefined,
     };
 
+    // Include retrospective fields when on Completed/Archived timelines
+    if (showRetroFields) {
+      cleanedData.retroNotes = formData.retroNotes || undefined;
+      cleanedData.outcomeTag = formData.outcomeTag;
+    }
+
     onSubmit(cleanedData);
+
+    // Handle retro fields separately if callback provided
+    if (showRetroFields && onRetroUpdate) {
+      onRetroUpdate({
+        retroNotes: formData.retroNotes || undefined,
+        outcomeTag: formData.outcomeTag,
+      });
+    }
   };
 
   const handleChange = (
@@ -211,6 +248,35 @@ function EventForm({ onSubmit, onCancel, isLoading = false, initialData }: Event
           <option value={EventPriority.Low}>Low</option>
         </select>
       </div>
+
+      {/* Retrospective Section (US8) - Only shown on Completed/Archived timelines */}
+      {showRetroFields && (
+        <div className="border-t border-gray-200 pt-4 mt-4 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-purple-600">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+            Retrospective
+          </div>
+
+          <OutcomeTagSelector
+            value={formData.outcomeTag}
+            onChange={(tag) => setFormData((prev) => ({ ...prev, outcomeTag: tag }))}
+            disabled={isLoading}
+          />
+
+          <RetroNotesField
+            value={formData.retroNotes}
+            onChange={(notes) => setFormData((prev) => ({ ...prev, retroNotes: notes }))}
+            disabled={isLoading}
+          />
+        </div>
+      )}
 
       {/* Form Actions */}
       <div className="flex justify-end gap-3 pt-4">

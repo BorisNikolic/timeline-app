@@ -14,6 +14,13 @@ export enum EventPriority {
   Low = 'Low',
 }
 
+// Outcome tag for retrospective features (US8)
+export enum OutcomeTag {
+  WentWell = 'Went Well',
+  NeedsImprovement = 'Needs Improvement',
+  Failed = 'Failed',
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -22,9 +29,14 @@ export interface Event {
   endTime?: string; // Optional end time in HH:MM format (24-hour)
   description?: string;
   categoryId: string;
+  timelineId: string; // Multi-timeline support
   assignedPerson?: string;
   status: EventStatus;
   priority: EventPriority;
+  // Retrospective fields (US8) - only editable on Completed/Archived timelines
+  retroNotes?: string;
+  outcomeTag?: OutcomeTag;
+  sourceEventId?: string; // Reference to original event if copied
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
@@ -54,6 +66,9 @@ export interface UpdateEventDto {
   assignedPerson?: string;
   status?: EventStatus;
   priority?: EventPriority;
+  // Retrospective fields (US8) - only editable on Completed/Archived timelines
+  retroNotes?: string;
+  outcomeTag?: OutcomeTag | null; // null to clear
 }
 
 // Event with category and creator details
