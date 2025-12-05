@@ -54,11 +54,15 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('token');
-      // Use BASE_URL to support GitHub Pages subdirectory deployment
-      const basePath = import.meta.env.BASE_URL || '/';
-      window.location.href = `${basePath}auth`;
+      // Don't redirect for auth endpoints (login/register) - let the form handle the error
+      const isAuthEndpoint = error.config?.url?.includes('/api/auth/');
+      if (!isAuthEndpoint) {
+        // Unauthorized on protected route - clear token and redirect to login
+        localStorage.removeItem('token');
+        // Use BASE_URL to support GitHub Pages subdirectory deployment
+        const basePath = import.meta.env.BASE_URL || '/';
+        window.location.href = `${basePath}auth`;
+      }
     }
 
     // Transform error into user-friendly message
@@ -86,6 +90,10 @@ apiClient.interceptors.response.use(
 
 // Helper function to handle errors
 export function handleApiError(error: unknown): string {
+  // The interceptor transforms axios errors into regular Error objects with friendly messages
+  if (error instanceof Error) {
+    return error.message;
+  }
   if (axios.isAxiosError(error)) {
     // Prefer detailed message over generic error
     // For example, whitelist rejection sends both 'error' and 'message' fields
