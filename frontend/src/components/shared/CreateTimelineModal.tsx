@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { TimelineForm } from './TimelineForm';
 import TemplateSelector from './TemplateSelector';
 import { useCreateTimeline, timelineKeys } from '../../hooks/useTimelines';
+import { dashboardKeys } from '../../hooks/useDashboard';
 import { timelinesApi } from '../../services/timelinesApi';
 import { useTimelineStore } from '../../stores/timelineStore';
 import { CreateTimelineDto, TimelineWithStats, CopyTimelineDto } from '../../types/timeline';
@@ -35,6 +36,8 @@ export function CreateTimelineModal({ isOpen, onClose }: CreateTimelineModalProp
       timelinesApi.copy(templateId, data),
     onSuccess: (newTimeline) => {
       queryClient.invalidateQueries({ queryKey: timelineKeys.lists() });
+      // Also invalidate dashboard data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       setCurrentTimeline(newTimeline.id, 'Admin');
       toast.success(`Timeline "${newTimeline.name}" created from template`);
       onClose();

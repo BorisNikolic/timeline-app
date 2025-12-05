@@ -13,6 +13,7 @@ import {
 } from '../types/timeline';
 import { useTimelineStore, useCurrentTimeline } from '../stores/timelineStore';
 import { toast } from '../utils/toast';
+import { dashboardKeys } from './useDashboard';
 
 // Query key factory for consistent cache management
 export const timelineKeys = {
@@ -62,6 +63,8 @@ export function useCreateTimeline() {
     onSuccess: (newTimeline) => {
       // Invalidate the list to include the new timeline
       queryClient.invalidateQueries({ queryKey: timelineKeys.lists() });
+      // Also invalidate dashboard data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
 
       // Optionally switch to the new timeline
       setCurrentTimeline(newTimeline.id, 'Admin');
@@ -104,6 +107,8 @@ export function useUpdateTimeline() {
 
       // Invalidate the list to reflect changes
       queryClient.invalidateQueries({ queryKey: timelineKeys.lists() });
+      // Also invalidate dashboard data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
 
       toast.success('Timeline updated');
     },
@@ -132,6 +137,8 @@ export function useDeleteTimeline() {
 
       // Invalidate the list
       queryClient.invalidateQueries({ queryKey: timelineKeys.lists() });
+      // Also invalidate dashboard data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
 
       // Clear current timeline if it was deleted
       if (currentTimelineId === deletedId) {
@@ -176,6 +183,8 @@ export function useSetTemplate() {
       // Invalidate lists and templates
       queryClient.invalidateQueries({ queryKey: timelineKeys.lists() });
       queryClient.invalidateQueries({ queryKey: timelineKeys.templates() });
+      // Also invalidate dashboard data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
 
       const action = updatedTimeline.isTemplate ? 'added to' : 'removed from';
       toast.success(`Timeline ${action} templates`);
@@ -203,6 +212,8 @@ export function useUnarchiveTimeline() {
 
       // Invalidate the list
       queryClient.invalidateQueries({ queryKey: timelineKeys.lists() });
+      // Also invalidate dashboard data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
 
       toast.success(`Timeline "${updatedTimeline.name}" unarchived`);
     },

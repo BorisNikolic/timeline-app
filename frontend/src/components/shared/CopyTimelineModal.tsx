@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { timelinesApi } from '../../services/timelinesApi';
 import { timelineKeys } from '../../hooks/useTimelines';
+import { dashboardKeys } from '../../hooks/useDashboard';
 import { CopyTimelineDto, TimelineWithStats } from '../../types/timeline';
 import { toast } from '../../utils/toast';
 import CopyTimelineForm from './CopyTimelineForm';
@@ -34,6 +35,8 @@ export default function CopyTimelineModal({
       timelinesApi.copy(sourceTimeline.id, data),
     onSuccess: (newTimeline) => {
       queryClient.invalidateQueries({ queryKey: timelineKeys.lists() });
+      // Also invalidate dashboard data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       toast.success(`Timeline "${newTimeline.name}" created successfully`);
       onClose();
       navigate(`/timeline/${newTimeline.id}/settings`);
