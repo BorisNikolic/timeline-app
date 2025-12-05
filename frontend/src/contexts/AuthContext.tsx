@@ -86,7 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     setUser(null);
     clearCurrentTimeline();
-    window.location.href = '/auth';
+    // Use BASE_URL to support GitHub Pages subdirectory deployment
+    const basePath = import.meta.env.BASE_URL || '/';
+    window.location.href = `${basePath}auth`;
   };
 
   return (

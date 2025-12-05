@@ -56,7 +56,9 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Unauthorized - clear token and redirect to login
       localStorage.removeItem('token');
-      window.location.href = '/auth';
+      // Use BASE_URL to support GitHub Pages subdirectory deployment
+      const basePath = import.meta.env.BASE_URL || '/';
+      window.location.href = `${basePath}auth`;
     }
 
     // Transform error into user-friendly message
