@@ -330,8 +330,8 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
             )}
           </div>
 
-          {/* Count badge for clusters */}
-          {isCluster && (
+          {/* Count badge for clusters - hide when popover is open to prevent overlap */}
+          {isCluster && !showClusterPopover && (
             <div
               className="absolute flex items-center justify-center font-bold text-white"
               style={{
