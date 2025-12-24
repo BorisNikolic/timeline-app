@@ -355,7 +355,7 @@ function TimelinePage() {
                   </svg>
                 </button>
               </div>
-              <CategoryManagement />
+              <CategoryManagement timelineId={timelineId!} />
             </div>
           </div>
         </Fragment>

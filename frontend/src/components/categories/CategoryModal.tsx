@@ -1,16 +1,18 @@
 import { Fragment, useEffect } from 'react';
 import CategoryForm from './CategoryForm';
 import { Category } from '../../types/Category';
-import { useCategoryStore } from '../../store/categories';
+import { useCreateTimelineCategory, useUpdateTimelineCategory } from '../../hooks/useCategories';
 
 interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   category?: Category; // If provided, we're in edit mode
+  timelineId: string;
 }
 
-function CategoryModal({ isOpen, onClose, category }: CategoryModalProps) {
-  const { createCategory, updateCategory } = useCategoryStore();
+function CategoryModal({ isOpen, onClose, category, timelineId }: CategoryModalProps) {
+  const createCategory = useCreateTimelineCategory(timelineId);
+  const updateCategory = useUpdateTimelineCategory(timelineId);
   const isEditMode = !!category;
 
   // Handle ESC key to close modal
@@ -31,14 +33,19 @@ function CategoryModal({ isOpen, onClose, category }: CategoryModalProps) {
   }, [isOpen, onClose]);
 
   const handleSubmit = async (data: { name: string; color: string }) => {
-    if (isEditMode) {
-      // Edit mode - update existing category
-      await updateCategory(category.id, data);
-    } else {
-      // Create mode - create new category
-      await createCategory(data);
+    try {
+      if (isEditMode) {
+        // Edit mode - update existing category
+        await updateCategory.mutateAsync({ categoryId: category.id, data });
+      } else {
+        // Create mode - create new category
+        await createCategory.mutateAsync(data);
+      }
+      onClose();
+    } catch (error) {
+      // Error is handled by the mutation's onError callback
+      console.error('Failed to save category:', error);
     }
-    onClose();
   };
 
   if (!isOpen) return null;

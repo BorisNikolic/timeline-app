@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { Category } from '../../types/Category';
-import { useCategories } from '../../hooks/useCategories';
-import { useCategoryStore } from '../../store/categories';
+import { useTimelineCategories, useDeleteTimelineCategory } from '../../hooks/useCategories';
 import CategoryModal from './CategoryModal';
 import DeleteConfirmDialog from '../shared/DeleteConfirmDialog';
 
-function CategoryManagement() {
-  const { categories, isLoading } = useCategories();
-  const { deleteCategory } = useCategoryStore();
+interface CategoryManagementProps {
+  timelineId: string;
+}
+
+function CategoryManagement({ timelineId }: CategoryManagementProps) {
+  const { data: categories = [], isLoading } = useTimelineCategories(timelineId);
+  const deleteCategory = useDeleteTimelineCategory(timelineId);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
@@ -33,7 +36,7 @@ function CategoryManagement() {
 
     setIsDeleting(true);
     try {
-      await deleteCategory(categoryToDelete.id);
+      await deleteCategory.mutateAsync(categoryToDelete.id);
       setCategoryToDelete(null);
     } catch (error) {
       console.error('Failed to delete category:', error);
@@ -123,6 +126,7 @@ function CategoryManagement() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         category={selectedCategory}
+        timelineId={timelineId}
       />
 
       {/* Delete Confirmation Dialog */}
