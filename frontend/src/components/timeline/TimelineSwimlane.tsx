@@ -90,11 +90,12 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
 
         {/* Event cards */}
         {eventPositions.map((eventPos) => {
-          // Check if this is an overflow indicator
+          // Check if this is an overflow indicator or cluster
           const isOverflow = eventPos.eventId.startsWith('overflow-');
+          const isCluster = eventPos.eventId.startsWith('cluster-');
 
-          // Find original event, or use the position data for overflow indicators
-          const originalEvent = isOverflow
+          // Find original event, or use the position data for overflow/cluster indicators
+          const originalEvent = (isOverflow || isCluster)
             ? eventPos
             : events.find(e => e.id === eventPos.eventId);
 
@@ -111,11 +112,16 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
               stackIndex={eventPos.stackIndex}
               zIndex={eventPos.zIndex}
               width={eventPos.width}
+              zoomLevel={zoomLevel}
               onClick={() => {
                 // Don't trigger click for overflow indicators
-                if (!isOverflow) {
+                if (!isOverflow && !isCluster) {
                   onEventClick(eventPos.eventId);
                 }
+              }}
+              onClusterEventClick={(eventId) => {
+                // Handle clicking an event within a cluster popover
+                onEventClick(eventId);
               }}
             />
           );

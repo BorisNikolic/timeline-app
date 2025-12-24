@@ -2,7 +2,7 @@
 // Date range, positioning, and scale utility functions
 
 import { startOfDay, subWeeks, addMonths, addDays, addWeeks } from 'date-fns';
-import type { ZoomLevel, Granularity, EventPosition, TimelineEventCard } from '../types/timeline';
+import type { ZoomLevel, Granularity, EventPosition, TimelineEventCard, CardVariant, CardConfig, ClusteredEventInfo } from '../types/timeline';
 
 // Constants
 export const EVENT_CARD_HEIGHT = 80; // pixels
@@ -18,6 +18,62 @@ export const ZOOM_TO_GRANULARITY: Record<ZoomLevel, Granularity> = {
   quarter: 'month', // Quarter view shows monthly ticks
   year: 'month'     // Year view shows monthly ticks
 };
+
+// Zoom level to card variant mapping
+export const ZOOM_TO_CARD_VARIANT: Record<ZoomLevel, CardVariant> = {
+  day: 'full',      // Full cards with all details
+  week: 'mini',     // Mini cards with title + priority dot
+  month: 'dot',     // Compact dots with tooltip
+  quarter: 'dot',   // Compact dots with tooltip
+  year: 'dot'       // Compact dots with tooltip
+};
+
+// Card configuration for each variant
+export const CARD_CONFIGS: Record<CardVariant, CardConfig> = {
+  full: {
+    variant: 'full',
+    width: 120,
+    height: 80,
+    stackOffsetX: 15,
+    stackOffsetY: 30
+  },
+  mini: {
+    variant: 'mini',
+    width: 80,
+    height: 40,
+    stackOffsetX: 10,
+    stackOffsetY: 20
+  },
+  dot: {
+    variant: 'dot',
+    width: 14,
+    height: 14,
+    stackOffsetX: 6,
+    stackOffsetY: 8
+  }
+};
+
+/**
+ * Get card variant based on zoom level
+ */
+export function getCardVariant(zoomLevel: ZoomLevel): CardVariant {
+  return ZOOM_TO_CARD_VARIANT[zoomLevel];
+}
+
+/**
+ * Get card configuration based on variant
+ */
+export function getCardConfig(variant: CardVariant): CardConfig {
+  return CARD_CONFIGS[variant];
+}
+
+/**
+ * Get card configuration directly from zoom level
+ */
+export function getCardConfigForZoom(zoomLevel: ZoomLevel): CardConfig {
+  const variant = getCardVariant(zoomLevel);
+  return getCardConfig(variant);
+}
 
 /**
  * Parse a date-only string (YYYY-MM-DD) as local midnight
@@ -163,18 +219,22 @@ export function calculateEventWidth(
 /**
  * Calculate event positions with cascading stack layout
  * Groups events by date and positions them with diagonal cascading
+ * Stack offsets are zoom-aware based on card variant
  */
 export function calculateEventPositions(
   events: any[],
   startDate: Date,
   endDate: Date,
   pixelsPerDay: number,
-  _zoomLevel: ZoomLevel = 'month'
+  zoomLevel: ZoomLevel = 'month'
 ): TimelineEventCard[] {
   // Performance monitoring (development only)
   if (import.meta.env.MODE !== 'production') {
     performance.mark('calc-positions-start');
   }
+
+  // Get zoom-aware card configuration for stack offsets
+  const cardConfig = getCardConfigForZoom(zoomLevel);
 
   // Group events by date (YYYY-MM-DD format)
   const eventsByDate = new Map<string, any[]>();
@@ -192,6 +252,10 @@ export function calculateEventPositions(
 
   const positions: TimelineEventCard[] = [];
 
+  // Get current card variant to determine if we should cluster
+  const variant = getCardVariant(zoomLevel);
+  const shouldCluster = variant === 'dot';
+
   // Process each date group
   eventsByDate.forEach((dateEvents, dateKey) => {
     // Parse as local midnight to ensure consistent timezone handling
@@ -206,6 +270,46 @@ export function calculateEventPositions(
       return timeA.localeCompare(timeB);
     });
 
+    // For dot variant: cluster all events on same date into a single dot with count badge
+    if (shouldCluster && sortedEvents.length > 1) {
+      // Create clustered event info for tooltip
+      const clusteredEvents: ClusteredEventInfo[] = sortedEvents.map(event => ({
+        eventId: event.id,
+        title: event.title,
+        priority: event.priority,
+        status: event.status
+      }));
+
+      // Use first event's priority for the cluster color (or highest priority)
+      const highestPriority = sortedEvents.reduce((highest, event) => {
+        const priorityRank = { High: 3, Medium: 2, Low: 1 };
+        return priorityRank[event.priority as keyof typeof priorityRank] > priorityRank[highest as keyof typeof priorityRank]
+          ? event.priority
+          : highest;
+      }, sortedEvents[0].priority);
+
+      // Create single cluster position
+      positions.push({
+        eventId: `cluster-${dateKey}`,
+        title: sortedEvents[0].title, // First event title for fallback
+        date: eventDate,
+        time: sortedEvents[0].time,
+        priority: highestPriority,
+        status: sortedEvents[0].status,
+        categoryColor: sortedEvents[0].categoryColor || '#6366f1',
+        xPosition: dateX,
+        yPosition: 0,
+        position: 'above',
+        stackIndex: 0,
+        zIndex: 15,
+        width: cardConfig.width,
+        isCluster: true,
+        clusterCount: sortedEvents.length,
+        clusteredEvents
+      });
+      return; // Skip individual event processing for this date
+    }
+
     const maxVisible = 10; // Maximum events to show before overflow
 
     // Position events with overlapping vertical stacks
@@ -219,11 +323,9 @@ export function calculateEventPositions(
       const stackIndex = index; // First card = 0 (bottom/front), last card = 3 (top/back)
 
       // Diagonal cascade: each card shifts right AND up from previous card
-      const HORIZONTAL_OFFSET = 15; // pixels to shift right per card
-      const VISIBLE_HEIGHT = 30; // Height visible per card in stack (enough to read title only)
-
-      const xPosition = dateX + (stackIndex * HORIZONTAL_OFFSET);
-      const yOffset = stackIndex * VISIBLE_HEIGHT; // Higher cards offset more
+      // Use zoom-aware stack offsets from card config
+      const xPosition = dateX + (stackIndex * cardConfig.stackOffsetX);
+      const yOffset = stackIndex * cardConfig.stackOffsetY; // Higher cards offset more
 
       // Debug: Log event position for today's events
       if (import.meta.env.MODE !== 'production' && stackIndex === 0) {
@@ -235,8 +337,9 @@ export function calculateEventPositions(
             date: eventDate.toISOString(),
             dateX: dateX.toFixed(2),
             stackIndex,
-            horizontalOffset: (stackIndex * HORIZONTAL_OFFSET),
-            finalX: xPosition.toFixed(2)
+            horizontalOffset: (stackIndex * cardConfig.stackOffsetX),
+            finalX: xPosition.toFixed(2),
+            cardVariant: cardConfig.variant
           });
         }
       }
@@ -247,8 +350,8 @@ export function calculateEventPositions(
       // All cards positioned above centerline for cascading downward effect
       const position: EventPosition = 'above';
 
-      // Calculate card width based on duration
-      const width = calculateEventWidth(event.time, event.endTime, pixelsPerDay);
+      // Calculate card width based on duration (or use zoom-aware default)
+      const width = calculateEventWidth(event.time, event.endTime, pixelsPerDay) || cardConfig.width;
 
       positions.push({
         eventId: event.id,
@@ -271,18 +374,16 @@ export function calculateEventPositions(
     if (sortedEvents.length > maxVisible) {
       const overflowCount = sortedEvents.length - maxVisible;
 
-      // Position overflow at top of cascade
+      // Position overflow at top of cascade (use zoom-aware offsets)
       const stackIndex = maxVisible; // Top of stack (highest)
-      const VISIBLE_HEIGHT = 30;
-      const HORIZONTAL_OFFSET = 15;
-      const yOffset = stackIndex * VISIBLE_HEIGHT;
-      const xOffset = dateX + (stackIndex * HORIZONTAL_OFFSET);
+      const yOffset = stackIndex * cardConfig.stackOffsetY;
+      const xOffset = dateX + (stackIndex * cardConfig.stackOffsetX);
 
       // Overflow should have lowest z-index (furthest back)
       const zIndex = 10 + (totalCardsInStack + 1 - stackIndex);
 
-      // Overflow indicator uses default width
-      const width = 120;
+      // Overflow indicator uses zoom-aware width
+      const width = cardConfig.width;
 
       positions.push({
         eventId: `overflow-${dateKey}`,

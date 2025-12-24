@@ -59,3 +59,61 @@
   min-width: 100vw;
   pointer-events: none;
 }
+
+/* Timeline Dot Card (zoom-responsive) */
+.timeline-dot-card {
+  position: relative;
+}
+
+/* Custom tooltip for dot variant on hover */
+.timeline-dot-card::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background-color: #1f2937;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Tooltip arrow */
+.timeline-dot-card::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1f2937;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* Show tooltip on hover */
+.timeline-dot-card:hover::after,
+.timeline-dot-card:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Dot card hover animation */
+.timeline-dot-card:hover {
+  z-index: 9999 !important;
+}
