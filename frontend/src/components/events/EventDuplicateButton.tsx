@@ -21,7 +21,7 @@ function EventDuplicateButton({ event, onDuplicate }: EventDuplicateButtonProps)
     // Create duplicated event data (exclude id, createdAt, updatedAt, createdBy)
     const duplicatedData: CreateEventDto = {
       title: `Copy of ${event.title}`,
-      date: event.date,
+      date: event.date.split('T')[0], // Ensure YYYY-MM-DD format for date input
       time: event.time,
       endTime: event.endTime,
       description: event.description,
