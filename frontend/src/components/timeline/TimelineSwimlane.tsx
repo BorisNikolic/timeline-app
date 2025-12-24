@@ -18,6 +18,18 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
 }) => {
   // Calculate positions for all events in this swimlane
   const eventPositions = useMemo(() => {
+    // DEBUG: Log swimlane calculation params
+    if (events.length > 0) {
+      console.log('🏊 Swimlane calc:', category.name, {
+        eventCount: events.length,
+        startDate: startDate instanceof Date ? startDate.toISOString() : 'NOT A DATE: ' + typeof startDate,
+        endDate: endDate instanceof Date ? endDate.toISOString() : 'NOT A DATE: ' + typeof endDate,
+        startMs: startDate?.getTime?.() || 'N/A',
+        endMs: endDate?.getTime?.() || 'N/A',
+        pixelsPerDay
+      });
+    }
+
     // Add category color to events for TimelineEventCard
     const eventsWithColor = events.map(event => ({
       ...event,
