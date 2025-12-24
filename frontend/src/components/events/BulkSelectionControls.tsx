@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { EventStatus } from '../../types/Event';
 import { useBulkEventUpdate } from '../../hooks/useBulkEventUpdate';
+import DeleteConfirmDialog from '../shared/DeleteConfirmDialog';
 
 interface BulkSelectionControlsProps {
   /**
@@ -32,6 +34,8 @@ export function BulkSelectionControls({
   visibleEventIds,
   isAvailable = true,
 }: BulkSelectionControlsProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const {
     isSelectionMode,
     selectedCount,
@@ -41,7 +45,21 @@ export function BulkSelectionControls({
     selectAll,
     clearSelection,
     bulkUpdateStatus,
+    bulkDelete,
   } = useBulkEventUpdate();
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    await bulkDelete();
+    setShowDeleteConfirm(false);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
 
   // T074: Disable bulk mode in timeline view
   if (!isAvailable) {
@@ -120,6 +138,18 @@ export function BulkSelectionControls({
         </div>
       )}
 
+      {/* Delete Selected button */}
+      {selectedCount > 0 && (
+        <button
+          onClick={handleDeleteClick}
+          disabled={isUpdating}
+          className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label={`Delete ${selectedCount} selected event${selectedCount !== 1 ? 's' : ''}`}
+        >
+          Delete Selected ({selectedCount})
+        </button>
+      )}
+
       {/* Disable Selection Mode button */}
       <button
         onClick={disableSelectionMode}
@@ -136,6 +166,17 @@ export function BulkSelectionControls({
           <span>Updating...</span>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Selected Events"
+        message={`Are you sure you want to delete ${selectedCount} event${selectedCount !== 1 ? 's' : ''}? This action cannot be undone.`}
+        confirmLabel={`Delete ${selectedCount} Event${selectedCount !== 1 ? 's' : ''}`}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isUpdating}
+      />
     </div>
   );
 }

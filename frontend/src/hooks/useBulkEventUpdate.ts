@@ -117,6 +117,89 @@ export function useBulkEventUpdate() {
     [selectedEventIds, queryClient, clearSelection]
   );
 
+  /**
+   * Bulk delete selected events with Promise.allSettled for partial success handling
+   *
+   * @returns Result object with success/failure counts
+   */
+  const bulkDelete = useCallback(
+    async (): Promise<BulkUpdateResult> => {
+      const eventIds = Array.from(selectedEventIds);
+
+      if (eventIds.length === 0) {
+        toast.error('No events selected');
+        return { succeeded: 0, failed: 0, total: 0 };
+      }
+
+      setIsUpdating(true);
+
+      try {
+        // Create array of DELETE requests
+        const promises = eventIds.map((id) =>
+          apiClient.delete(`/api/events/${id}`)
+            .then(() => ({ eventId: id, success: true }))
+            .catch((error) => ({ eventId: id, success: false, error: error.message }))
+        );
+
+        // Execute all requests in parallel with Promise.allSettled
+        const results = await Promise.allSettled(promises);
+
+        // Count successes and failures
+        let succeeded = 0;
+        let failed = 0;
+        const errors: Array<{ eventId: string; error: string }> = [];
+
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            if (result.value.success) {
+              succeeded++;
+            } else {
+              failed++;
+              errors.push({
+                eventId: result.value.eventId,
+                error: 'error' in result.value ? result.value.error : 'Unknown error',
+              });
+            }
+          } else {
+            failed++;
+          }
+        });
+
+        // Show appropriate toast messages
+        if (succeeded > 0 && failed === 0) {
+          toast.success(`Deleted ${succeeded} event${succeeded > 1 ? 's' : ''} successfully`);
+        } else if (succeeded > 0 && failed > 0) {
+          toast.info(`Deleted ${succeeded} of ${eventIds.length} events (${failed} failed)`);
+        } else {
+          toast.error(`Failed to delete ${failed} event${failed > 1 ? 's' : ''}`);
+        }
+
+        // Invalidate React Query cache to refetch events
+        queryClient.invalidateQueries({ queryKey: ['events'] });
+
+        // Clear selection after operation
+        clearSelection();
+
+        return {
+          succeeded,
+          failed,
+          total: eventIds.length,
+          errors: errors.length > 0 ? errors : undefined,
+        };
+      } catch (error) {
+        toast.error('Bulk delete failed');
+        return {
+          succeeded: 0,
+          failed: selectedEventIds.size,
+          total: selectedEventIds.size,
+        };
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [selectedEventIds, queryClient, clearSelection]
+  );
+
   return {
     // State
     selectedEventIds,
@@ -131,5 +214,6 @@ export function useBulkEventUpdate() {
     enableSelectionMode,
     disableSelectionMode,
     bulkUpdateStatus,
+    bulkDelete,
   };
 }
