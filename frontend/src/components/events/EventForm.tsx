@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { EventStatus, EventPriority, CreateEventDto, OutcomeTag } from '../../types/Event';
 import { TimelineStatus } from '../../types/timeline';
 import { useCategories } from '../../hooks/useCategories';
@@ -43,6 +43,25 @@ function EventForm({
     retroNotes: initialData?.retroNotes || '',
     outcomeTag: initialData?.outcomeTag || null,
   });
+
+  // Sync form data when initialData changes (e.g., when opening duplicate modal)
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        date: initialData.date || new Date().toISOString().split('T')[0],
+        time: initialData.time || '',
+        endTime: initialData.endTime || '',
+        description: initialData.description || '',
+        categoryId: initialData.categoryId || '',
+        assignedPerson: initialData.assignedPerson || '',
+        status: initialData.status || EventStatus.NotStarted,
+        priority: initialData.priority || EventPriority.Medium,
+        retroNotes: initialData.retroNotes || '',
+        outcomeTag: initialData.outcomeTag || null,
+      });
+    }
+  }, [initialData]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
