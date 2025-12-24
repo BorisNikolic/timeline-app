@@ -263,6 +263,9 @@ export function calculateEventPositions(
     // Calculate X position for the date (this is the left edge position, not center)
     const dateX = calculateEventX(eventDate, startDate, endDate, pixelsPerDay);
 
+    // DEBUG: Log position calculation for each date group (temporary - for production debugging)
+    console.log('📍 Position calc:', dateKey, 'dateX:', dateX.toFixed(2), 'events:', dateEvents.map((e: any) => e.title));
+
     // Calculate date-based z-index: later dates get higher z-index so they appear on top when overlapping
     const daysFromStart = Math.max(0, Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
     const dateZIndexOffset = daysFromStart * 10; // 10 z-index units per day
@@ -416,6 +419,9 @@ export function calculateEventPositions(
       console.warn(`⚠️ Position calculation took ${measure.duration.toFixed(2)}ms (target: <100ms)`);
     }
   }
+
+  // DEBUG: Log final positions (temporary - for production debugging)
+  console.log('📊 Final positions:', positions.map(p => `${p.title.substring(0, 15)}@x=${p.xPosition.toFixed(0)}`).join(', '));
 
   return positions;
 }
