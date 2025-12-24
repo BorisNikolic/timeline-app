@@ -5,13 +5,13 @@
 
 export interface DatePreset {
   label: string;
-  getValue: () => Date;
+  daysOffset: number;
 }
 
 /**
- * Calculate date with days offset
+ * Calculate date with days offset from a base date
  */
-const addDays = (date: Date, days: number): Date => {
+export const addDays = (date: Date, days: number): Date => {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
@@ -20,31 +20,34 @@ const addDays = (date: Date, days: number): Date => {
 /**
  * Available date presets for quick selection
  * FR-008: Next Month uses +30 days (not calendar month)
+ * Offsets are relative to the current form date (not today)
  */
 export const datePresets: DatePreset[] = [
-  {
-    label: 'Today',
-    getValue: () => new Date()
-  },
-  {
-    label: 'Tomorrow',
-    getValue: () => addDays(new Date(), 1)
-  },
-  {
-    label: 'Next Week',
-    getValue: () => addDays(new Date(), 7)
-  },
-  {
-    label: 'Next Month',
-    getValue: () => addDays(new Date(), 30) // FR-008: Use 30 days, not calendar month
-  }
+  { label: 'Today', daysOffset: 0 },
+  { label: 'Tomorrow', daysOffset: 1 },
+  { label: 'Next Week', daysOffset: 7 },
+  { label: 'Next Month', daysOffset: 30 }
 ];
 
 /**
- * Format date as ISO string for API (YYYY-MM-DD)
+ * Get preset date value relative to a base date
+ * @param preset - The date preset
+ * @param baseDate - The base date to calculate from (defaults to today)
+ */
+export const getPresetValue = (preset: DatePreset, baseDate?: Date): Date => {
+  const base = baseDate || new Date();
+  return addDays(base, preset.daysOffset);
+};
+
+/**
+ * Format date as YYYY-MM-DD for API using local timezone
+ * Note: Using getFullYear/getMonth/getDate to avoid UTC conversion issues
  */
 export const formatDateForAPI = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 /**

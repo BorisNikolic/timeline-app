@@ -10,6 +10,7 @@
  */
 
 import { CreateEventDto, EventWithDetails, EventStatus, EventPriority } from '../../types/Event';
+import { formatDateForAPI } from '../../utils/datePresets';
 
 interface EventDuplicateButtonProps {
   event: EventWithDetails;
@@ -19,9 +20,11 @@ interface EventDuplicateButtonProps {
 function EventDuplicateButton({ event, onDuplicate }: EventDuplicateButtonProps) {
   const handleDuplicate = () => {
     // Create duplicated event data (exclude id, createdAt, updatedAt, createdBy)
+    // Use formatDateForAPI to handle timezone correctly (avoids UTC date shift)
+    const eventDate = new Date(event.date);
     const duplicatedData: CreateEventDto = {
       title: `Copy of ${event.title}`,
-      date: event.date.split('T')[0], // Ensure YYYY-MM-DD format for date input
+      date: formatDateForAPI(eventDate),
       time: event.time,
       endTime: event.endTime,
       description: event.description,

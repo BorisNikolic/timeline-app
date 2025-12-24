@@ -1,18 +1,23 @@
-import { datePresets, formatDateForAPI } from '../../utils/datePresets';
+import { datePresets, formatDateForAPI, getPresetValue } from '../../utils/datePresets';
 
 interface QuickDatePresetsProps {
   onDateSelect: (date: string) => void;
+  /** Base date for relative calculations (YYYY-MM-DD format). If not provided, uses today. */
+  baseDate?: string;
 }
 
 /**
  * Quick Date Presets Component (User Story 5 - P2)
  * Provides one-click buttons for common dates: Today, Tomorrow, Next Week, Next Month
+ * When baseDate is provided, offsets are calculated relative to that date.
  */
-function QuickDatePresets({ onDateSelect }: QuickDatePresetsProps) {
+function QuickDatePresets({ onDateSelect, baseDate }: QuickDatePresetsProps) {
   const handlePresetClick = (label: string) => {
     const preset = datePresets.find(p => p.label === label);
     if (preset) {
-      const date = preset.getValue();
+      // Parse baseDate if provided, otherwise use today
+      const base = baseDate ? new Date(baseDate + 'T00:00:00') : new Date();
+      const date = getPresetValue(preset, base);
       const formattedDate = formatDateForAPI(date);
       onDateSelect(formattedDate);
     }

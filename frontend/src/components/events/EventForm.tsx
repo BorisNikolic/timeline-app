@@ -139,6 +139,7 @@ function EventForm({
         />
         <QuickDatePresets
           onDateSelect={(date) => setFormData(prev => ({ ...prev, date }))}
+          baseDate={formData.date}
         />
       </div>
 

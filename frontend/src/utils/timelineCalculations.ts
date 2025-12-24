@@ -263,6 +263,10 @@ export function calculateEventPositions(
     // Calculate X position for the date (this is the left edge position, not center)
     const dateX = calculateEventX(eventDate, startDate, endDate, pixelsPerDay);
 
+    // Calculate date-based z-index: later dates get higher z-index so they appear on top when overlapping
+    const daysFromStart = Math.max(0, Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+    const dateZIndexOffset = daysFromStart * 10; // 10 z-index units per day
+
     // Sort by time (earliest first)
     const sortedEvents = [...dateEvents].sort((a, b) => {
       const timeA = a.time || '';
@@ -301,7 +305,7 @@ export function calculateEventPositions(
         yPosition: 0,
         position: 'above',
         stackIndex: 0,
-        zIndex: 15,
+        zIndex: 15 + dateZIndexOffset, // Later dates have higher z-index
         width: cardConfig.width,
         isCluster: true,
         clusterCount: sortedEvents.length,
@@ -344,8 +348,8 @@ export function calculateEventPositions(
         }
       }
 
-      // Reverse z-index: bottom card (index 0) has highest z-index
-      const zIndex = 10 + (totalCardsInStack - stackIndex);
+      // z-index: later dates on top, within same date bottom card has highest
+      const zIndex = 10 + dateZIndexOffset + (totalCardsInStack - stackIndex);
 
       // All cards positioned above centerline for cascading downward effect
       const position: EventPosition = 'above';
@@ -379,8 +383,8 @@ export function calculateEventPositions(
       const yOffset = stackIndex * cardConfig.stackOffsetY;
       const xOffset = dateX + (stackIndex * cardConfig.stackOffsetX);
 
-      // Overflow should have lowest z-index (furthest back)
-      const zIndex = 10 + (totalCardsInStack + 1 - stackIndex);
+      // Overflow should have lowest z-index within its date, but still respect date ordering
+      const zIndex = 10 + dateZIndexOffset + (totalCardsInStack + 1 - stackIndex);
 
       // Overflow indicator uses zoom-aware width
       const width = cardConfig.width;
