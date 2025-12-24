@@ -2,6 +2,7 @@
 // Zoom-responsive event card with 3 variants: full, mini, dot
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import type { TimelineEventCardProps, ClusteredEventInfo } from '../../types/timeline';
 import { getCardVariant, getCardConfigForZoom } from '../../utils/timelineCalculations';
 import '../../styles/timeline-animations.css';
@@ -21,12 +22,14 @@ const STATUS_ICONS: Record<string, string> = {
 };
 
 // Cluster popover component for showing all events in a cluster
+// Uses portal to render at body level, avoiding z-index stacking context issues
 const ClusterPopover: React.FC<{
   events: ClusteredEventInfo[];
   onEventClick: (eventId: string) => void;
   onClose: () => void;
   categoryColor: string;
-}> = ({ events, onEventClick, onClose, categoryColor }) => {
+  anchorRect: DOMRect | null;
+}> = ({ events, onEventClick, onClose, categoryColor, anchorRect }) => {
   const popoverRef = React.useRef<HTMLDivElement>(null);
 
   // Close popover when clicking outside
@@ -40,16 +43,23 @@ const ClusterPopover: React.FC<{
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
-  return (
+  // Don't render if no anchor position
+  if (!anchorRect) return null;
+
+  // Calculate position - center above the anchor element
+  const popoverStyle: React.CSSProperties = {
+    position: 'fixed',
+    left: anchorRect.left + anchorRect.width / 2,
+    top: anchorRect.top - 8, // 8px gap above anchor
+    transform: 'translate(-50%, -100%)',
+    zIndex: 10000
+  };
+
+  const popoverContent = (
     <div
       ref={popoverRef}
-      className="absolute z-[10000] bg-white rounded-lg shadow-xl border border-gray-200 min-w-[200px] max-w-[280px]"
-      style={{
-        bottom: '100%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        marginBottom: '8px'
-      }}
+      className="bg-white rounded-lg shadow-xl border border-gray-200 min-w-[200px] max-w-[280px]"
+      style={popoverStyle}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Arrow pointing down */}
@@ -58,7 +68,8 @@ const ClusterPopover: React.FC<{
         style={{
           bottom: '-6px',
           left: '50%',
-          transform: 'translateX(-50%) rotate(45deg)'
+          transform: 'translateX(-50%) rotate(45deg)',
+          zIndex: -1
         }}
       />
 
@@ -107,6 +118,9 @@ const ClusterPopover: React.FC<{
       </div>
     </div>
   );
+
+  // Render via portal to body to escape stacking context
+  return createPortal(popoverContent, document.body);
 };
 
 export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
@@ -125,6 +139,8 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
   const isAbove = position === 'above';
   const [isHovered, setIsHovered] = React.useState(false);
   const [showClusterPopover, setShowClusterPopover] = React.useState(false);
+  const [anchorRect, setAnchorRect] = React.useState<DOMRect | null>(null);
+  const dotRef = React.useRef<HTMLDivElement>(null);
 
   const variant = getCardVariant(zoomLevel);
   const cardConfig = getCardConfigForZoom(zoomLevel);
@@ -271,6 +287,10 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
     // Handle click - show popover for clusters, regular onClick for single events
     const handleDotClick = () => {
       if (isCluster) {
+        // Capture anchor position when opening popover
+        if (!showClusterPopover && dotRef.current) {
+          setAnchorRect(dotRef.current.getBoundingClientRect());
+        }
         setShowClusterPopover(!showClusterPopover);
       } else {
         onClick();
@@ -288,6 +308,7 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
     return (
       <div className="relative">
         <div
+          ref={dotRef}
           onClick={handleDotClick}
           className={`
             timeline-dot-card
@@ -351,13 +372,14 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
           )}
         </div>
 
-        {/* Cluster popover */}
+        {/* Cluster popover - rendered via portal to escape stacking context */}
         {isCluster && showClusterPopover && (
           <ClusterPopover
             events={clusteredEvents}
             onEventClick={handleClusterEventClick}
             onClose={() => setShowClusterPopover(false)}
             categoryColor={categoryColor}
+            anchorRect={anchorRect}
           />
         )}
       </div>
