@@ -232,6 +232,18 @@ export type Granularity = 'hour' | 'day' | 'week' | 'month';
 export type EventPosition = 'above' | 'below';
 export type ViewMode = 'category' | 'timeline';
 
+// Card variant based on zoom level (zoom-responsive cards)
+export type CardVariant = 'full' | 'mini' | 'dot';
+
+// Card configuration for each variant
+export interface CardConfig {
+  variant: CardVariant;
+  width: number;        // Card width in pixels
+  height: number;       // Card height in pixels
+  stackOffsetX: number; // Horizontal offset per stack level
+  stackOffsetY: number; // Vertical offset per stack level
+}
+
 // TimelineViewState - Client-side state (persisted in localStorage)
 export interface TimelineViewState {
   viewMode: ViewMode;
@@ -251,6 +263,14 @@ export interface CategorySwimlane {
   sortOrder: number;
 }
 
+// Clustered event info for dot variant grouping
+export interface ClusteredEventInfo {
+  eventId: string;
+  title: string;
+  priority: 'High' | 'Medium' | 'Low';
+  status: 'Not Started' | 'In Progress' | 'Completed';
+}
+
 // TimelineEventCard - View Model (derived from Event with positioning)
 export interface TimelineEventCard {
   eventId: string;
@@ -266,6 +286,10 @@ export interface TimelineEventCard {
   stackIndex: number;
   zIndex: number;
   width: number;
+  // Cluster support for dot variant
+  isCluster?: boolean;
+  clusterCount?: number;
+  clusteredEvents?: ClusteredEventInfo[];
 }
 
 // AxisTick - Date marker with label and position
@@ -303,6 +327,8 @@ export interface ChronologicalTimelineProps {
   events: any[]; // Use existing Event type from project
   categories: any[]; // Use existing Category type from project
   onEventClick: (eventId: string) => void;
+  timelineStartDate?: string; // ISO date string from timeline entity
+  timelineEndDate?: string;   // ISO date string from timeline entity
 }
 
 export interface TimelineAxisProps {
@@ -325,7 +351,11 @@ export interface TimelineSwimlaneProps {
 }
 
 export interface TimelineEventCardProps {
-  event: any; // Use existing Event type
+  event: any & {
+    isCluster?: boolean;
+    clusterCount?: number;
+    clusteredEvents?: ClusteredEventInfo[];
+  }; // Use existing Event type with cluster extensions
   position: EventPosition;
   xPosition: number;
   yPosition: number;
@@ -333,7 +363,9 @@ export interface TimelineEventCardProps {
   stackIndex: number;
   zIndex: number;
   width: number;
+  zoomLevel: ZoomLevel; // For zoom-responsive card rendering
   onClick: () => void;
+  onClusterEventClick?: (eventId: string) => void; // For clicking individual events in a cluster popover
 }
 
 export interface ZoomControlsProps {

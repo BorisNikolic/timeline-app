@@ -270,6 +270,8 @@ function TimelinePage() {
           events={filteredEvents}
           categories={categories}
           onEventClick={handleEventClick}
+          timelineStartDate={timeline?.startDate}
+          timelineEndDate={timeline?.endDate}
         />
       )}
 

@@ -23,7 +23,9 @@ import '../../styles/timeline-animations.css';
 export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
   events,
   categories,
-  onEventClick
+  onEventClick,
+  timelineStartDate,
+  timelineEndDate
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const todayLineRef = useRef<HTMLDivElement>(null);
@@ -40,10 +42,31 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
     setVisualScale
   } = useTimelineViewState();
 
-  // Calculate date range based on actual events
+  // Helper to parse ISO date string as local midnight
+  const parseLocalDate = (dateString: string): Date => {
+    const dateOnly = dateString.split('T')[0];
+    return new Date(dateOnly + 'T00:00:00');
+  };
+
+  // Calculate date range - prefer timeline dates over event-based calculation
   const dateRange = useMemo(() => {
+    // Use timeline entity dates if available
+    if (timelineStartDate && timelineEndDate) {
+      return {
+        startDate: parseLocalDate(timelineStartDate),
+        endDate: parseLocalDate(timelineEndDate),
+      };
+    }
+    // Fallback to event-based calculation
     return calculateEventBasedDateRange(events);
-  }, [events]);
+  }, [events, timelineStartDate, timelineEndDate]);
+
+  // Check if today falls within the timeline's date range
+  const isTodayInRange = useMemo(() => {
+    if (!dateRange) return false;
+    const today = startOfDay(new Date());
+    return today >= dateRange.startDate && today <= dateRange.endDate;
+  }, [dateRange]);
 
   // Calculate scale and timeline width
   const pixelsPerDay = useMemo(() => {
@@ -240,21 +263,25 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
             />
           ))}
 
-          {/* TODAY Line */}
-          <div ref={todayLineRef} style={{ position: 'absolute', left: `${todayPosition + CATEGORY_HEADER_WIDTH_PX}px`, top: 0, width: '1px', height: `${totalHeight}px` }}>
-            <TimelineNowLine
-              xPosition={0}
-              height={totalHeight}
-            />
-          </div>
+          {/* TODAY Line - only show if today is within timeline date range */}
+          {isTodayInRange && (
+            <div ref={todayLineRef} style={{ position: 'absolute', left: `${todayPosition + CATEGORY_HEADER_WIDTH_PX}px`, top: 0, width: '1px', height: `${totalHeight}px` }}>
+              <TimelineNowLine
+                xPosition={0}
+                height={totalHeight}
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Jump to Today Button - Always visible on mobile, conditional on desktop */}
-      <JumpToTodayButton
-        isVisible={isMobile || !todayLineVisible}
-        onJumpToToday={handleJumpToToday}
-      />
+      {/* Jump to Today Button - only show if today is within timeline date range */}
+      {isTodayInRange && (
+        <JumpToTodayButton
+          isVisible={isMobile || !todayLineVisible}
+          onJumpToToday={handleJumpToToday}
+        />
+      )}
 
       {/* Scroll Indicator Badge */}
       <ScrollIndicatorBadge
