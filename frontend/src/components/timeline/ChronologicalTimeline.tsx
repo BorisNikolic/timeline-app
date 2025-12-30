@@ -48,17 +48,37 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
     return new Date(dateOnly + 'T00:00:00');
   };
 
-  // Calculate date range - prefer timeline dates over event-based calculation
+  // Calculate date range - use timeline dates but extend to include all events
   const dateRange = useMemo(() => {
-    // Use timeline entity dates if available
-    if (timelineStartDate && timelineEndDate) {
-      return {
-        startDate: parseLocalDate(timelineStartDate),
-        endDate: parseLocalDate(timelineEndDate),
-      };
+    // Start with timeline entity dates if available
+    let startDate = timelineStartDate ? parseLocalDate(timelineStartDate) : null;
+    let endDate = timelineEndDate ? parseLocalDate(timelineEndDate) : null;
+
+    // If we have events, ensure the range includes all of them
+    if (events.length > 0) {
+      const eventDates = events.map(e => parseLocalDate(e.date));
+      const earliestEventDate = new Date(Math.min(...eventDates.map(d => d.getTime())));
+      const latestEventDate = new Date(Math.max(...eventDates.map(d => d.getTime())));
+
+      // Extend range to include events outside timeline bounds
+      if (startDate && earliestEventDate < startDate) {
+        startDate = earliestEventDate;
+      }
+      if (endDate && latestEventDate > endDate) {
+        endDate = latestEventDate;
+      }
+
+      // If no timeline dates, use event-based range
+      if (!startDate) startDate = earliestEventDate;
+      if (!endDate) endDate = latestEventDate;
     }
-    // Fallback to event-based calculation
-    return calculateEventBasedDateRange(events);
+
+    // Return null if we still have no valid range
+    if (!startDate || !endDate) {
+      return calculateEventBasedDateRange(events);
+    }
+
+    return { startDate, endDate };
   }, [events, timelineStartDate, timelineEndDate]);
 
   // Check if today falls within the timeline's date range
