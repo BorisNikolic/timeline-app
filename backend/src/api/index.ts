@@ -8,6 +8,7 @@ import memberRoutes from './members';
 import userRoutes from './users';
 import dashboardRoutes from './dashboard';
 import preferencesRoutes from './preferences';
+import { timelineInvitationsRouter, publicInvitationsRouter } from './invitations';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.get('/', (_req, res) => {
       users: '/api/users',
       dashboard: '/api/dashboard',
       preferences: '/api/preferences',
+      invitations: '/api/invitations',
     },
   });
 });
@@ -35,8 +37,10 @@ router.use('/categories', categoryRoutes);
 router.use('/export', exportRoutes);
 router.use('/timelines', timelineRoutes);
 router.use('/timelines/:timelineId/members', memberRoutes);
+router.use('/timelines/:timelineId/invitations', timelineInvitationsRouter);
 router.use('/users', userRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/preferences', preferencesRoutes);
+router.use('/invitations', publicInvitationsRouter);
 
 export default router;

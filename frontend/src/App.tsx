@@ -8,14 +8,16 @@ import AuthPage from './pages/Auth';
 import TimelineSettingsPage from './pages/TimelineSettingsPage';
 import DashboardPage from './pages/DashboardPage';
 import ArchivePage from './pages/ArchivePage';
+import InviteAcceptPage from './components/invitations/InviteAcceptPage';
 
 function App() {
   return (
     <AuthProvider>
       <Toaster position="top-right" />
       <Routes>
-        {/* Public route */}
+        {/* Public routes */}
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/invite/:token" element={<InviteAcceptPage />} />
 
         {/* Protected routes */}
         <Route

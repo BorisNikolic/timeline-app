@@ -66,7 +66,7 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
       className="relative border-b-2 border-gray-300 timeline-swimlane-bg transition-all duration-300"
       style={{
         '--swimlane-bg-color': hexToRgba(category.color, 0.03),
-        minWidth: '100%',
+        width: '100%',
         height: `${laneHeight}px`
       } as React.CSSProperties}
     >
@@ -147,11 +147,10 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
       {/* Swimlane content area (for event cards) - hidden when collapsed */}
       {!effectivelyCollapsed && (
         <div
-          className="relative"
+          className="absolute top-0 bottom-0"
           style={{
-            marginLeft: 'var(--category-header-width, 192px)',
-            minWidth: '100%',
-            height: `${laneHeight}px`,
+            left: 'var(--category-header-width, 192px)',
+            right: 0,
             zIndex: 1
           }}
         >

@@ -11,6 +11,8 @@ import { TimelineForm } from '../components/shared/TimelineForm';
 import { DeleteTimelineConfirmDialog } from '../components/shared/DeleteTimelineConfirmDialog';
 import MemberList from '../components/members/MemberList';
 import InviteMemberModal from '../components/members/InviteMemberModal';
+import InviteByEmailModal from '../components/invitations/InviteByEmailModal';
+import PendingInvitesList from '../components/invitations/PendingInvitesList';
 import {
   useTimeline,
   useUpdateTimeline,
@@ -44,6 +46,7 @@ export function TimelineSettingsPage() {
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showEmailInviteModal, setShowEmailInviteModal] = useState(false);
 
   // Only admins can access settings
   if (role && role !== 'Admin') {
@@ -320,25 +323,47 @@ export function TimelineSettingsPage() {
             </p>
           </div>
           {role === 'Admin' && (
-            <button
-              onClick={() => setShowInviteModal(true)}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <svg
-                className="w-4 h-4 mr-1.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowEmailInviteModal(true)}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              Invite Member
-            </button>
+                <svg
+                  className="w-4 h-4 mr-1.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                Invite via Email
+              </button>
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                title="Add existing user"
+              >
+                <svg
+                  className="w-4 h-4 mr-1.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                  />
+                </svg>
+                Add User
+              </button>
+            </div>
           )}
         </div>
 
@@ -349,6 +374,11 @@ export function TimelineSettingsPage() {
           currentUserRole={role || 'Viewer'}
           isLoading={isMembersLoading}
         />
+
+        {/* Pending Invitations (Admin only) */}
+        {role === 'Admin' && (
+          <PendingInvitesList timelineId={timelineId!} />
+        )}
 
         {/* Leave Timeline (for non-owners) */}
         {user && timeline.ownerId !== user.id && (
@@ -394,10 +424,17 @@ export function TimelineSettingsPage() {
         isDeleting={isDeleting}
       />
 
-      {/* Invite Member Modal */}
+      {/* Invite Member Modal (for existing users) */}
       <InviteMemberModal
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
+        timelineId={timelineId!}
+      />
+
+      {/* Invite via Email Modal */}
+      <InviteByEmailModal
+        isOpen={showEmailInviteModal}
+        onClose={() => setShowEmailInviteModal(false)}
         timelineId={timelineId!}
       />
     </div>

@@ -1,0 +1,453 @@
+openapi: 3.0.3
+info:
+  title: Timeline Invitations API
+  description: API endpoints for email-based timeline invitations
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+
+paths:
+  /timelines/{timelineId}/invitations:
+    get:
+      summary: List pending invitations for a timeline
+      description: Returns all pending invitations for a timeline. Requires Admin role.
+      operationId: listInvitations
+      tags:
+        - Invitations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timelineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Timeline ID
+      responses:
+        '200':
+          description: List of pending invitations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invitations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InvitationPublic'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      summary: Create an email invitation
+      description: |
+        Send an invitation email to join the timeline.
+        - If email belongs to existing user, they'll be added on click
+        - If email is new, they'll register and be added
+        - Duplicate pending invitations update role and resend email
+        Requires Admin role.
+      operationId: createInvitation
+      tags:
+        - Invitations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timelineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvitationRequest'
+      responses:
+        '201':
+          description: Invitation created and email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationPublic'
+        '400':
+          description: Invalid email format or user already a member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: Email sending failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /timelines/{timelineId}/invitations/{invitationId}:
+    delete:
+      summary: Cancel a pending invitation
+      description: Cancels a pending invitation and invalidates the token. Requires Admin role.
+      operationId: cancelInvitation
+      tags:
+        - Invitations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timelineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Invitation cancelled
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /timelines/{timelineId}/invitations/{invitationId}/resend:
+    post:
+      summary: Resend invitation email
+      description: Resends the invitation email without changing the token or expiration. Requires Admin role.
+      operationId: resendInvitation
+      tags:
+        - Invitations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timelineId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Email resent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationPublic'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Email sending failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invitations/validate/{token}:
+    get:
+      summary: Validate an invitation token
+      description: |
+        Validates the token and returns invitation details.
+        Used by frontend to determine the correct flow (register vs login).
+        Does not require authentication.
+      operationId: validateInvitation
+      tags:
+        - Invitations
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 40
+            maxLength: 50
+          description: The invitation token from the email link
+      responses:
+        '200':
+          description: Token validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationValidation'
+        '400':
+          description: Invalid token format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invitations/accept/{token}:
+    post:
+      summary: Accept an invitation
+      description: |
+        Accepts the invitation and adds the user to the timeline.
+        - For existing users: Must be authenticated as the invited email
+        - For new users: Creates account and adds to timeline
+
+        Different request body based on user type.
+      operationId: acceptInvitation
+      tags:
+        - Invitations
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 40
+            maxLength: 50
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/AcceptExistingUser'
+                - $ref: '#/components/schemas/AcceptNewUser'
+      responses:
+        '200':
+          description: Invitation accepted, user added to timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptInvitationResponse'
+        '400':
+          description: Token invalid, expired, or email mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                example:
+                  error: 'INVITATION_EXPIRED'
+                  message: 'This invitation has expired. Please request a new invitation from the timeline admin.'
+        '409':
+          description: User already a member of this timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateInvitationRequest:
+      type: object
+      required:
+        - email
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address to send invitation to
+          example: 'collaborator@example.com'
+        role:
+          type: string
+          enum: [Admin, Editor, Viewer]
+          description: Role to assign when invitation is accepted
+          example: 'Editor'
+
+    InvitationPublic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [Admin, Editor, Viewer]
+        status:
+          type: string
+          enum: [pending, accepted, expired, cancelled]
+        timelineId:
+          type: string
+          format: uuid
+        timelineName:
+          type: string
+        invitedByName:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    InvitationValidation:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: Whether the token is valid and not expired
+        expired:
+          type: boolean
+          description: True if token was valid but has expired
+        email:
+          type: string
+          format: email
+          description: The invited email address
+        role:
+          type: string
+          enum: [Admin, Editor, Viewer]
+        timelineId:
+          type: string
+          format: uuid
+        timelineName:
+          type: string
+        inviterName:
+          type: string
+        isExistingUser:
+          type: boolean
+          description: True if email belongs to an existing user account
+
+    AcceptExistingUser:
+      type: object
+      description: Request body for existing users (authenticated)
+      properties: {}
+      # Empty body - user identity comes from JWT
+
+    AcceptNewUser:
+      type: object
+      description: Request body for new user registration via invitation
+      required:
+        - name
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: User's display name
+          example: 'Jane Doe'
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          description: User's chosen password
+          example: 'SecureP@ss123'
+
+    AcceptInvitationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/UserPublic'
+        timeline:
+          $ref: '#/components/schemas/TimelinePublic'
+        role:
+          type: string
+          enum: [Admin, Editor, Viewer]
+        token:
+          type: string
+          description: JWT token (only for new user registration)
+
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+
+    TimelinePublic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_TOKEN
+            - INVITATION_EXPIRED
+            - INVITATION_CANCELLED
+            - EMAIL_MISMATCH
+            - ALREADY_MEMBER
+            - EMAIL_SEND_FAILED
+            - VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            example:
+              error: 'UNAUTHORIZED'
+              message: 'Authentication required'
+
+    Forbidden:
+      description: User does not have required role
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            example:
+              error: 'FORBIDDEN'
+              message: 'Admin role required'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            example:
+              error: 'NOT_FOUND'
+              message: 'Invitation not found'
