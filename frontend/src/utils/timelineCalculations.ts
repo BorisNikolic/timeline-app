@@ -23,7 +23,7 @@ export const ZOOM_TO_GRANULARITY: Record<ZoomLevel, Granularity> = {
 export const ZOOM_TO_CARD_VARIANT: Record<ZoomLevel, CardVariant> = {
   day: 'full',      // Full cards with all details
   week: 'mini',     // Mini cards with title + priority dot
-  month: 'dot',     // Compact dots with tooltip
+  month: 'mini',    // Mini cards for better scanability (changed from dot)
   quarter: 'dot',   // Compact dots with tooltip
   year: 'dot'       // Compact dots with tooltip
 };
@@ -46,10 +46,10 @@ export const CARD_CONFIGS: Record<CardVariant, CardConfig> = {
   },
   dot: {
     variant: 'dot',
-    width: 14,
-    height: 14,
-    stackOffsetX: 6,
-    stackOffsetY: 8
+    width: 24,
+    height: 24,
+    stackOffsetX: 10,
+    stackOffsetY: 12
   }
 };
 
@@ -263,16 +263,6 @@ export function calculateEventPositions(
     // Calculate X position for the date (this is the left edge position, not center)
     const dateX = calculateEventX(eventDate, startDate, endDate, pixelsPerDay);
 
-    // DEBUG: Log position calculation for each date group (temporary - for production debugging)
-    console.log('📍 Position calc:', {
-      dateKey,
-      eventDateMs: eventDate.getTime(),
-      startMs: startDate.getTime(),
-      endMs: endDate.getTime(),
-      pixelsPerDay,
-      dateX: dateX.toFixed(2)
-    });
-
     // Calculate date-based z-index: later dates get higher z-index so they appear on top when overlapping
     const daysFromStart = Math.max(0, Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
     const dateZIndexOffset = daysFromStart * 10; // 10 z-index units per day
@@ -340,23 +330,6 @@ export function calculateEventPositions(
       // Use zoom-aware stack offsets from card config
       const xPosition = dateX + (stackIndex * cardConfig.stackOffsetX);
       const yOffset = stackIndex * cardConfig.stackOffsetY; // Higher cards offset more
-
-      // Debug: Log event position for today's events
-      if (import.meta.env.MODE !== 'production' && stackIndex === 0) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (eventDate.getTime() === today.getTime()) {
-          console.log('📍 Event card position (today):', {
-            title: event.title,
-            date: eventDate.toISOString(),
-            dateX: dateX.toFixed(2),
-            stackIndex,
-            horizontalOffset: (stackIndex * cardConfig.stackOffsetX),
-            finalX: xPosition.toFixed(2),
-            cardVariant: cardConfig.variant
-          });
-        }
-      }
 
       // z-index: later dates on top, within same date bottom card has highest
       const zIndex = 10 + dateZIndexOffset + (totalCardsInStack - stackIndex);
@@ -426,9 +399,6 @@ export function calculateEventPositions(
       console.warn(`⚠️ Position calculation took ${measure.duration.toFixed(2)}ms (target: <100ms)`);
     }
   }
-
-  // DEBUG: Log final positions (temporary - for production debugging)
-  console.log('📊 Final positions:', positions.map(p => `${p.title.substring(0, 15)}@x=${p.xPosition.toFixed(0)}`).join(', '));
 
   return positions;
 }

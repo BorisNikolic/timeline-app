@@ -7,7 +7,7 @@ import { ViewToggle } from '../components/timeline/ViewToggle';
 import { ChronologicalTimeline } from '../components/timeline/ChronologicalTimeline';
 import { useTimelineViewState } from '../hooks/useTimelineViewState';
 import { useTimelineEvents, useDeleteTimelineEvent } from '../hooks/useEvents';
-import { useCategories } from '../hooks/useCategories';
+import { useTimelineCategories } from '../hooks/useCategories';
 import EventDetailView from '../components/events/EventDetailView';
 import DeleteConfirmDialog from '../components/shared/DeleteConfirmDialog';
 import { EventWithDetails, CreateEventDto } from '../types/Event';
@@ -121,7 +121,7 @@ function TimelinePage() {
 
   // Data hooks - use timeline-scoped hooks
   const { data: events = [], isLoading: eventsLoading, error: eventsError } = useTimelineEvents(effectiveTimelineId);
-  const { categories } = useCategories();
+  const { data: categories = [] } = useTimelineCategories(effectiveTimelineId);
   const deleteEvent = useDeleteTimelineEvent(effectiveTimelineId || '');
 
   // Search functionality

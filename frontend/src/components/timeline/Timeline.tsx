@@ -75,10 +75,16 @@ function Timeline({ events: propsEvents, timelineId, timelineStatus }: TimelineP
     return grouped;
   }, [events]);
 
+  // Filter categories to only include those with events
+  // This fixes the virtual scrolling issue where empty categories cause layout problems
+  const categoriesWithEvents = useMemo(() => {
+    return categories.filter(cat => eventsByCategory.has(cat.id) && eventsByCategory.get(cat.id)!.length > 0);
+  }, [categories, eventsByCategory]);
+
   // Scroll indicator tracking for category lanes (when not using virtual scrolling)
   useEffect(() => {
     const container = categoriesContainerRef.current;
-    if (!container || categories.length === 0) {
+    if (!container || categoriesWithEvents.length === 0) {
       setShowScrollIndicator(false);
       return;
     }
@@ -105,7 +111,7 @@ function Timeline({ events: propsEvents, timelineId, timelineStatus }: TimelineP
       // Show indicator if there's significant content below and we're not at bottom
       if (!isNearBottom && contentBelow > 100) {
         // Estimate how many categories are below based on average visible height
-        const avgCategoryHeight = scrollHeight / categories.length;
+        const avgCategoryHeight = scrollHeight / categoriesWithEvents.length;
         const estimatedHiddenCategories = Math.max(1, Math.ceil(contentBelow / avgCategoryHeight));
         setHiddenCategoriesCount(estimatedHiddenCategories);
         setShowScrollIndicator(true);
@@ -156,7 +162,7 @@ function Timeline({ events: propsEvents, timelineId, timelineStatus }: TimelineP
 
   // Virtual scrolling row renderer for category lanes
   const CategoryRow = ({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const category = categories[index];
+    const category = categoriesWithEvents[index];
     const categoryEvents = eventsByCategory.get(category.id) || [];
 
     return (
@@ -176,10 +182,10 @@ function Timeline({ events: propsEvents, timelineId, timelineStatus }: TimelineP
   return (
     <div className="space-y-6 relative">
       {/* Virtual scrolling for category lanes when we have many categories */}
-      {categories.length > 10 ? (
+      {categoriesWithEvents.length > 10 ? (
         <List
           height={600}
-          itemCount={categories.length}
+          itemCount={categoriesWithEvents.length}
           itemSize={200}
           width="100%"
         >
@@ -190,7 +196,7 @@ function Timeline({ events: propsEvents, timelineId, timelineStatus }: TimelineP
           ref={categoriesContainerRef}
           className="space-y-6 max-h-[80vh] overflow-y-auto"
         >
-          {categories.map((category) => {
+          {categoriesWithEvents.map((category) => {
             const categoryEvents = eventsByCategory.get(category.id) || [];
             return (
               <CategoryLane
