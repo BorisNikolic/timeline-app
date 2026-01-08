@@ -30,14 +30,18 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
   pixelsPerDay,
   onEventClick
 }) => {
-  // Auto-collapse empty lanes by default
-  const [isCollapsed, setIsCollapsed] = useState(events.length === 0);
+  // All categories start expanded, empty categories are always collapsed (no toggle)
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Empty categories are always collapsed and cannot be expanded
+  const isEmpty = events.length === 0;
+  const effectivelyCollapsed = isEmpty || isCollapsed;
 
   // Calculate dynamic height based on event count
   const laneHeight = useMemo(() => {
-    if (isCollapsed) return 48;
+    if (effectivelyCollapsed) return 48;
     return calculateLaneHeight(events.length);
-  }, [events.length, isCollapsed]);
+  }, [events.length, effectivelyCollapsed]);
   // Calculate positions for all events in this swimlane
   const eventPositions = useMemo(() => {
     // Add category color to events for TimelineEventCard
@@ -77,16 +81,33 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
         }}
       >
         <div className="flex items-center gap-2 w-full">
-          {/* Collapse/Expand button for empty lanes or clickable indicator */}
-          {events.length === 0 ? (
+          {isEmpty ? (
+            /* Empty category - collapsed only, no toggle */
+            <>
+              {/* Category color indicator */}
+              <div
+                className="w-4 h-4 rounded shadow-sm flex-shrink-0 opacity-50"
+                style={{ backgroundColor: category.color }}
+                aria-hidden="true"
+              />
+
+              {/* Category name */}
+              <div className="font-semibold text-sm text-gray-400 truncate flex-1">
+                {category.name}
+              </div>
+
+              <span className="text-xs text-gray-400 whitespace-nowrap">0 events</span>
+            </>
+          ) : (
+            /* Category with events - collapsible */
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="flex items-center gap-2 w-full group"
+              className="flex items-center gap-2 w-full group hover:bg-black/5 rounded -mx-1 px-1 py-0.5 transition-colors"
               title={isCollapsed ? 'Click to expand' : 'Click to collapse'}
             >
               {/* Chevron indicator */}
               <svg
-                className={`w-4 h-4 text-gray-400 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
+                className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isCollapsed ? '' : 'rotate-90'}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -96,50 +117,35 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
 
               {/* Category color indicator */}
               <div
-                className="w-4 h-4 rounded shadow-sm flex-shrink-0"
-                style={{ backgroundColor: category.color }}
-                aria-hidden="true"
-              />
-
-              {/* Category name */}
-              <div className="text-left flex-1 min-w-0">
-                <div className="font-semibold text-sm text-gray-900 truncate">
-                  {category.name}
-                </div>
-                {!isCollapsed && (
-                  <div className="text-xs text-gray-400">No events</div>
-                )}
-              </div>
-
-              {isCollapsed && (
-                <span className="text-xs text-gray-400 whitespace-nowrap">0 events</span>
-              )}
-            </button>
-          ) : (
-            <>
-              {/* Category color indicator */}
-              <div
                 className="w-5 h-5 rounded-md shadow-sm flex-shrink-0"
                 style={{ backgroundColor: category.color }}
                 aria-hidden="true"
               />
 
-              {/* Category name */}
-              <div className="min-w-0">
+              {/* Category name and event count */}
+              <div className="text-left min-w-0 flex-1">
                 <div className="font-semibold text-sm text-gray-900 truncate">
                   {category.name}
                 </div>
-                <div className="text-xs text-gray-500">
-                  {events.length} event{events.length !== 1 ? 's' : ''}
-                </div>
+                {!isCollapsed && (
+                  <div className="text-xs text-gray-500">
+                    {events.length} event{events.length !== 1 ? 's' : ''}
+                  </div>
+                )}
               </div>
-            </>
+
+              {isCollapsed && (
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {events.length} event{events.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </button>
           )}
         </div>
       </div>
 
       {/* Swimlane content area (for event cards) - hidden when collapsed */}
-      {!isCollapsed && (
+      {!effectivelyCollapsed && (
         <div
           className="relative"
           style={{
