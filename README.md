@@ -7,6 +7,11 @@ A collaborative web application for managing festival events with visual timelin
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://reactjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
 
+## Live Demo
+
+- **Frontend**: https://borisnikolic.github.io/timeline-app
+- **Backend API**: https://festival-timeline-api.onrender.com
+
 ## Quick Start
 
 ```bash
@@ -39,12 +44,33 @@ bun run dev  # Runs on http://localhost:5173
 
 ## Features
 
-- ✅ **Visual Timeline** - Events organized in horizontal category lanes
-- ✅ **Team Collaboration** - Multiple users manage shared timeline
-- ✅ **Status Tracking** - Progress tracking with statuses and priorities
-- ✅ **Data Export** - CSV and Excel export with complete event data
-- ✅ **Mobile Responsive** - Works on devices 375px+ width
-- ✅ **Virtual Scrolling** - Handles 200+ events smoothly
+### Core Features
+- **Visual Timeline** - Events organized in horizontal category lanes with drag support
+- **Multi-Timeline Support** - Create and manage multiple festival timelines
+- **Team Collaboration** - Invite users via email to collaborate on timelines
+- **Role-Based Access** - Admin, Editor, and Viewer roles with permission enforcement
+- **Status Tracking** - Progress tracking with statuses (Not Started, In Progress, Completed) and priorities (High, Medium, Low)
+- **Data Export** - CSV and Excel export with complete event data
+- **Mobile Responsive** - Works on devices 375px+ width
+- **Virtual Scrolling** - Handles 200+ events smoothly
+
+### Email Invitations (New!)
+- **Invite via Email** - Send invitation links to any email address
+- **New User Registration** - Invitees can create accounts directly from invitation link
+- **Existing User Support** - Existing users are prompted to log in
+- **Role Assignment** - Assign Admin, Editor, or Viewer roles when inviting
+- **Invitation Management** - Resend or cancel pending invitations
+- **Secure Tokens** - 256-bit entropy tokens with bcrypt hashing
+
+### UX Enhancements
+- **Quick Status Toggle** - Click status badge to update in 1 click
+- **Visual Priority Indicators** - Color-coded borders (red=high, yellow=medium, gray=low)
+- **Event Duplication** - Copy events with pre-filled form
+- **Keyboard Shortcuts** - N (new event), / (search), E (export), ESC (close)
+- **Quick Date Presets** - Today, Tomorrow, Next Week, Next Month buttons
+- **Status Dashboard** - Real-time event count aggregation
+- **Text Search** - Filter events by title/description with debouncing
+- **Bulk Status Updates** - Multi-select and batch update events
 
 ## Documentation
 
@@ -56,9 +82,11 @@ bun run dev  # Runs on http://localhost:5173
 
 **Frontend**: React 18, TypeScript, Vite, TailwindCSS, Zustand, React Query, react-window
 
-**Backend**: Bun 1.3+, Express, TypeScript, PostgreSQL 16, Passport.js, JWT, bcrypt
+**Backend**: Bun 1.3+, Express, TypeScript, PostgreSQL 16, Passport.js, JWT, bcrypt, Nodemailer
 
 **Testing**: Vitest, Playwright, React Testing Library, Supertest
+
+**Deployment**: GitHub Pages (frontend), Render (backend API + PostgreSQL)
 
 ## Project Structure
 
@@ -66,8 +94,8 @@ bun run dev  # Runs on http://localhost:5173
 timeline_app/
 ├── backend/           # Express.js API server
 │   ├── src/
-│   │   ├── api/      # Route handlers
-│   │   ├── services/ # Business logic
+│   │   ├── api/      # Route handlers (events, categories, invitations, etc.)
+│   │   ├── services/ # Business logic (EmailService, InvitationService, etc.)
 │   │   ├── db/       # Database migrations and queries
 │   │   └── middleware/
 │   └── .env.example
@@ -78,6 +106,7 @@ timeline_app/
 │   │   ├── services/
 │   │   └── store/
 │   └── .env.example
+├── specs/             # Feature specifications
 ├── CLAUDE.md         # Development guide
 ├── PROJECT.md        # Full documentation
 └── README.md         # This file
@@ -107,10 +136,29 @@ bun run lint          # Check code quality
 
 **Backend (.env)**:
 ```env
-DATABASE_URL=postgresql://timeline_admin:dev_password_123@localhost:5432/festival_timeline
+# Database
+DATABASE_URL=postgresql://localhost/festival_timeline
+
+# Authentication
 JWT_SECRET=your-secret-key-here
+JWT_EXPIRY=24h
+
+# Server
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
+
+# Email (SMTP) - Required for invitation emails
+# Gmail: Use App Password (https://myaccount.google.com/apppasswords)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=your-email@gmail.com
+
+# Frontend URL for invitation links
+# Development: http://localhost:5173
+# Production: https://borisnikolic.github.io/timeline-app
+FRONTEND_URL=http://localhost:5173
 ```
 
 **Frontend (.env)**:
@@ -118,19 +166,53 @@ CORS_ORIGIN=http://localhost:5173
 VITE_API_URL=http://localhost:3000
 ```
 
+## Deployment
+
+### Frontend (GitHub Pages)
+The frontend is deployed to GitHub Pages at https://borisnikolic.github.io/timeline-app
+
+```bash
+cd frontend
+bun run build
+# Deploy dist/ folder to gh-pages branch
+```
+
+### Backend (Render)
+The backend API is deployed to Render at https://festival-timeline-api.onrender.com
+
+Environment variables to configure on Render:
+- `DATABASE_URL` - PostgreSQL connection string (provided by Render PostgreSQL)
+- `JWT_SECRET` - Secure secret for JWT tokens
+- `CORS_ORIGIN` - Frontend URL (https://borisnikolic.github.io)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` - Email configuration
+- `FRONTEND_URL` - https://borisnikolic.github.io/timeline-app
+
 ## Implementation Status
 
-✅ **Phase 1-3**: Setup and Foundation (34/34 tasks)
-✅ **User Story 1**: Quick Event Creation (18/18 tasks)
-✅ **User Story 2**: Category Organization (15/15 tasks)
-✅ **User Story 3**: Team Assignment (6/6 tasks)
-✅ **User Story 4**: Status & Priority Tracking (10/10 tasks)
-✅ **User Story 5**: Event Editing & Deletion (10/10 tasks)
-✅ **User Story 6**: Event List View with Sorting (17/17 tasks)
-✅ **User Story 7**: Data Export (11/11 tasks)
-✅ **Phase 10**: Authentication (14/14 tasks)
+### Core Features
+- **Phase 1-3**: Setup and Foundation (34/34 tasks)
+- **User Story 1**: Quick Event Creation (18/18 tasks)
+- **User Story 2**: Category Organization (15/15 tasks)
+- **User Story 3**: Team Assignment (6/6 tasks)
+- **User Story 4**: Status & Priority Tracking (10/10 tasks)
+- **User Story 5**: Event Editing & Deletion (10/10 tasks)
+- **User Story 6**: Event List View with Sorting (17/17 tasks)
+- **User Story 7**: Data Export (11/11 tasks)
+- **Phase 10**: Authentication (14/14 tasks)
 
-**Total**: 136 of 150 tasks (90.7%) - Production ready
+### Feature 001: Multi-Timeline Support
+- Timeline CRUD operations
+- Timeline membership and roles
+- Dashboard with timeline listing
+
+### Feature 002: Email Timeline Invites (New!)
+- Email invitation system with secure tokens
+- New user registration via invitation
+- Existing user invitation flow
+- Invitation management (resend, cancel)
+- Role assignment on invite
+
+**Total**: Production ready
 
 ## Testing
 
@@ -159,6 +241,11 @@ cd frontend && bun run test:e2e
 - Ensure JWT_SECRET is set in backend/.env
 - Check CORS_ORIGIN matches frontend URL
 
+**Email not sending**:
+- Verify SMTP credentials in backend/.env
+- For Gmail, use App Password (not regular password)
+- Check SMTP_HOST is correct (smtp.gmail.com for Gmail)
+
 See [CLAUDE.md](CLAUDE.md) for detailed troubleshooting guide.
 
 ## Contributing
@@ -182,4 +269,4 @@ For development guidance, see:
 
 ---
 
-**Version**: 1.0.0 | **Status**: Production Ready | **Last Updated**: 2025-10-18
+**Version**: 1.1.0 | **Status**: Production Ready | **Last Updated**: 2026-01-08
