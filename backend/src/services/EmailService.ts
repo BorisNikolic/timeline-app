@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { MemberRole } from '../types/timeline';
 
 interface InvitationEmailData {
@@ -10,39 +10,26 @@ interface InvitationEmailData {
 }
 
 export class EmailService {
-  private transporter: nodemailer.Transporter | null = null;
+  private resend: Resend | null = null;
   private frontendUrl: string;
   private fromAddress: string;
 
   constructor() {
     this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    this.fromAddress = process.env.SMTP_FROM || 'noreply@festival-timeline.app';
-    this.initializeTransporter();
+    this.fromAddress = process.env.EMAIL_FROM || 'Festival Timeline <onboarding@resend.dev>';
+    this.initializeResend();
   }
 
-  private initializeTransporter(): void {
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+  private initializeResend(): void {
+    const apiKey = process.env.RESEND_API_KEY;
 
-    // Skip if no SMTP configuration (dev mode without email)
-    if (!smtpHost) {
-      console.warn('EmailService: No SMTP_HOST configured. Emails will be logged but not sent.');
+    if (!apiKey) {
+      console.warn('EmailService: No RESEND_API_KEY configured. Emails will be logged but not sent.');
       return;
     }
 
-    const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-    const smtpSecure = process.env.SMTP_SECURE === 'true';
-
-    this.transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: smtpUser && smtpPass ? {
-        user: smtpUser,
-        pass: smtpPass,
-      } : undefined,
-    });
+    this.resend = new Resend(apiKey);
+    console.log('EmailService: Resend initialized successfully');
   }
 
   /**
@@ -63,8 +50,8 @@ export class EmailService {
     const textContent = this.generateTextEmail(inviterName, timelineName, role, inviteLink);
     const htmlContent = this.generateHtmlEmail(inviterName, timelineName, role, inviteLink);
 
-    // If no transporter, log the email for development
-    if (!this.transporter) {
+    // If no Resend client, log the email for development
+    if (!this.resend) {
       console.log('==== EMAIL (DEV MODE - NOT SENT) ====');
       console.log(`To: ${to}`);
       console.log(`Subject: ${subject}`);
@@ -74,21 +61,20 @@ export class EmailService {
     }
 
     try {
-      const info = await this.transporter.sendMail({
+      const { data: result, error } = await this.resend.emails.send({
         from: this.fromAddress,
-        to,
+        to: [to],
         subject,
         text: textContent,
         html: htmlContent,
       });
 
-      console.log(`Invitation email sent to ${to}. Message ID: ${info.messageId}`);
-
-      // For Ethereal, log the preview URL
-      if (process.env.SMTP_HOST === 'smtp.ethereal.email') {
-        console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+      if (error) {
+        console.error('Failed to send invitation email:', error);
+        return false;
       }
 
+      console.log(`Invitation email sent to ${to}. Message ID: ${result?.id}`);
       return true;
     } catch (error) {
       console.error('Failed to send invitation email:', error);
@@ -123,7 +109,6 @@ If you don't recognize this invitation, you can safely ignore this email.
     inviteLink: string
   ): string {
     // Using inline styles for maximum email client compatibility
-    // Email clients often strip <style> blocks and override link colors
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -136,7 +121,7 @@ If you don't recognize this invitation, you can safely ignore this email.
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
   <div style="background-color: #f3f4f6; border-radius: 12px; padding: 32px;">
     <div style="text-align: center; margin-bottom: 24px;">
-      <h1 style="color: #111827; font-size: 28px; font-weight: 700; margin: 0;">🎪 Timeline Invitation</h1>
+      <h1 style="color: #111827; font-size: 28px; font-weight: 700; margin: 0;">Timeline Invitation</h1>
     </div>
     <div style="background-color: #ffffff; border-radius: 8px; padding: 28px; margin-bottom: 24px; border: 1px solid #e5e7eb;">
       <p style="margin: 0 0 16px 0; color: #374151; font-size: 16px;">Hi,</p>
@@ -194,19 +179,14 @@ If you don't recognize this invitation, you can safely ignore this email.
   }
 
   /**
-   * Verify the transporter connection (useful for health checks)
+   * Verify the Resend connection (useful for health checks)
    */
   async verifyConnection(): Promise<boolean> {
-    if (!this.transporter) {
+    if (!this.resend) {
       return false;
     }
-    try {
-      await this.transporter.verify();
-      return true;
-    } catch (error) {
-      console.error('SMTP connection verification failed:', error);
-      return false;
-    }
+    // Resend doesn't have a verify method, but we can check if the client exists
+    return true;
   }
 }
 
