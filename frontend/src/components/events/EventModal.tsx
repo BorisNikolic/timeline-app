@@ -66,6 +66,7 @@ function EventModal({ isOpen, onClose, timelineId, event, duplicateData, timelin
             isLoading={isEditMode ? updateEvent.isPending : createEvent.isPending}
             mode={isEditMode ? 'edit' : 'create'}
             timelineStatus={timelineStatus}
+            timelineId={timelineId}
             initialData={
               isEditMode
                 ? {

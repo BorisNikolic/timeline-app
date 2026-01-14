@@ -9,6 +9,7 @@ export const EVENT_CARD_HEIGHT = 80; // pixels
 export const STACK_SPACING = 8; // pixels between stacked cards
 export const MAX_STACK_COUNT = 10; // Maximum events to stack before showing overflow indicator
 export const CATEGORY_HEADER_WIDTH_PX = 192; // Match Tailwind w-48 (12rem = 192px)
+export const TIMELINE_END_BUFFER_PX = 150; // Buffer at end of timeline to ensure last-day events are fully visible
 
 // Zoom level to granularity mapping
 export const ZOOM_TO_GRANULARITY: Record<ZoomLevel, Granularity> = {
@@ -76,18 +77,26 @@ export function getCardConfigForZoom(zoomLevel: ZoomLevel): CardConfig {
 }
 
 /**
- * Parse a date-only string (YYYY-MM-DD) as local midnight
- * Avoids timezone shifts by forcing local timezone interpretation
+ * Parse a date string as local midnight
+ * Handles both YYYY-MM-DD format and full ISO strings with timezone
  * @param dateString Date string in YYYY-MM-DD format or ISO string
  * @returns Date object at local midnight
  */
 function parseLocalDate(dateString: string): Date {
-  // If it's already an ISO string with time, extract just the date part
-  const dateOnly = dateString.split('T')[0];
+  // Check if it's a full ISO string with time component
+  if (dateString.includes('T')) {
+    // Parse the full ISO string first to get correct local date
+    const date = new Date(dateString);
+    // Extract local date components (not UTC!)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    // Return local midnight of the local date
+    return new Date(`${year}-${month}-${day}T00:00:00`);
+  }
 
-  // Append T00:00:00 to force local timezone interpretation
-  // "2024-12-18" -> "2024-12-18T00:00:00" -> local midnight (not UTC)
-  return new Date(dateOnly + 'T00:00:00');
+  // For date-only strings (YYYY-MM-DD), append T00:00:00 for local interpretation
+  return new Date(dateString + 'T00:00:00');
 }
 
 /**

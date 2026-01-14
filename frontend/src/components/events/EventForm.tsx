@@ -1,7 +1,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { EventStatus, EventPriority, CreateEventDto, OutcomeTag } from '../../types/Event';
 import { TimelineStatus } from '../../types/timeline';
-import { useCategories } from '../../hooks/useCategories';
+import { useTimelineCategories } from '../../hooks/useCategories';
 import QuickDatePresets from './QuickDatePresets';
 import RetroNotesField from './RetroNotesField';
 import OutcomeTagSelector from './OutcomeTagSelector';
@@ -14,6 +14,7 @@ interface EventFormProps {
   timelineStatus?: TimelineStatus; // Show retro fields when Completed or Archived
   mode?: 'create' | 'edit';
   onRetroUpdate?: (data: { retroNotes?: string; outcomeTag?: OutcomeTag | null }) => void;
+  timelineId: string; // Required for fetching timeline-specific categories
 }
 
 function EventForm({
@@ -24,8 +25,9 @@ function EventForm({
   timelineStatus,
   mode = 'create',
   onRetroUpdate,
+  timelineId,
 }: EventFormProps) {
-  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { data: categories = [], isLoading: categoriesLoading } = useTimelineCategories(timelineId);
 
   // Determine if retrospective fields should be shown (only on Completed/Archived timelines in edit mode)
   const showRetroFields = mode === 'edit' && (timelineStatus === 'Completed' || timelineStatus === 'Archived');

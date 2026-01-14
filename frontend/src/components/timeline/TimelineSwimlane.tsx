@@ -2,22 +2,53 @@
 // Category lane with positioned event cards
 
 import React, { useMemo, useState } from 'react';
-import type { TimelineSwimlaneProps } from '../../types/timeline';
+import type { TimelineSwimlaneProps, ZoomLevel } from '../../types/timeline';
 import { TimelineEventCard } from './TimelineEventCard';
-import { calculateEventPositions } from '../../utils/timelineCalculations';
+import { calculateEventPositions, getCardConfigForZoom } from '../../utils/timelineCalculations';
 
 /**
- * Calculate dynamic lane height based on event count
- * - Empty (0 events): collapsed by default
- * - Sparse (1-2 events): 96px
- * - Normal (3-5 events): 160px
- * - Dense (6+ events): 224px
+ * Calculate the maximum number of events on any single date
+ * This determines how many cards need to stack vertically
  */
-function calculateLaneHeight(eventCount: number): number {
-  if (eventCount === 0) return 48; // Collapsed height
-  if (eventCount <= 2) return 96;
-  if (eventCount <= 5) return 160;
-  return 224;
+function calculateMaxEventsPerDate(events: any[]): number {
+  if (events.length === 0) return 0;
+
+  const eventsByDate = new Map<string, number>();
+  events.forEach(event => {
+    const dateKey = event.date.split('T')[0]; // Extract YYYY-MM-DD
+    eventsByDate.set(dateKey, (eventsByDate.get(dateKey) || 0) + 1);
+  });
+
+  return Math.max(...eventsByDate.values());
+}
+
+/**
+ * Calculate dynamic lane height based on max stacking depth and zoom level
+ * Uses actual card dimensions from config to ensure stacked cards fit
+ * - Empty (0 events): collapsed by default
+ * - Height based on actual stack dimensions (stackOffsetY * count + cardHeight)
+ */
+function calculateLaneHeight(maxStackDepth: number, zoomLevel: ZoomLevel = 'week'): number {
+  if (maxStackDepth === 0) return 48; // Collapsed height
+
+  // Get actual card dimensions for this zoom level
+  const cardConfig = getCardConfigForZoom(zoomLevel);
+  const { height: cardHeight, stackOffsetY } = cardConfig;
+
+  // Calculate total stack height: (n-1) offsets + one full card height
+  // Stack goes: card0 at 0, card1 at stackOffsetY, card2 at 2*stackOffsetY, etc.
+  const visibleCards = Math.min(maxStackDepth, 10); // Cap at MAX_STACK_COUNT
+  const totalStackHeight = (visibleCards - 1) * stackOffsetY + cardHeight;
+
+  // Add padding: cards are centered, so we need space above and below
+  // The stack extends upward from centerline, plus some bottom padding
+  const padding = 40; // Buffer for visual breathing room
+  const laneHeight = totalStackHeight + padding;
+
+  // Minimum heights per zoom level for good appearance
+  const minHeight = zoomLevel === 'day' ? 120 : 96;
+
+  return Math.max(minHeight, laneHeight);
 }
 
 export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
@@ -37,11 +68,14 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
   const isEmpty = events.length === 0;
   const effectivelyCollapsed = isEmpty || isCollapsed;
 
-  // Calculate dynamic height based on event count
+  // Calculate max stacking depth (max events on same date)
+  const maxStackDepth = useMemo(() => calculateMaxEventsPerDate(events), [events]);
+
+  // Calculate dynamic height based on max stacking depth and zoom level
   const laneHeight = useMemo(() => {
     if (effectivelyCollapsed) return 48;
-    return calculateLaneHeight(events.length);
-  }, [events.length, effectivelyCollapsed]);
+    return calculateLaneHeight(maxStackDepth, zoomLevel);
+  }, [maxStackDepth, effectivelyCollapsed, zoomLevel]);
   // Calculate positions for all events in this swimlane
   const eventPositions = useMemo(() => {
     // Add category color to events for TimelineEventCard
@@ -154,14 +188,7 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
             zIndex: 1
           }}
         >
-        {/* Centerline */}
-        <div
-          className="absolute top-1/2 left-0 right-0 h-px bg-gray-300"
-          style={{ transform: 'translateY(-50%)' }}
-          aria-hidden="true"
-        />
-
-        {/* Event cards */}
+        {/* Event cards - positioned from top, stacking downward */}
         {eventPositions.map((eventPos) => {
           // Check if this is an overflow indicator or cluster
           const isOverflow = eventPos.eventId.startsWith('overflow-');

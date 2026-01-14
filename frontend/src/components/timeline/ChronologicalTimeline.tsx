@@ -16,7 +16,8 @@ import {
   getPixelsPerDay,
   calculateTimelineWidth,
   calculateEventX,
-  CATEGORY_HEADER_WIDTH_PX
+  CATEGORY_HEADER_WIDTH_PX,
+  TIMELINE_END_BUFFER_PX
 } from '../../utils/timelineCalculations';
 import '../../styles/timeline-animations.css';
 
@@ -44,8 +45,19 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
 
   // Helper to parse ISO date string as local midnight
   const parseLocalDate = (dateString: string): Date => {
-    const dateOnly = dateString.split('T')[0];
-    return new Date(dateOnly + 'T00:00:00');
+    // Check if it's a full ISO string with time component
+    if (dateString.includes('T')) {
+      // Parse the full ISO string first to get correct local date
+      const date = new Date(dateString);
+      // Extract local date components (not UTC!)
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      // Return local midnight of the local date
+      return new Date(`${year}-${month}-${day}T00:00:00`);
+    }
+    // For date-only strings (YYYY-MM-DD), append T00:00:00 for local interpretation
+    return new Date(dateString + 'T00:00:00');
   };
 
   // Calculate date range - use timeline dates but extend to include all events
@@ -215,8 +227,48 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
     };
   }, [swimlanes.length]);
 
-  // Calculate total height for NOW line
-  const totalHeight = swimlanes.length * 256 + 64; // swimlane height + axis height
+  // Calculate total height for NOW line based on actual swimlane heights
+  const totalHeight = useMemo(() => {
+    const AXIS_HEIGHT = 96;
+
+    // Calculate max events on same date (matches TimelineSwimlane logic)
+    const calculateMaxEventsPerDate = (evts: any[]): number => {
+      if (evts.length === 0) return 0;
+      const eventsByDate = new Map<string, number>();
+      evts.forEach(event => {
+        const dateKey = event.date.split('T')[0];
+        eventsByDate.set(dateKey, (eventsByDate.get(dateKey) || 0) + 1);
+      });
+      return Math.max(...eventsByDate.values());
+    };
+
+    // Calculate lane height using actual card dimensions (matches TimelineSwimlane)
+    const calculateLaneHeight = (maxStackDepth: number): number => {
+      if (maxStackDepth === 0) return 48;
+
+      // Get card config based on zoom level
+      const cardConfig = zoomLevel === 'day'
+        ? { height: 80, stackOffsetY: 30 }  // full card
+        : zoomLevel === 'week' || zoomLevel === 'month'
+          ? { height: 40, stackOffsetY: 20 }  // mini card
+          : { height: 24, stackOffsetY: 12 }; // dot
+
+      const visibleCards = Math.min(maxStackDepth, 10);
+      const totalStackHeight = (visibleCards - 1) * cardConfig.stackOffsetY + cardConfig.height;
+      const padding = 40;
+      const laneHeight = totalStackHeight + padding;
+      const minHeight = zoomLevel === 'day' ? 120 : 96;
+
+      return Math.max(minHeight, laneHeight);
+    };
+
+    const swimlanesHeight = swimlanes.reduce((total, { events: evts }) => {
+      const maxStackDepth = calculateMaxEventsPerDate(evts);
+      return total + calculateLaneHeight(maxStackDepth);
+    }, 0);
+
+    return swimlanesHeight + AXIS_HEIGHT;
+  }, [swimlanes, zoomLevel, visualScale]);
 
   // Extract dates early (before empty state check), but safely handle null case
   const startDate = dateRange?.startDate;
@@ -254,7 +306,7 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
         <div
           className="relative"
           style={{
-            width: `${timelineWidth}px`,
+            width: `${timelineWidth + CATEGORY_HEADER_WIDTH_PX + TIMELINE_END_BUFFER_PX}px`,
             minWidth: '100%',
             '--category-header-width': '192px'
           } as React.CSSProperties}

@@ -405,16 +405,21 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
     ? xPosition - (cardConfig.width / 2)
     : xPosition;
 
-  const adjustedYPosition = variant === 'dot'
-    ? yPosition + 50 // Smaller offset for dots
-    : yPosition + 60;
+  // Stack offset from calculateEventPositions (stackIndex * stackOffsetY)
+  const stackOffset = yPosition;
+
+  // Position cards from top of lane, stacking downward
+  // This ensures cards stay within the lane bounds regardless of stack size
+  // Top padding of 20px for visual breathing room
+  const topPadding = 20;
+  const topPosition = topPadding + stackOffset;
 
   return (
     <div
       className={`timeline-event-card absolute ${isHovered ? 'transition-all duration-200' : ''}`}
       style={{
         left: `${adjustedXPosition}px`,
-        [isAbove ? 'bottom' : 'top']: `${adjustedYPosition}px`,
+        top: `${topPosition}px`,
         zIndex: isHovered ? 9999 : zIndex,
         width: variant === 'dot' ? `${cardConfig.width}px` : `${width}px`
       }}
