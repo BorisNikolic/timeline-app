@@ -125,7 +125,7 @@ const ClusterPopover: React.FC<{
 
 export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
   event,
-  position,
+  position: _position,
   xPosition,
   yPosition,
   categoryColor,
@@ -136,7 +136,6 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
   onClick,
   onClusterEventClick
 }) => {
-  const isAbove = position === 'above';
   const [isHovered, setIsHovered] = React.useState(false);
   const [showClusterPopover, setShowClusterPopover] = React.useState(false);
   const [anchorRect, setAnchorRect] = React.useState<DOMRect | null>(null);
