@@ -325,6 +325,7 @@ export interface TodayMarker {
 export interface ViewToggleProps {
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
+  timelineId?: string; // For Schedule View navigation link
 }
 
 export interface ChronologicalTimelineProps {

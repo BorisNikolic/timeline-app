@@ -1,5 +1,5 @@
 import { useState, Fragment, useRef, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import Timeline from '../components/timeline/Timeline';
 import EventModal from '../components/events/EventModal';
 import ExportMenu, { ExportMenuRef } from '../components/export/ExportMenu';
@@ -113,6 +113,18 @@ function TimelinePage() {
 
   // Timeline view state
   const { viewMode, setViewMode } = useTimelineViewState();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle view query param from Schedule page navigation
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam === 'category' || viewParam === 'timeline') {
+      setViewMode(viewParam);
+      // Clear the query param after applying
+      searchParams.delete('view');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, setViewMode]);
 
   // Get the effective timeline ID (from URL or store)
   const effectiveTimelineId = timelineId || currentTimelineId;
@@ -228,17 +240,6 @@ function TimelinePage() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Schedule View Link */}
-              <Link
-                to={`/schedule/${effectiveTimelineId}`}
-                className="flex items-center gap-1.5 rounded-lg border-2 border-gray-300 bg-transparent px-3 py-1.5 text-sm font-semibold text-gray-600 transition-all hover:bg-gray-100 hover:border-gray-400"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <span className="hidden sm:inline">Schedule View</span>
-                <span className="sm:hidden">Schedule</span>
-              </Link>
               {canEdit && (
                 <button
                   onClick={() => setIsCategoryManagementOpen(true)}
@@ -272,6 +273,7 @@ function TimelinePage() {
       <ViewToggle
         currentView={viewMode}
         onViewChange={setViewMode}
+        timelineId={effectiveTimelineId}
       />
 
       {/* Conditional Timeline View */}

@@ -40,8 +40,11 @@ export default function EventBar({ event, config, onClick }: EventBarProps) {
         }
       }}
     >
-      {/* Content container */}
-      <div className="h-full flex flex-col justify-center px-2 py-1 text-white">
+      {/* Content container - text shadow for readability on light backgrounds */}
+      <div
+        className="h-full flex flex-col justify-center px-2 py-1 text-white"
+        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+      >
         {/* Event title */}
         <span
           className={`font-medium truncate ${isCompact ? 'text-xs' : 'text-sm'}`}

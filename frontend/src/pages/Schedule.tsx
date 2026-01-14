@@ -37,8 +37,8 @@ export default function SchedulePage() {
   const { setCurrentTimeline, currentTimelineId } = useTimelineStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // State
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // State - initialize with null, will be set to first event date when data loads
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -73,6 +73,7 @@ export default function SchedulePage() {
 
   // Filter events for selected date and convert to schedule events
   const scheduleEvents = useMemo(() => {
+    if (!selectedDate) return [];
     const dayEvents = getEventsForDate(events, selectedDate);
     return toScheduleEvents(dayEvents, config);
   }, [events, selectedDate, config]);
@@ -92,9 +93,19 @@ export default function SchedulePage() {
   // Get dates that have events
   const datesWithEvents = useMemo(() => getUniqueDatesWithEvents(events), [events]);
 
-  // Auto-scroll to current time on initial load
+  // Set initial date to first day with events when data loads
   useEffect(() => {
-    if (isToday(selectedDate) && scrollContainerRef.current) {
+    if (!selectedDate && datesWithEvents.length > 0) {
+      setSelectedDate(datesWithEvents[0]);
+    } else if (!selectedDate && events.length === 0 && !eventsLoading) {
+      // Fallback to today if no events exist
+      setSelectedDate(new Date());
+    }
+  }, [datesWithEvents, selectedDate, events.length, eventsLoading]);
+
+  // Auto-scroll to current time on initial load (only when selected date is today)
+  useEffect(() => {
+    if (selectedDate && isToday(selectedDate) && scrollContainerRef.current) {
       const now = new Date();
       const currentHour = now.getHours();
       const scrollToX = (currentHour - 2) * config.pixelsPerHour; // Show 2 hours before current time
@@ -130,7 +141,7 @@ export default function SchedulePage() {
   };
 
   // Loading state
-  if (timelineLoading || eventsLoading) {
+  if (timelineLoading || eventsLoading || !selectedDate) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
@@ -165,14 +176,6 @@ export default function SchedulePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Link to full Timeline view */}
-            <Link
-              to={`/timeline/${effectiveTimelineId}`}
-              className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              Timeline View
-            </Link>
-
             {/* Add Event button */}
             {canEdit && (
               <button
@@ -186,6 +189,27 @@ export default function SchedulePage() {
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* View Toggle Tabs */}
+      <div className="flex-shrink-0 bg-white px-6">
+        <div className="flex gap-2 border-b border-gray-200">
+          <Link
+            to={`/timeline/${effectiveTimelineId}?view=category`}
+            className="px-4 py-2 font-medium transition-colors border-b-2 -mb-px border-transparent text-gray-500 hover:text-gray-700"
+          >
+            Category View
+          </Link>
+          <Link
+            to={`/timeline/${effectiveTimelineId}?view=timeline`}
+            className="px-4 py-2 font-medium transition-colors border-b-2 -mb-px border-transparent text-gray-500 hover:text-gray-700"
+          >
+            Timeline View
+          </Link>
+          <span className="px-4 py-2 font-medium border-b-2 -mb-px border-indigo-600 text-indigo-600">
+            Schedule View
+          </span>
         </div>
       </div>
 
@@ -216,7 +240,7 @@ export default function SchedulePage() {
           {/* Swimlanes */}
           <div className="relative">
             {/* Now indicator (only on today) */}
-            {isToday(selectedDate) && (
+            {selectedDate && isToday(selectedDate) && (
               <div className="absolute top-0 bottom-0 left-40 z-20">
                 <NowIndicator config={config} />
               </div>
