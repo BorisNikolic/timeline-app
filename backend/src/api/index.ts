@@ -9,6 +9,7 @@ import userRoutes from './users';
 import dashboardRoutes from './dashboard';
 import preferencesRoutes from './preferences';
 import { timelineInvitationsRouter, publicInvitationsRouter } from './invitations';
+import publicRoutes from './public';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.get('/', (_req, res) => {
       dashboard: '/api/dashboard',
       preferences: '/api/preferences',
       invitations: '/api/invitations',
+      public: '/api/public (read-only, no auth required)',
     },
   });
 });
@@ -42,5 +44,8 @@ router.use('/users', userRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/preferences', preferencesRoutes);
 router.use('/invitations', publicInvitationsRouter);
+
+// Public API - READ-ONLY, no authentication required (for mobile app)
+router.use('/public', publicRoutes);
 
 export default router;
