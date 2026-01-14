@@ -226,6 +226,68 @@ export function calculateEventWidth(
 }
 
 /**
+ * Calculate event duration in minutes from start and end time
+ * @returns Duration in minutes, or null if times are invalid/missing
+ */
+export function calculateDurationMinutes(
+  startTime?: string,
+  endTime?: string
+): number | null {
+  if (!startTime || !endTime) return null;
+
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+
+  if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
+    return null;
+  }
+
+  const startMinutes = startHour * 60 + startMinute;
+  const endMinutes = endHour * 60 + endMinute;
+  const duration = endMinutes - startMinutes;
+
+  return duration > 0 ? duration : null;
+}
+
+/**
+ * Format duration for display as badge text
+ * Examples: "30m", "1h", "2h 30m", "4h"
+ */
+export function formatDuration(durationMinutes: number): string {
+  if (durationMinutes < 60) {
+    return `${durationMinutes}m`;
+  }
+
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+
+  if (minutes === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${minutes}m`;
+}
+
+/**
+ * Calculate duration bar width in pixels
+ * This represents the full visual extent of the event duration
+ * Used for the semi-transparent underlay in Day view
+ */
+export function calculateDurationBarWidth(
+  startTime?: string,
+  endTime?: string,
+  pixelsPerDay: number = 100
+): number | null {
+  const durationMinutes = calculateDurationMinutes(startTime, endTime);
+  if (durationMinutes === null) return null;
+
+  const durationHours = durationMinutes / 60;
+  const pixelsPerHour = pixelsPerDay / 24;
+
+  return durationHours * pixelsPerHour;
+}
+
+/**
  * Calculate event positions with cascading stack layout
  * Groups events by date and positions them with diagonal cascading
  * Stack offsets are zoom-aware based on card variant
@@ -349,11 +411,18 @@ export function calculateEventPositions(
       // Calculate card width based on duration (or use zoom-aware default)
       const width = calculateEventWidth(event.time, event.endTime, pixelsPerDay) || cardConfig.width;
 
+      // Calculate duration data for badges and bars
+      const durationMinutes = calculateDurationMinutes(event.time, event.endTime) ?? undefined;
+      const durationBarWidth = zoomLevel === 'day'
+        ? calculateDurationBarWidth(event.time, event.endTime, pixelsPerDay) ?? undefined
+        : undefined;
+
       positions.push({
         eventId: event.id,
         title: event.title.substring(0, 50), // Truncate to 50 chars
         date: eventDate,
         time: event.time,
+        endTime: event.endTime,
         priority: event.priority,
         status: event.status,
         categoryColor: event.categoryColor || '#6366f1', // fallback color
@@ -362,7 +431,9 @@ export function calculateEventPositions(
         position,
         stackIndex,
         zIndex,
-        width
+        width,
+        durationMinutes,
+        durationBarWidth
       });
     });
 

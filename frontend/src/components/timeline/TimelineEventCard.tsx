@@ -21,6 +21,74 @@ const STATUS_ICONS: Record<string, string> = {
   'Completed': '●'
 };
 
+// Format time string to HH:MM (remove seconds if present)
+const formatTime = (time: string): string => {
+  // Handle "HH:MM:SS" or "HH:MM" format
+  const parts = time.split(':');
+  return `${parts[0]}:${parts[1]}`;
+};
+
+// Duration badge component - shows formatted duration (e.g., "30m", "2h", "2h 30m")
+const DurationBadge: React.FC<{
+  durationMinutes: number;
+  variant: 'full' | 'mini';
+}> = ({ durationMinutes, variant }) => {
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+
+  let text: string;
+  if (durationMinutes < 60) {
+    text = `${durationMinutes}m`;
+  } else if (minutes === 0) {
+    text = `${hours}h`;
+  } else {
+    text = `${hours}h ${minutes}m`;
+  }
+
+  const sizeClasses = variant === 'full'
+    ? 'text-[10px] px-1.5 py-0.5'
+    : 'text-[9px] px-1 py-0.5';
+
+  return (
+    <span
+      className={`
+        ${sizeClasses}
+        bg-indigo-100 text-indigo-700
+        rounded font-medium
+        whitespace-nowrap
+        flex-shrink-0
+      `}
+      title={`Duration: ${text}`}
+    >
+      {text}
+    </span>
+  );
+};
+
+// Duration bar underlay - visual extent indicator (Day view only)
+// Shows the full duration of an event as a semi-transparent bar behind the card
+const DurationBarUnderlay: React.FC<{
+  cardWidth: number;
+  durationBarWidth: number;
+  categoryColor: string;
+}> = ({ cardWidth, durationBarWidth, categoryColor }) => {
+  // Only show if duration bar extends beyond the card
+  if (durationBarWidth <= cardWidth) return null;
+
+  return (
+    <div
+      className="duration-bar-underlay absolute top-0 left-0 h-full rounded-lg pointer-events-none"
+      style={{
+        width: `${durationBarWidth}px`,
+        backgroundColor: categoryColor,
+        opacity: 0.15,
+        zIndex: -1
+      }}
+      aria-hidden="true"
+    />
+  );
+};
+
 // Cluster popover component for showing all events in a cluster
 // Uses portal to render at body level, avoiding z-index stacking context issues
 const ClusterPopover: React.FC<{
@@ -132,6 +200,8 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
   stackIndex: _stackIndex,
   zIndex,
   width,
+  durationMinutes,
+  durationBarWidth,
   zoomLevel,
   onClick,
   onClusterEventClick
@@ -145,76 +215,97 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
   const cardConfig = getCardConfigForZoom(zoomLevel);
 
   // Render full card variant (Day zoom level)
-  const renderFullCard = () => (
-    <div
-      onClick={onClick}
-      className={`
-        cursor-pointer bg-white border-2 rounded-lg
-        transition-all duration-200
-        p-2 md:p-3
-        min-h-[44px]
-        ${isHovered ? 'shadow-2xl scale-105' : 'shadow-md hover:shadow-lg'}
-      `}
-      style={{
-        borderLeftColor: categoryColor,
-        borderLeftWidth: '4px',
-        width: '100%'
-      }}
-      role="button"
-      tabIndex={0}
-      onKeyPress={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          onClick();
-        }
-      }}
-    >
-      {/* Title */}
-      <div className="font-semibold text-sm text-gray-900 truncate mb-1">
-        {event.title}
-      </div>
+  const renderFullCard = () => {
+    const hasDuration = durationMinutes && durationMinutes > 0;
 
-      {/* Date */}
-      <div className="text-xs text-gray-600 mb-2">
-        {new Date(event.date).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
-        })}
-        {event.time && ` • ${event.time}`}
-      </div>
+    return (
+      <div className="relative">
+        {/* Duration bar underlay (only for Day view with duration) */}
+        {durationBarWidth && durationBarWidth > width && (
+          <DurationBarUnderlay
+            cardWidth={width}
+            durationBarWidth={durationBarWidth}
+            categoryColor={categoryColor}
+          />
+        )}
 
-      {/* Priority & Status badges */}
-      <div className="flex gap-2 items-center">
-        {/* Priority badge */}
-        <span
+        <div
+          onClick={onClick}
           className={`
-            text-xs px-2 py-0.5 rounded-full font-medium
-            ${event.priority === 'High' ? 'bg-red-100 text-red-700' : ''}
-            ${event.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' : ''}
-            ${event.priority === 'Low' ? 'bg-green-100 text-green-700' : ''}
+            cursor-pointer bg-white border-2 rounded-lg
+            transition-all duration-200
+            p-2 md:p-3
+            min-h-[44px]
+            ${isHovered ? 'shadow-2xl scale-105' : 'shadow-md hover:shadow-lg'}
           `}
+          style={{
+            borderLeftColor: categoryColor,
+            borderLeftWidth: '4px',
+            width: '100%'
+          }}
+          role="button"
+          tabIndex={0}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              onClick();
+            }
+          }}
         >
-          {event.priority}
-        </span>
+          {/* Title - full width for maximum space */}
+          <div className="font-semibold text-sm text-gray-900 truncate mb-1">
+            {event.title}
+          </div>
 
-        {/* Status icon */}
-        <span
-          className={`
-            text-xs px-2 py-0.5 rounded-full font-medium
-            ${event.status === 'Not Started' ? 'bg-gray-100 text-gray-700' : ''}
-            ${event.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : ''}
-            ${event.status === 'Completed' ? 'bg-green-100 text-green-700' : ''}
-          `}
-        >
-          {STATUS_ICONS[event.status]}
-        </span>
+          {/* Time range with duration badge - compact single line */}
+          {event.time && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
+              <span>
+                {formatTime(event.time)}
+                {event.endTime && ` - ${formatTime(event.endTime)}`}
+              </span>
+              {hasDuration && (
+                <DurationBadge durationMinutes={durationMinutes!} variant="full" />
+              )}
+            </div>
+          )}
+
+          {/* Priority & Status badges */}
+          <div className="flex gap-2 items-center">
+            {/* Priority badge */}
+            <span
+              className={`
+                text-xs px-2 py-0.5 rounded-full font-medium
+                ${event.priority === 'High' ? 'bg-red-100 text-red-700' : ''}
+                ${event.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' : ''}
+                ${event.priority === 'Low' ? 'bg-green-100 text-green-700' : ''}
+              `}
+            >
+              {event.priority}
+            </span>
+
+            {/* Status icon */}
+            <span
+              className={`
+                text-xs px-2 py-0.5 rounded-full font-medium
+                ${event.status === 'Not Started' ? 'bg-gray-100 text-gray-700' : ''}
+                ${event.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : ''}
+                ${event.status === 'Completed' ? 'bg-green-100 text-green-700' : ''}
+              `}
+            >
+              {STATUS_ICONS[event.status]}
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Render mini card variant (Week zoom level)
   const renderMiniCard = () => {
     const priorityColors = PRIORITY_COLORS[event.priority] || PRIORITY_COLORS.Low;
+    const hasDuration = durationMinutes && durationMinutes > 0;
+    // Truncate title more aggressively if we have a duration badge
+    const truncateLength = hasDuration ? 12 : 18;
 
     return (
       <div
@@ -252,8 +343,13 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
 
         {/* Title (truncated) */}
         <span className="text-xs font-medium text-gray-800 truncate flex-1">
-          {event.title.length > 20 ? `${event.title.substring(0, 20)}...` : event.title}
+          {event.title.length > truncateLength ? `${event.title.substring(0, truncateLength)}...` : event.title}
         </span>
+
+        {/* Duration badge (if has duration) */}
+        {hasDuration && (
+          <DurationBadge durationMinutes={durationMinutes!} variant="mini" />
+        )}
 
         {/* Status indicator */}
         <span className="text-xs text-gray-500 flex-shrink-0">

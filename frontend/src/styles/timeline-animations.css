@@ -117,3 +117,12 @@
 .timeline-dot-card:hover {
   z-index: 9999 !important;
 }
+
+/* Duration bar underlay animation */
+.duration-bar-underlay {
+  transition: opacity 0.2s ease;
+}
+
+.timeline-event-card:hover .duration-bar-underlay {
+  opacity: 0.25 !important;
+}

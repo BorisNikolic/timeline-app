@@ -11,9 +11,10 @@ interface EventModalProps {
   event?: EventWithDetails; // If provided, we're in edit mode
   duplicateData?: CreateEventDto; // If provided, we're duplicating an event
   timelineStatus?: TimelineStatus; // Timeline status for retrospective fields
+  onEventSaved?: (eventId: string) => void; // Called with event ID after successful save
 }
 
-function EventModal({ isOpen, onClose, timelineId, event, duplicateData, timelineStatus }: EventModalProps) {
+function EventModal({ isOpen, onClose, timelineId, event, duplicateData, timelineStatus, onEventSaved }: EventModalProps) {
   const createEvent = useCreateTimelineEvent(timelineId);
   const updateEvent = useUpdateTimelineEvent(timelineId);
   const isEditMode = !!event;
@@ -37,13 +38,20 @@ function EventModal({ isOpen, onClose, timelineId, event, duplicateData, timelin
   }, [isOpen, onClose]);
 
   const handleSubmit = async (data: CreateEventDto) => {
+    let savedEventId: string;
+
     if (isEditMode) {
       // Edit mode - update existing event
       await updateEvent.mutateAsync({ eventId: event.id, data: data as UpdateEventDto });
+      savedEventId = event.id;
     } else {
       // Create mode - create new event
-      await createEvent.mutateAsync(data);
+      const createdEvent = await createEvent.mutateAsync(data);
+      savedEventId = createdEvent.id;
     }
+
+    // Notify parent to scroll to saved event
+    onEventSaved?.(savedEventId);
     onClose();
   };
 

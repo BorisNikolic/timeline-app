@@ -212,6 +212,8 @@ export const TimelineSwimlane: React.FC<TimelineSwimlaneProps> = ({
               stackIndex={eventPos.stackIndex}
               zIndex={eventPos.zIndex}
               width={eventPos.width}
+              durationMinutes={eventPos.durationMinutes}
+              durationBarWidth={eventPos.durationBarWidth}
               zoomLevel={zoomLevel}
               onClick={() => {
                 // Don't trigger click for overflow indicators

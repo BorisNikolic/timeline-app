@@ -94,6 +94,7 @@ function TimelinePage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCategoryManagementOpen, setIsCategoryManagementOpen] = useState(false);
   const [duplicateEventData, setDuplicateEventData] = useState<CreateEventDto | null>(null);
+  const [scrollToEventId, setScrollToEventId] = useState<string | null>(null);
   const exportMenuRef = useRef<ExportMenuRef>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -272,6 +273,8 @@ function TimelinePage() {
           onEventClick={handleEventClick}
           timelineStartDate={timeline?.startDate}
           timelineEndDate={timeline?.endDate}
+          scrollToEventId={scrollToEventId}
+          onScrollComplete={() => setScrollToEventId(null)}
         />
       )}
 
@@ -295,6 +298,7 @@ function TimelinePage() {
           timelineId={timelineId}
           duplicateData={duplicateEventData || undefined}
           timelineStatus={timeline?.status}
+          onEventSaved={setScrollToEventId}
         />
       )}
 
@@ -320,6 +324,7 @@ function TimelinePage() {
           timelineId={timelineId}
           event={selectedEvent || undefined}
           timelineStatus={timeline?.status}
+          onEventSaved={setScrollToEventId}
         />
       )}
 

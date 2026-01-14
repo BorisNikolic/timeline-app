@@ -26,10 +26,13 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
   categories,
   onEventClick,
   timelineStartDate,
-  timelineEndDate
+  timelineEndDate,
+  scrollToEventId,
+  onScrollComplete
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const todayLineRef = useRef<HTMLDivElement>(null);
+  const hasInitialScrolledRef = useRef(false);
   const [todayLineVisible, setTodayLineVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
@@ -117,9 +120,10 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
     return calculateEventX(today, dateRange.startDate, dateRange.endDate, pixelsPerDay);
   }, [dateRange, pixelsPerDay]);
 
-  // Scroll to TODAY on mount
+  // Scroll to TODAY on initial mount only
   useEffect(() => {
     if (!scrollContainerRef.current || events.length === 0 || todayPosition === 0) return;
+    if (hasInitialScrolledRef.current) return; // Only scroll to today once
 
     // Center on TODAY with a slight delay to ensure layout is ready
     const timer = setTimeout(() => {
@@ -127,10 +131,38 @@ export const ChronologicalTimeline: React.FC<ChronologicalTimelineProps> = ({
       const containerWidth = scrollContainerRef.current.clientWidth;
       const targetScroll = Math.max(0, todayPosition - containerWidth / 2);
       scrollContainerRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
+      hasInitialScrolledRef.current = true;
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [events.length, todayPosition]); // Run when events load or today position changes
+  }, [events.length, todayPosition]);
+
+  // Scroll to specific event when scrollToEventId changes
+  useEffect(() => {
+    if (!scrollToEventId || !scrollContainerRef.current || !dateRange) return;
+
+    // Find the event to scroll to
+    const targetEvent = events.find(e => e.id === scrollToEventId);
+    if (!targetEvent) {
+      onScrollComplete?.();
+      return;
+    }
+
+    // Calculate event position using the same logic as todayPosition
+    const eventDate = parseLocalDate(targetEvent.date);
+    const eventX = calculateEventX(eventDate, dateRange.startDate, dateRange.endDate, pixelsPerDay);
+
+    // Scroll to center the event with a slight delay
+    const timer = setTimeout(() => {
+      if (!scrollContainerRef.current) return;
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      const targetScroll = Math.max(0, eventX - containerWidth / 2);
+      scrollContainerRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
+      onScrollComplete?.();
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [scrollToEventId, events, dateRange, pixelsPerDay, onScrollComplete]);
 
   // Mobile detection
   useEffect(() => {

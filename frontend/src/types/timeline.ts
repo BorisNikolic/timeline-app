@@ -277,6 +277,7 @@ export interface TimelineEventCard {
   title: string;
   date: Date;
   time?: string;
+  endTime?: string;
   priority: 'High' | 'Medium' | 'Low';
   status: 'Not Started' | 'In Progress' | 'Completed';
   categoryColor: string;
@@ -286,6 +287,9 @@ export interface TimelineEventCard {
   stackIndex: number;
   zIndex: number;
   width: number;
+  // Duration support for Day/Week views
+  durationMinutes?: number;
+  durationBarWidth?: number;
   // Cluster support for dot variant
   isCluster?: boolean;
   clusterCount?: number;
@@ -329,6 +333,8 @@ export interface ChronologicalTimelineProps {
   onEventClick: (eventId: string) => void;
   timelineStartDate?: string; // ISO date string from timeline entity
   timelineEndDate?: string;   // ISO date string from timeline entity
+  scrollToEventId?: string | null; // Event ID to scroll to after create/edit
+  onScrollComplete?: () => void;   // Called after scrolling to event (to clear scrollToEventId)
 }
 
 export interface TimelineAxisProps {
@@ -363,6 +369,9 @@ export interface TimelineEventCardProps {
   stackIndex: number;
   zIndex: number;
   width: number;
+  // Duration support for Day/Week views
+  durationMinutes?: number;
+  durationBarWidth?: number;
   zoomLevel: ZoomLevel; // For zoom-responsive card rendering
   onClick: () => void;
   onClusterEventClick?: (eventId: string) => void; // For clicking individual events in a cluster popover
