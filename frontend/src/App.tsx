@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/shared/Layout';
 import PrivateRoute from './components/auth/PrivateRoute';
 import TimelinePage from './pages/Timeline';
+import SchedulePage from './pages/Schedule';
 import AuthPage from './pages/Auth';
 import TimelineSettingsPage from './pages/TimelineSettingsPage';
 import DashboardPage from './pages/DashboardPage';
@@ -34,6 +35,7 @@ function App() {
           <Route path="timeline" element={<TimelinePage />} />
           <Route path="timeline/:timelineId" element={<TimelinePage />} />
           <Route path="timeline/:timelineId/settings" element={<TimelineSettingsPage />} />
+          <Route path="schedule/:timelineId" element={<SchedulePage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
