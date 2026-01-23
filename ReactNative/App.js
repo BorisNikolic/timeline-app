@@ -6,22 +6,36 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
+import { NetworkProvider } from './src/contexts/NetworkContext';
 import { colors } from './src/theme';
 import {
   addNotificationReceivedListener,
   addNotificationResponseListener,
 } from './src/services/notifications';
 
-// Create React Query client
+// Create AsyncStorage persister for offline cache
+const asyncStoragePersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: 'PYRAMID_FESTIVAL_CACHE',
+  throttleTime: 1000,
+});
+
+// Create React Query client with offline-first config
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
-      staleTime: 2 * 60 * 1000, // 2 minutes
+      gcTime: Infinity, // Never garbage collect - keep cached data forever
+      staleTime: 5 * 60 * 1000, // 5 minutes - refetch in background when online
+      retry: 3,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000),
       refetchOnWindowFocus: false,
+      networkMode: 'offlineFirst', // Return cached data immediately
     },
   },
 });
@@ -63,12 +77,17 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <NavigationContainer theme={navigationTheme}>
-          <StatusBar style="light" />
-          <AppNavigator />
-        </NavigationContainer>
-      </QueryClientProvider>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister: asyncStoragePersister }}
+      >
+        <NetworkProvider>
+          <NavigationContainer theme={navigationTheme}>
+            <StatusBar style="light" />
+            <AppNavigator />
+          </NavigationContainer>
+        </NetworkProvider>
+      </PersistQueryClientProvider>
     </SafeAreaProvider>
   );
 }

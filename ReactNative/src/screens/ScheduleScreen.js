@@ -22,10 +22,12 @@ import StageFilter from '../components/StageFilter';
 import HappeningNow from '../components/HappeningNow';
 import EventCard from '../components/EventCard';
 import ReminderPicker from '../components/ReminderPicker';
+import OfflineFirstLaunch from '../components/OfflineFirstLaunch';
 
 import { useTimelineEvents, useCategories, useEventsForDate, useHappeningNow } from '../hooks/useEvents';
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { useReminders } from '../hooks/useReminders';
+import { useNetwork } from '../contexts/NetworkContext';
 import { groupEventsByHour, getUniqueDates, isToday, parseDate, isSameDay } from '../utils/dateHelpers';
 import { TIMELINE_ID } from '../utils/constants';
 
@@ -40,8 +42,12 @@ export default function ScheduleScreen({ navigation }) {
   // Current time for live updates
   const currentTime = useCurrentTime();
 
+  // Network state for offline handling
+  const { isConnected, isInternetReachable } = useNetwork();
+  const isOffline = !isConnected || !isInternetReachable;
+
   // API queries using hardcoded timeline ID
-  const { data: events, isLoading: eventsLoading, refetch: refetchEvents } = useTimelineEvents(timelineId);
+  const { data: events, isLoading: eventsLoading, isError, error, refetch: refetchEvents } = useTimelineEvents(timelineId);
   const { data: categories } = useCategories(timelineId);
 
   // Reminders
@@ -136,8 +142,23 @@ export default function ScheduleScreen({ navigation }) {
     }
   }, [selectedEventForReminder, removeReminder]);
 
+  // Offline first launch - no cached data and offline
+  if (!events && isError && isOffline) {
+    return <OfflineFirstLaunch onRetry={refetchEvents} />;
+  }
+
   // Loading state - show while events are loading or date is being determined
-  if (eventsLoading || selectedDate === null) {
+  if (eventsLoading && !events) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.teal} />
+        <Text style={styles.loadingText}>Loading schedule...</Text>
+      </View>
+    );
+  }
+
+  // Waiting for date selection after events loaded
+  if (selectedDate === null) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.teal} />

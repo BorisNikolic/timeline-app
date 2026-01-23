@@ -7,14 +7,28 @@ import { getTimelineEvents, getTimelineCategories } from '../services/api';
 import { isSameDay, parseDate } from '../utils/dateHelpers';
 
 /**
+ * Query key factory for consistent cache keys
+ */
+export const eventKeys = {
+  all: ['events'],
+  timeline: (id) => ['events', id],
+  categories: {
+    all: ['categories'],
+    timeline: (id) => ['categories', id],
+  },
+};
+
+/**
  * Fetch all events for a timeline
  */
 export function useTimelineEvents(timelineId) {
   return useQuery({
-    queryKey: ['events', timelineId],
+    queryKey: eventKeys.timeline(timelineId),
     queryFn: () => getTimelineEvents(timelineId),
     enabled: !!timelineId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: Infinity, // Never garbage collect - keep cached data forever
+    staleTime: 5 * 60 * 1000, // 5 minutes - refetch in background when online
+    placeholderData: (prev) => prev, // Show stale data while refetching
   });
 }
 
@@ -23,10 +37,12 @@ export function useTimelineEvents(timelineId) {
  */
 export function useCategories(timelineId) {
   return useQuery({
-    queryKey: ['categories', timelineId],
+    queryKey: eventKeys.categories.timeline(timelineId),
     queryFn: () => getTimelineCategories(timelineId),
     enabled: !!timelineId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: Infinity, // Never garbage collect - keep cached data forever
+    staleTime: 30 * 60 * 1000, // 30 minutes - categories change less often
+    placeholderData: (prev) => prev,
   });
 }
 

@@ -95,31 +95,31 @@ function MyEventsStack() {
 export default function AppNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused }) => (
-          <TabIcon name={route.name} focused={focused} />
-        ),
-        tabBarActiveTintColor: colors.teal,
-        tabBarInactiveTintColor: colors.text.tertiary,
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabBarLabel,
-        headerShown: false,
-      })}
-    >
-      <Tab.Screen
-        name="Schedule"
-        component={ScheduleStack}
-        options={{
-          title: 'Schedule',
-        }}
-      />
-      <Tab.Screen
-        name="MyEvents"
-        component={MyEventsStack}
-        options={{
-          title: 'My Events',
-        }}
-      />
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={route.name} focused={focused} />
+          ),
+          tabBarActiveTintColor: colors.teal,
+          tabBarInactiveTintColor: colors.text.tertiary,
+          tabBarStyle: styles.tabBar,
+          tabBarLabelStyle: styles.tabBarLabel,
+          headerShown: false,
+        })}
+      >
+        <Tab.Screen
+          name="Schedule"
+          component={ScheduleStack}
+          options={{
+            title: 'Schedule',
+          }}
+        />
+        <Tab.Screen
+          name="MyEvents"
+          component={MyEventsStack}
+          options={{
+            title: 'My Events',
+          }}
+        />
     </Tab.Navigator>
   );
 }
