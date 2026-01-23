@@ -51,6 +51,7 @@ export const colors = {
     darkAlt: '#323550',     // Slightly lighter dark
     light: '#F9F9F9',       // Light screens
     lightAlt: '#FFFFFF',    // Pure white sections
+    screen: '#F9F9F9',      // Screen background (alias for light)
     card: '#FFFFFF',        // Card backgrounds
     cardDark: '#2A2A4A',    // Cards on dark background
   },
@@ -85,7 +86,22 @@ export const colors = {
   },
 };
 
-// Quick access aliases
+// Quick access aliases (for destructuring imports)
 export const { primary, accent, neutral, semantic, background, text, gradients, alpha } = colors;
+
+// Flat aliases for convenience (colors.teal instead of colors.primary.teal)
+colors.navy = colors.primary.navy;
+colors.navyDark = colors.primary.navyDark;
+colors.teal = colors.primary.teal;
+colors.tealLight = colors.primary.tealLight;
+colors.tealBright = colors.primary.tealBright;
+colors.coral = colors.accent.coral;
+colors.coralDark = colors.accent.coralDark;
+colors.golden = colors.accent.golden;
+colors.goldenLight = colors.accent.goldenLight;
+colors.cream = colors.accent.cream;
+colors.burgundy = colors.accent.burgundy;
+colors.white = colors.neutral.white;
+colors.black = colors.neutral.black;
 
 export default colors;

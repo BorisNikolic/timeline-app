@@ -5,32 +5,32 @@
  * Usage: import { theme, colors, typography } from './theme';
  */
 
-import colors from './colors';
-import typography from './typography';
+import colorsModule from './colors';
+import typographyModule from './typography';
 import spacingModule from './spacing';
 
 const { spacing, borderRadius, shadows, layout } = spacingModule;
 
+// Export individual modules with explicit references
+export const colors = colorsModule;
+export const typography = typographyModule;
+export { spacing, borderRadius, shadows, layout };
+
 // Combined theme object
 export const theme = {
-  colors,
-  typography,
+  colors: colorsModule,
+  typography: typographyModule,
   spacing,
   borderRadius,
   shadows,
   layout,
 };
 
-// Re-export individual modules
-export { colors } from './colors';
-export { typography } from './typography';
-export { spacing, borderRadius, shadows, layout } from './spacing';
-
 // Common component styles
 export const componentStyles = {
   // Primary button (teal)
   buttonPrimary: {
-    backgroundColor: colors.primary.teal,
+    backgroundColor: colorsModule.primary.teal,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.md,
@@ -40,8 +40,8 @@ export const componentStyles = {
     ...shadows.md,
   },
   buttonPrimaryText: {
-    color: colors.neutral.white,
-    ...typography.textStyles.button,
+    color: colorsModule.neutral.white,
+    ...typographyModule.textStyles.button,
   },
 
   // Secondary button (outline)
@@ -51,19 +51,19 @@ export const componentStyles = {
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.md,
     borderWidth: 2,
-    borderColor: colors.primary.teal,
+    borderColor: colorsModule.primary.teal,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: layout.buttonHeight,
   },
   buttonSecondaryText: {
-    color: colors.primary.teal,
-    ...typography.textStyles.button,
+    color: colorsModule.primary.teal,
+    ...typographyModule.textStyles.button,
   },
 
   // Accent button (coral)
   buttonAccent: {
-    backgroundColor: colors.accent.coral,
+    backgroundColor: colorsModule.accent.coral,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.md,
@@ -73,19 +73,19 @@ export const componentStyles = {
     ...shadows.md,
   },
   buttonAccentText: {
-    color: colors.neutral.white,
-    ...typography.textStyles.button,
+    color: colorsModule.neutral.white,
+    ...typographyModule.textStyles.button,
   },
 
   // Card styles
   card: {
-    backgroundColor: colors.background.card,
+    backgroundColor: colorsModule.background.card,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     ...shadows.md,
   },
   cardDark: {
-    backgroundColor: colors.background.cardDark,
+    backgroundColor: colorsModule.background.cardDark,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     ...shadows.lg,
@@ -93,32 +93,32 @@ export const componentStyles = {
 
   // Input styles
   input: {
-    backgroundColor: colors.neutral.white,
+    backgroundColor: colorsModule.neutral.white,
     borderWidth: 1,
-    borderColor: colors.neutral.grayLight,
+    borderColor: colorsModule.neutral.grayLight,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     minHeight: layout.inputHeight,
-    fontSize: typography.fontSizes.md,
-    color: colors.text.primary,
+    fontSize: typographyModule.fontSizes.md,
+    color: colorsModule.text.primary,
   },
   inputFocused: {
-    borderColor: colors.primary.teal,
+    borderColor: colorsModule.primary.teal,
     borderWidth: 2,
   },
   inputError: {
-    borderColor: colors.semantic.error,
+    borderColor: colorsModule.semantic.error,
   },
 
   // Container styles
   screenContainer: {
     flex: 1,
-    backgroundColor: colors.background.light,
+    backgroundColor: colorsModule.background.light,
   },
   screenContainerDark: {
     flex: 1,
-    backgroundColor: colors.background.dark,
+    backgroundColor: colorsModule.background.dark,
   },
   contentContainer: {
     paddingHorizontal: layout.screenPaddingHorizontal,
@@ -128,12 +128,12 @@ export const componentStyles = {
   // Divider
   divider: {
     height: 1,
-    backgroundColor: colors.neutral.grayLightest,
+    backgroundColor: colorsModule.neutral.grayLightest,
     marginVertical: spacing.md,
   },
   dividerDark: {
     height: 1,
-    backgroundColor: colors.alpha.white20,
+    backgroundColor: colorsModule.alpha.white20,
     marginVertical: spacing.md,
   },
 };

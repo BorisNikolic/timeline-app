@@ -1,10 +1,12 @@
 # Festival Timeline Management App
 
-A collaborative web application for managing festival events with visual timeline organization by category.
+A collaborative web and mobile application for managing festival events with visual timeline organization by category.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-1.3+-orange.svg)](https://bun.sh/)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://reactjs.org/)
+[![React Native](https://img.shields.io/badge/React_Native-0.81-61DAFB.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54-000020.svg)](https://expo.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
 
 ## Live Demo
@@ -62,6 +64,13 @@ bun run dev  # Runs on http://localhost:5173
 - **Invitation Management** - Resend or cancel pending invitations
 - **Secure Tokens** - 256-bit entropy tokens with bcrypt hashing
 
+### Mobile App (Pyramid Festival)
+- **Festival Schedule** - Browse events by day with stage filtering
+- **My Events** - Save favorite events and track your personal schedule
+- **Push Notifications** - Get reminders before events start
+- **Offline Support** - View cached schedule without internet
+- **iOS & Android** - Native apps via Expo
+
 ### UX Enhancements
 - **Quick Status Toggle** - Click status badge to update in 1 click
 - **Visual Priority Indicators** - Color-coded borders (red=high, yellow=medium, gray=low)
@@ -82,11 +91,13 @@ bun run dev  # Runs on http://localhost:5173
 
 **Frontend**: React 18, TypeScript, Vite, TailwindCSS, Zustand, React Query, react-window
 
+**Mobile**: React Native 0.81, Expo 54, React Navigation, React Query, Expo Notifications
+
 **Backend**: Bun 1.3+, Express, TypeScript, PostgreSQL 16, Passport.js, JWT, bcrypt, Nodemailer
 
 **Testing**: Vitest, Playwright, React Testing Library, Supertest
 
-**Deployment**: GitHub Pages (frontend), Render (backend API + PostgreSQL)
+**Deployment**: GitHub Pages (frontend), Render (backend API + PostgreSQL), Expo (mobile builds)
 
 ## Project Structure
 
@@ -106,6 +117,14 @@ timeline_app/
 │   │   ├── services/
 │   │   └── store/
 │   └── .env.example
+├── ReactNative/       # Expo mobile app (Pyramid Festival)
+│   ├── src/
+│   │   ├── screens/  # ScheduleScreen, MyEventsScreen, SettingsScreen
+│   │   ├── components/ # EventCard, DayPicker, StageFilter
+│   │   ├── hooks/    # useEvents, useReminders
+│   │   ├── services/ # API client, notifications
+│   │   └── theme/    # Colors, typography
+│   └── app.json      # Expo config
 ├── specs/             # Feature specifications
 ├── CLAUDE.md         # Development guide
 ├── PROJECT.md        # Full documentation
@@ -130,6 +149,64 @@ bun run test          # Run component tests
 bun run test:e2e      # Run E2E tests
 bun run build         # Production build
 bun run lint          # Check code quality
+```
+
+**React Native** (Pyramid Festival App):
+```bash
+cd ReactNative
+npm install           # Install dependencies
+npx expo start        # Start Expo dev server
+npx expo start --ios  # Start with iOS simulator
+npx expo start --android  # Start with Android emulator
+```
+
+## Running Mobile App on Device
+
+### Prerequisites
+1. Install [Expo Go](https://expo.dev/client) on your iOS or Android device
+2. Ensure your phone and computer are on the same WiFi network
+
+### Steps
+
+```bash
+# 1. Navigate to React Native folder
+cd ReactNative
+
+# 2. Install dependencies
+npm install
+
+# 3. Start the Expo development server
+npx expo start
+```
+
+### Connecting Your Device
+
+**Option 1: QR Code (Recommended)**
+- After running `npx expo start`, a QR code appears in the terminal
+- **iOS**: Open the Camera app and scan the QR code
+- **Android**: Open Expo Go app and scan the QR code
+
+**Option 2: Manual URL**
+- In the Expo dev server terminal, press `?` to see options
+- Copy the `exp://` URL shown
+- Open Expo Go and enter the URL manually
+
+### Development Options
+- Press `j` to open debugger
+- Press `r` to reload the app
+- Press `m` to toggle menu
+- Shake device to open developer menu
+
+### Building for Production
+```bash
+# Build for iOS (requires Apple Developer account)
+npx eas build --platform ios
+
+# Build for Android
+npx eas build --platform android
+
+# Build APK for direct installation
+npx eas build --platform android --profile preview
 ```
 
 ## Environment Variables
@@ -269,4 +346,4 @@ For development guidance, see:
 
 ---
 
-**Version**: 1.1.0 | **Status**: Production Ready | **Last Updated**: 2026-01-08
+**Version**: 1.2.0 | **Status**: Production Ready | **Last Updated**: 2026-01-23
