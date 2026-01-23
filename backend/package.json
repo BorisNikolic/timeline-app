@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "bun --watch src/server.ts",
     "build": "tsc && cp -r src/db/migrations dist/db/ && cp -r src/db/seeds dist/db/",
-    "postbuild": "node dist/db/run-migrations.js",
-    "start": "node dist/server.js",
+    "start": "node dist/db/run-migrations.js && node dist/server.js",
     "db:run-migrations": "bun run src/db/run-migrations.ts",
     "test": "vitest",
     "test:integration": "vitest --config vitest.integration.config.ts",
