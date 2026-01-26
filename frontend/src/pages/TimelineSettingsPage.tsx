@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TimelineForm } from '../components/shared/TimelineForm';
 import { DeleteTimelineConfirmDialog } from '../components/shared/DeleteTimelineConfirmDialog';
+import CopyTimelineModal from '../components/shared/CopyTimelineModal';
 import MemberList from '../components/members/MemberList';
 import InviteMemberModal from '../components/members/InviteMemberModal';
 import InviteByEmailModal from '../components/invitations/InviteByEmailModal';
@@ -24,7 +25,7 @@ import { useTimelineEvents } from '../hooks/useEvents';
 import { useMembers, useLeaveTimeline } from '../hooks/useMembers';
 import { useTimelineRole } from '../hooks/useTimelineRole';
 import { useAuth } from '../contexts/AuthContext';
-import { CreateTimelineDto, STATUS_CONFIG, TimelineStatus, UpdateTimelineDto } from '../types/timeline';
+import { CreateTimelineDto, STATUS_CONFIG, TimelineStatus, UpdateTimelineDto, TimelineWithStats } from '../types/timeline';
 import StatusTransitionDropdown from '../components/timeline/StatusTransitionDropdown';
 
 export function TimelineSettingsPage() {
@@ -47,6 +48,7 @@ export function TimelineSettingsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showEmailInviteModal, setShowEmailInviteModal] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
 
   // Only admins can access settings
   if (role && role !== 'Admin') {
@@ -313,6 +315,28 @@ export function TimelineSettingsPage() {
         </div>
       )}
 
+      {/* Clone Timeline */}
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Clone Timeline</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-700">Create a copy of this timeline</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Clone this timeline with its categories and events to use as a starting point for a new project.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowCopyModal(true)}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            Clone Timeline
+          </button>
+        </div>
+      </div>
+
       {/* Team Members */}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -437,6 +461,15 @@ export function TimelineSettingsPage() {
         onClose={() => setShowEmailInviteModal(false)}
         timelineId={timelineId!}
       />
+
+      {/* Copy Timeline Modal */}
+      {timeline && (
+        <CopyTimelineModal
+          isOpen={showCopyModal}
+          onClose={() => setShowCopyModal(false)}
+          sourceTimeline={timeline as TimelineWithStats}
+        />
+      )}
     </div>
   );
 }
