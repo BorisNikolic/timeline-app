@@ -28,7 +28,7 @@ import { useTimelineEvents, useCategories, useEventsForDate, useHappeningNow } f
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { useReminders } from '../hooks/useReminders';
 import { useNetwork } from '../contexts/NetworkContext';
-import { groupEventsByHour, getUniqueDates, isToday, parseDate, isSameDay } from '../utils/dateHelpers';
+import { groupEventsByHour, getUniqueDates, parseDate, isSameDay } from '../utils/dateHelpers';
 import { TIMELINE_ID } from '../utils/constants';
 
 export default function ScheduleScreen({ navigation }) {
@@ -98,9 +98,9 @@ export default function ScheduleScreen({ navigation }) {
   // Group events by hour for section list
   const sections = useMemo(() => groupEventsByHour(enrichedEvents), [enrichedEvents]);
 
-  // Get happening now events
+  // Get happening now events (always visible regardless of selected day)
   const happeningNowEvents = useMemo(() => {
-    if (!events || !categories || !isToday(selectedDate)) return [];
+    if (!events || !categories) return [];
     const live = useHappeningNow(events, currentTime);
     return live.map(event => {
       const category = categories.find(c => c.id === event.categoryId);
@@ -110,7 +110,7 @@ export default function ScheduleScreen({ navigation }) {
         categoryColor: category?.color || colors.teal,
       };
     });
-  }, [events, categories, currentTime, selectedDate]);
+  }, [events, categories, currentTime]);
 
   // Handlers
   const handleEventPress = useCallback((event) => {
