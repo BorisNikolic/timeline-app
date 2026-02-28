@@ -19,6 +19,7 @@ export default function EventCard({
   const isLive = isEventHappeningNow(event, currentTime);
   const minutesUntil = getMinutesUntilEvent(event, currentTime);
   const timeUntilText = formatTimeUntil(minutesUntil);
+  const isPast = minutesUntil !== null && minutesUntil < 0;
 
   return (
     <TouchableOpacity
@@ -65,16 +66,18 @@ export default function EventCard({
         </Text>
       </View>
 
-      {/* Reminder button */}
-      <TouchableOpacity
-        style={styles.reminderButton}
-        onPress={onReminderPress}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <Text style={[styles.reminderIcon, hasReminder && styles.reminderIconActive]}>
-          {hasReminder ? '🔔' : '🔕'}
-        </Text>
-      </TouchableOpacity>
+      {/* Reminder button - hidden for past events */}
+      {!isPast && (
+        <TouchableOpacity
+          style={styles.reminderButton}
+          onPress={onReminderPress}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={[styles.reminderIcon, hasReminder && styles.reminderIconActive]}>
+            {hasReminder ? '🔔' : '🔕'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 }

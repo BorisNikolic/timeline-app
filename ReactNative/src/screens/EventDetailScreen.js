@@ -16,7 +16,7 @@ import { spacing, borderRadius, shadows } from '../theme/spacing';
 
 import ReminderPicker from '../components/ReminderPicker';
 import { useReminders } from '../hooks/useReminders';
-import { formatTime, formatDateLong, parseDate } from '../utils/dateHelpers';
+import { formatTime, formatDateLong, parseDate, getMinutesUntilEvent } from '../utils/dateHelpers';
 
 export default function EventDetailScreen({ route, navigation }) {
   const { event } = route.params;
@@ -25,6 +25,8 @@ export default function EventDetailScreen({ route, navigation }) {
 
   const eventHasReminder = hasReminder(event.id);
   const existingReminder = getReminder(event.id);
+  const minutesUntil = getMinutesUntilEvent(event);
+  const isPast = minutesUntil !== null && minutesUntil < 0;
 
   const handleSetReminder = useCallback(async (minutes) => {
     try {
@@ -83,8 +85,8 @@ export default function EventDetailScreen({ route, navigation }) {
           )}
         </View>
 
-        {/* Reminder status */}
-        {eventHasReminder && (
+        {/* Reminder status - hidden for past events */}
+        {eventHasReminder && !isPast && (
           <View style={styles.reminderStatus}>
             <Text style={styles.reminderStatusIcon}>🔔</Text>
             <View style={styles.reminderStatusContent}>
@@ -103,28 +105,30 @@ export default function EventDetailScreen({ route, navigation }) {
         )}
       </ScrollView>
 
-      {/* Bottom action bar */}
-      <View style={styles.actionBar}>
-        <TouchableOpacity
-          style={[
-            styles.reminderButton,
-            eventHasReminder && styles.reminderButtonActive,
-          ]}
-          onPress={() => setReminderModalVisible(true)}
-        >
-          <Text style={styles.reminderButtonIcon}>
-            {eventHasReminder ? '🔔' : '🔕'}
-          </Text>
-          <Text
+      {/* Bottom action bar - hidden for past events */}
+      {!isPast && (
+        <View style={styles.actionBar}>
+          <TouchableOpacity
             style={[
-              styles.reminderButtonText,
-              eventHasReminder && styles.reminderButtonTextActive,
+              styles.reminderButton,
+              eventHasReminder && styles.reminderButtonActive,
             ]}
+            onPress={() => setReminderModalVisible(true)}
           >
-            {eventHasReminder ? 'Reminder Set' : 'Set Reminder'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text style={styles.reminderButtonIcon}>
+              {eventHasReminder ? '🔔' : '🔕'}
+            </Text>
+            <Text
+              style={[
+                styles.reminderButtonText,
+                eventHasReminder && styles.reminderButtonTextActive,
+              ]}
+            >
+              {eventHasReminder ? 'Reminder Set' : 'Set Reminder'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Reminder picker modal */}
       <ReminderPicker
