@@ -11,6 +11,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppNavigator from './src/navigation/AppNavigator';
 import { NetworkProvider } from './src/contexts/NetworkContext';
 import { colors } from './src/theme';
@@ -76,18 +77,20 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister: asyncStoragePersister }}
-      >
-        <NetworkProvider>
-          <NavigationContainer theme={navigationTheme}>
-            <StatusBar style="light" />
-            <AppNavigator />
-          </NavigationContainer>
-        </NetworkProvider>
-      </PersistQueryClientProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister: asyncStoragePersister }}
+        >
+          <NetworkProvider>
+            <NavigationContainer theme={navigationTheme}>
+              <StatusBar style="light" />
+              <AppNavigator />
+            </NavigationContainer>
+          </NetworkProvider>
+        </PersistQueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
