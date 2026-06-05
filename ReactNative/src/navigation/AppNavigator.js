@@ -2,10 +2,12 @@
  * AppNavigator - Bottom tabs with Home, Schedule, Map, Info, and My Events
  */
 
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet } from 'react-native';
+import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StyleSheet } from 'react-native';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from '../screens/HomeScreen';
@@ -14,6 +16,7 @@ import MapScreen from '../screens/MapScreen';
 import InfoScreen from '../screens/InfoScreen';
 import MyEventsScreen from '../screens/MyEventsScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
+import BlogPostScreen from '../screens/BlogPostScreen';
 
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -32,7 +35,7 @@ const stackScreenOptions = {
   },
 };
 
-// Home stack with event detail navigation
+// Home stack with event detail and blog post navigation
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
@@ -45,6 +48,14 @@ function HomeStack() {
         name="EventDetail"
         component={EventDetailScreen}
         options={{ title: 'Event Details' }}
+      />
+      <Stack.Screen
+        name="BlogPost"
+        component={BlogPostScreen}
+        options={({ route }) => ({
+          title: route.params?.title || 'News',
+          headerBackTitle: 'Home',
+        })}
       />
     </Stack.Navigator>
   );
@@ -119,9 +130,46 @@ const TAB_ICONS = {
   MyEvents: { focused: 'heart', unfocused: 'heart-outline' },
 };
 
+const FULLSCREEN_ROUTES = ['BlogPost'];
+const TAB_BAR_ANIMATION_DURATION = 500;
+
+function AnimatedTabBar(props) {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 60 + insets.bottom;
+
+  const currentTabRoute = props.state.routes[props.state.index];
+  const focused = getFocusedRouteNameFromRoute(currentTabRoute);
+  const shouldHide = !!focused && FULLSCREEN_ROUTES.includes(focused);
+
+  const animValue = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(animValue, {
+      toValue: shouldHide ? 0 : 1,
+      duration: TAB_BAR_ANIMATION_DURATION,
+      useNativeDriver: false,
+    }).start();
+  }, [shouldHide, animValue]);
+
+  const height = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, tabBarHeight],
+  });
+
+  return (
+    <Animated.View
+      style={{ height, opacity: animValue, overflow: 'hidden' }}
+      pointerEvents={shouldHide ? 'none' : 'auto'}
+    >
+      <BottomTabBar {...props} />
+    </Animated.View>
+  );
+}
+
 export default function AppNavigator() {
   return (
     <Tab.Navigator
+      tabBar={(props) => <AnimatedTabBar {...props} />}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           const icons = TAB_ICONS[route.name];

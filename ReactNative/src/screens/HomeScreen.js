@@ -18,7 +18,9 @@ import { typography } from '../theme/typography';
 import { spacing, borderRadius, shadows } from '../theme/spacing';
 
 import HappeningNow from '../components/HappeningNow';
+import NewsCarousel from '../components/NewsCarousel';
 import { useTimelineEvents, useCategories, useHappeningNow } from '../hooks/useEvents';
+import { useBlogPosts } from '../hooks/useBlogPosts';
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import {
   formatTime,
@@ -174,6 +176,11 @@ export default function HomeScreen({ navigation }) {
 
   const { data: events, isLoading, refetch } = useTimelineEvents(timelineId);
   const { data: categories } = useCategories(timelineId);
+  const {
+    data: blogPosts,
+    isLoading: isBlogLoading,
+    isError: isBlogError,
+  } = useBlogPosts(5);
 
   const countdown = useFestivalCountdown(events);
 
@@ -221,6 +228,10 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('EventDetail', { event });
   }, [navigation]);
 
+  const handlePostPress = useCallback((post) => {
+    navigation.navigate('BlogPost', { postId: post.id, title: post.title });
+  }, [navigation]);
+
   const navigateToTab = useCallback((tabName) => {
     navigation.getParent()?.navigate(tabName);
   }, [navigation]);
@@ -257,6 +268,20 @@ export default function HomeScreen({ navigation }) {
             currentTime={currentTime}
           />
         )}
+
+        {/* News / Blog */}
+        <View style={[styles.section, styles.newsSection]}>
+          <View style={[styles.sectionHeader, styles.newsSectionHeader]}>
+            <Ionicons name="newspaper" size={18} color={colors.teal} />
+            <Text style={styles.sectionTitle}>NEWS</Text>
+          </View>
+          <NewsCarousel
+            posts={blogPosts}
+            isLoading={isBlogLoading}
+            isError={isBlogError}
+            onPostPress={handlePostPress}
+          />
+        </View>
 
         {/* Up Next */}
         {upNextEvents.length > 0 && (
@@ -407,10 +432,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginTop: spacing.lg,
   },
+  newsSection: {
+    paddingHorizontal: 0,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.md,
+  },
+  newsSectionHeader: {
+    paddingHorizontal: spacing.md,
   },
   sectionTitle: {
     ...typography.textStyles.label,

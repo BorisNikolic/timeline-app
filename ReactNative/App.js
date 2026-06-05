@@ -3,7 +3,8 @@
  * Main entry point with navigation and providers
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { QueryClient } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppNavigator from './src/navigation/AppNavigator';
 import { NetworkProvider } from './src/contexts/NetworkContext';
 import { colors } from './src/theme';
+import { typography } from './src/theme/typography';
 import {
   addNotificationReceivedListener,
   addNotificationResponseListener,
@@ -56,7 +58,23 @@ const navigationTheme = {
   },
 };
 
+function HydrationSplash() {
+  return (
+    <View style={splashStyles.container}>
+      <Text style={splashStyles.brand}>PYRAMID</Text>
+      <Text style={splashStyles.brandAccent}>FESTIVAL</Text>
+      <ActivityIndicator
+        size="small"
+        color={colors.tealLight}
+        style={splashStyles.spinner}
+      />
+    </View>
+  );
+}
+
 export default function App() {
+  const [isHydrated, setIsHydrated] = useState(false);
+
   // Setup notification listeners
   useEffect(() => {
     // Handle notification received while app is foregrounded
@@ -82,11 +100,12 @@ export default function App() {
         <PersistQueryClientProvider
           client={queryClient}
           persistOptions={{ persister: asyncStoragePersister }}
+          onSuccess={() => setIsHydrated(true)}
         >
           <NetworkProvider>
             <NavigationContainer theme={navigationTheme}>
               <StatusBar style="light" />
-              <AppNavigator />
+              {isHydrated ? <AppNavigator /> : <HydrationSplash />}
             </NavigationContainer>
           </NetworkProvider>
         </PersistQueryClientProvider>
@@ -94,3 +113,26 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+const splashStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.navyDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  brand: {
+    ...typography.textStyles.hero,
+    color: colors.text.inverse,
+    letterSpacing: 6,
+  },
+  brandAccent: {
+    ...typography.textStyles.h2,
+    color: colors.accent.golden,
+    letterSpacing: 8,
+    marginTop: -4,
+  },
+  spinner: {
+    marginTop: 40,
+  },
+});
