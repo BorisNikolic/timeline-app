@@ -6,7 +6,7 @@ Everything needed to publish the app to the **App Store** and **Google Play**.
 
 ```
 store-assets/
-├── privacy-policy.md              ← host this at a public URL, use it in both stores
+├── privacy-policy.md              ← source text; live at the GitHub Pages URL below
 ├── graphics/
 │   ├── play-icon-512.png          ← Google Play "hi-res icon" (512×512, required)
 │   └── feature-graphic-1024x500.png ← Google Play "feature graphic" (required)
@@ -35,7 +35,9 @@ strongest (Home, Lineup, Map, My Plan make a good core set).
 1. **Apple Developer Program** membership ($99/yr) → https://developer.apple.com
 2. **Google Play Developer** account ($25 one‑time) → https://play.google.com/console
 3. An **Expo account** (free) for EAS Build → https://expo.dev  (run `eas login`)
-4. A **public URL** hosting `privacy-policy.md` (both stores require it).
+4. ~~A public URL hosting the privacy policy~~ ✅ **done** — live at
+   **https://borisnikolic.github.io/timeline-app/app-privacy.html**
+   (source: `frontend/public/app-privacy.html`, deploys with the site).
 
 ## Build & submit (EAS)
 
@@ -62,7 +64,7 @@ each build.
 - [ ] Create the app record (bundle id `com.pyramidfestival.app`).
 - [ ] Upload screenshots — the **6.9"** set from `screenshots/ios/` covers the required slot.
 - [ ] Privacy: choose **"Data Not Collected"** (accurate — see privacy policy).
-- [ ] Privacy Policy URL.
+- [ ] Privacy Policy URL → `https://borisnikolic.github.io/timeline-app/app-privacy.html`
 - [ ] Category: **Music** (secondary: Travel or Entertainment).
 - [ ] Age rating questionnaire (all "No" → 4+).
 - [ ] `supportsTablet` is **false**, so **no iPad screenshots required.**
@@ -75,7 +77,7 @@ each build.
       `graphics/feature-graphic-1024x500.png` (feature graphic).
 - [ ] Phone screenshots from `screenshots/android/` (min 2).
 - [ ] **Data safety** form: **no data collected / no data shared.**
-- [ ] Privacy Policy URL.
+- [ ] Privacy Policy URL → `https://borisnikolic.github.io/timeline-app/app-privacy.html`
 - [ ] Content rating questionnaire.
 - [ ] Category: **Music & Audio** (or Events).
 - [ ] Target audience (not designed for children).

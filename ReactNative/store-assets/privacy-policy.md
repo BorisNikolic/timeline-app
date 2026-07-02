@@ -48,6 +48,7 @@ version at the same URL.
 
 Questions about this policy: **privacy@pyramidfestival.com**
 
-> _Before submitting to the stores, host this file at a public URL (e.g._
-> _`https://pyramidfestival.com/app-privacy`) and use that URL in App Store Connect and_
-> _Google Play. Replace the contact email if you prefer a different address._
+> _This policy is published (as a styled page) via GitHub Pages at:_
+> _**https://borisnikolic.github.io/timeline-app/app-privacy.html**_
+> _— use that URL in App Store Connect and Google Play._
+> _Source: `frontend/public/app-privacy.html`. Replace the contact email if you prefer a different address._
