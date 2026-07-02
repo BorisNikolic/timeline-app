@@ -1,5 +1,8 @@
 import { registerRootComponent } from 'expo';
 
+// Must run before expo-notifications is evaluated (see the module's comment).
+import './src/config/logbox';
+
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);

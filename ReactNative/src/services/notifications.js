@@ -2,6 +2,9 @@
  * Push notification service using expo-notifications
  */
 
+// Install console filters BEFORE expo-notifications evaluates — it logs its
+// Expo Go "remote push removed" notice at import time. See config/logbox.
+import '../config/logbox';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
