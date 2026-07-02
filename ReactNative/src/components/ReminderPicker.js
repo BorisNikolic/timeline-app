@@ -1,5 +1,6 @@
 /**
- * ReminderPicker - Modal for selecting reminder time
+ * ReminderPicker — bottom-sheet modal for selecting a reminder time.
+ * Restyled to the Pyramid Festival theme (tokens via useTheme). Logic preserved.
  */
 
 import React, { useState } from 'react';
@@ -13,10 +14,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing, borderRadius, shadows } from '../theme/spacing';
+import { useTheme } from '../contexts/ThemeContext';
+import { fonts, radius } from '../theme/tokens';
 import { REMINDER_PRESETS } from '../utils/constants';
+import { IconBell } from './ui/Icons';
 
 export default function ReminderPicker({
   visible,
@@ -26,6 +27,7 @@ export default function ReminderPicker({
   event,
   existingReminder,
 }) {
+  const { t } = useTheme();
   const [customMinutes, setCustomMinutes] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
 
@@ -47,35 +49,34 @@ export default function ReminderPicker({
     onClose();
   };
 
+  const accentTint = t.accent + '22';
+
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <TouchableOpacity style={styles.backdrop} onPress={onClose} />
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
 
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: t.surface }, t.cardShadow]}>
+          <View style={[styles.grabber, { backgroundColor: t.hairlineStrong }]} />
+
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Set Reminder</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.closeButton}>✕</Text>
+            <Text style={[styles.title, { color: t.ink }]}>Set Reminder</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={10}>
+              <Text style={[styles.closeButton, { color: t.ink3 }]}>✕</Text>
             </TouchableOpacity>
           </View>
 
           {/* Event info */}
           {event && (
-            <View style={styles.eventInfo}>
-              <Text style={styles.eventTitle} numberOfLines={2}>
+            <View style={[styles.eventInfo, { backgroundColor: t.surface2 }]}>
+              <Text style={[styles.eventTitle, { color: t.ink }]} numberOfLines={2}>
                 {event.title}
               </Text>
-              <Text style={styles.eventCategory}>
+              <Text style={[styles.eventCategory, { color: t.ink2 }]}>
                 {event.categoryName}
               </Text>
             </View>
@@ -83,11 +84,17 @@ export default function ReminderPicker({
 
           {/* Existing reminder info */}
           {existingReminder && (
-            <View style={styles.existingReminder}>
-              <Text style={styles.existingReminderText}>
-                🔔 Reminder set: {existingReminder.minutesBefore} min before
-              </Text>
-              <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
+            <View style={[styles.existingReminder, { backgroundColor: accentTint }]}>
+              <View style={styles.existingRow}>
+                <IconBell size={16} color={t.accent} />
+                <Text style={[styles.existingReminderText, { color: t.accent }]}>
+                  Reminder set: {existingReminder.minutesBefore} min before
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.removeButton, { backgroundColor: t.hot }]}
+                onPress={handleRemove}
+              >
                 <Text style={styles.removeButtonText}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -95,25 +102,24 @@ export default function ReminderPicker({
 
           {/* Preset options */}
           <View style={styles.presets}>
-            {REMINDER_PRESETS.map(preset => (
-              <TouchableOpacity
-                key={preset.minutes}
-                style={[
-                  styles.presetButton,
-                  existingReminder?.minutesBefore === preset.minutes && styles.presetButtonActive,
-                ]}
-                onPress={() => handlePresetSelect(preset.minutes)}
-              >
-                <Text
+            {(REMINDER_PRESETS || []).map(preset => {
+              const active = existingReminder?.minutesBefore === preset.minutes;
+              return (
+                <TouchableOpacity
+                  key={preset.minutes}
                   style={[
-                    styles.presetButtonText,
-                    existingReminder?.minutesBefore === preset.minutes && styles.presetButtonTextActive,
+                    styles.presetButton,
+                    { backgroundColor: t.surface2, borderColor: 'transparent' },
+                    active && { backgroundColor: accentTint, borderColor: t.accent },
                   ]}
+                  onPress={() => handlePresetSelect(preset.minutes)}
                 >
-                  {preset.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text style={[styles.presetButtonText, { color: active ? t.accent : t.ink2 }]}>
+                    {preset.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* Custom time input */}
@@ -121,7 +127,7 @@ export default function ReminderPicker({
             style={styles.customToggle}
             onPress={() => setShowCustomInput(!showCustomInput)}
           >
-            <Text style={styles.customToggleText}>
+            <Text style={[styles.customToggleText, { color: t.accent2 }]}>
               {showCustomInput ? '▼ Custom time' : '▶ Custom time'}
             </Text>
           </TouchableOpacity>
@@ -129,9 +135,9 @@ export default function ReminderPicker({
           {showCustomInput && (
             <View style={styles.customInput}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: t.surface2, color: t.ink }]}
                 placeholder="Enter minutes"
-                placeholderTextColor={colors.text.tertiary}
+                placeholderTextColor={t.ink3}
                 keyboardType="numeric"
                 value={customMinutes}
                 onChangeText={setCustomMinutes}
@@ -139,12 +145,15 @@ export default function ReminderPicker({
               <TouchableOpacity
                 style={[
                   styles.customButton,
-                  !customMinutes && styles.customButtonDisabled,
+                  { backgroundColor: t.accent },
+                  !customMinutes && { backgroundColor: t.surface2 },
                 ]}
                 onPress={handleCustomSubmit}
                 disabled={!customMinutes}
               >
-                <Text style={styles.customButtonText}>Set</Text>
+                <Text style={[styles.customButtonText, { color: customMinutes ? t.onAccent : t.ink3 }]}>
+                  Set
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -161,127 +170,123 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: colors.alpha.black60,
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   container: {
-    backgroundColor: colors.background.card,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    padding: spacing.lg,
-    ...shadows.xl,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 32,
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 44,
+    height: 5,
+    borderRadius: radius.pill,
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 16,
   },
   title: {
-    ...typography.textStyles.h3,
-    color: colors.text.primary,
+    fontFamily: fonts.displayBold,
+    fontSize: 22,
   },
   closeButton: {
-    fontSize: 24,
-    color: colors.text.tertiary,
-    padding: spacing.sm,
+    fontSize: 22,
+    padding: 4,
   },
   eventInfo: {
-    backgroundColor: colors.neutral.grayLighter,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.md,
+    padding: 16,
+    borderRadius: radius.md,
+    marginBottom: 16,
   },
   eventTitle: {
-    ...typography.textStyles.h5,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    marginBottom: 4,
   },
   eventCategory: {
-    ...typography.textStyles.caption,
-    color: colors.text.secondary,
+    fontFamily: fonts.bodyMed,
+    fontSize: 13,
   },
   existingReminder: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.teal + '20',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.md,
+    padding: 14,
+    borderRadius: radius.md,
+    marginBottom: 16,
+  },
+  existingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
   },
   existingReminderText: {
-    ...typography.textStyles.bodySmall,
-    color: colors.teal,
+    fontFamily: fonts.bodySemi,
+    fontSize: 13,
   },
   removeButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.coral,
-    borderRadius: borderRadius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: radius.sm,
   },
   removeButtonText: {
-    ...typography.textStyles.buttonSmall,
-    color: colors.text.inverse,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: '#FFFFFF',
   },
   presets: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+    gap: 10,
+    marginBottom: 8,
   },
   presetButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.neutral.grayLighter,
-    borderRadius: borderRadius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: radius.sm,
     borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  presetButtonActive: {
-    borderColor: colors.teal,
-    backgroundColor: colors.teal + '20',
   },
   presetButtonText: {
-    ...typography.textStyles.button,
-    color: colors.text.secondary,
-    textTransform: 'none',
-  },
-  presetButtonTextActive: {
-    color: colors.teal,
+    fontFamily: fonts.bodySemi,
+    fontSize: 14,
   },
   customToggle: {
-    paddingVertical: spacing.sm,
+    paddingVertical: 12,
   },
   customToggleText: {
-    ...typography.textStyles.bodySmall,
-    color: colors.teal,
+    fontFamily: fonts.bodySemi,
+    fontSize: 13,
   },
   customInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
+    gap: 10,
+    marginTop: 4,
   },
   input: {
     flex: 1,
-    height: 48,
-    backgroundColor: colors.neutral.grayLighter,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    ...typography.textStyles.body,
-    color: colors.text.primary,
+    height: 50,
+    borderRadius: radius.sm,
+    paddingHorizontal: 16,
+    fontFamily: fonts.body,
+    fontSize: 15,
   },
   customButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.teal,
-    borderRadius: borderRadius.md,
-  },
-  customButtonDisabled: {
-    backgroundColor: colors.neutral.gray,
+    paddingHorizontal: 24,
+    height: 50,
+    justifyContent: 'center',
+    borderRadius: radius.sm,
   },
   customButtonText: {
-    ...typography.textStyles.button,
-    color: colors.text.inverse,
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
   },
 });

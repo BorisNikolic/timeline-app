@@ -1,5 +1,6 @@
 /**
- * InfoScreen - Festival information with expandable accordion sections
+ * InfoScreen — "Know Before You Go" essentials, redesigned on the Pyramid theme.
+ * Static festival facts + accordion sections sourced from ../data/festivalInfo.
  */
 
 import React, { useState, useCallback } from 'react';
@@ -12,46 +13,78 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  Linking,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing, borderRadius, shadows } from '../theme/spacing';
+import { useTheme } from '../contexts/ThemeContext';
+import { fonts, radius } from '../theme/tokens';
+import { InfoIcon, IconChevron } from '../components/ui/Icons';
+import { PyramidMark, Rings369 } from '../components/geometry/Geometry';
+import ThemeToggle from '../components/ui/ThemeToggle';
 import { festivalSections } from '../data/festivalInfo';
 
-// Enable LayoutAnimation on Android
+// Enable LayoutAnimation on Android.
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-function AccordionSection({ section, isExpanded, onToggle }) {
+const PLACE = 'Pyramid Village · Rtanj Mountain, Serbia';
+const CONTACT_EMAIL = 'info@pyramidfestival.com';
+
+const QUICK_FACTS = [
+  { icon: 'cal', label: 'Dates', value: '3–9 Aug 2026' },
+  { icon: 'pin', label: 'Where', value: 'Rtanj, Serbia' },
+  { icon: 'gate', label: 'Gates', value: 'Open 16:00' },
+  { icon: 'card', label: 'Payments', value: 'Cashless' },
+];
+
+// Map the data's Ionicons names to our stroke InfoIcon names.
+const ICON_MAP = {
+  star: 'star',
+  car: 'car',
+  'musical-notes': 'music',
+  restaurant: 'food',
+  medkit: 'health',
+  'shield-checkmark': 'shield',
+  leaf: 'leaf',
+  'help-circle': 'help',
+};
+
+function QuickFact({ fact, t }) {
   return (
-    <View style={styles.sectionContainer}>
-      <TouchableOpacity
-        style={styles.sectionHeader}
-        onPress={onToggle}
-        activeOpacity={0.7}
-      >
-        <View style={styles.sectionHeaderLeft}>
-          <View style={styles.iconContainer}>
-            <Ionicons name={section.icon} size={20} color={colors.teal} />
-          </View>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
+    <View style={[styles.fact, { backgroundColor: t.surface, borderColor: t.hairline }, t.cardShadow]}>
+      <View style={[styles.factIcon, { backgroundColor: t.accent + '24' }]}>
+        <InfoIcon name={fact.icon} size={18} color={t.accent} />
+      </View>
+      <View style={styles.factText}>
+        <Text style={[styles.factLabel, { color: t.ink3 }]}>{fact.label.toUpperCase()}</Text>
+        <Text style={[styles.factValue, { color: t.ink }]} numberOfLines={1}>{fact.value}</Text>
+      </View>
+    </View>
+  );
+}
+
+function Accordion({ section, open, onToggle, t }) {
+  return (
+    <View
+      style={[
+        styles.acc,
+        { backgroundColor: t.surface, borderColor: open ? t.hairlineStrong : t.hairline },
+        t.cardShadow,
+      ]}
+    >
+      <TouchableOpacity style={styles.accHead} onPress={onToggle} activeOpacity={0.75}>
+        <InfoIcon name={ICON_MAP[section.icon] || 'help'} size={20} color={t.accent2} />
+        <Text style={[styles.accTitle, { color: t.ink }]}>{section.title}</Text>
+        <View style={open ? styles.chevOpen : styles.chevClosed}>
+          <IconChevron size={18} color={t.ink3} />
         </View>
-        <Ionicons
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={colors.text.tertiary}
-        />
       </TouchableOpacity>
 
-      {isExpanded && (
-        <View style={styles.sectionContent}>
-          {section.content.map((paragraph, index) => (
-            <Text key={index} style={styles.paragraph}>
-              {paragraph}
-            </Text>
+      {open && (
+        <View style={styles.accBody}>
+          {(section.content || []).map((p, i) => (
+            <Text key={i} style={[styles.para, { color: t.ink2 }]}>{p}</Text>
           ))}
         </View>
       )}
@@ -60,49 +93,62 @@ function AccordionSection({ section, isExpanded, onToggle }) {
 }
 
 export default function InfoScreen() {
+  const { t } = useTheme();
   const insets = useSafeAreaInsets();
-  const [expandedSections, setExpandedSections] = useState(new Set());
+  const [openId, setOpenId] = useState(festivalSections[0]?.id ?? null);
 
-  const toggleSection = useCallback((sectionId) => {
+  const toggle = useCallback((id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedSections(prev => {
-      const next = new Set(prev);
-      if (next.has(sectionId)) {
-        next.delete(sectionId);
-      } else {
-        next.add(sectionId);
-      }
-      return next;
-    });
+    setOpenId(prev => (prev === id ? null : id));
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <Text style={styles.headerTitle}>Festival Info</Text>
-        <Text style={styles.headerSubtitle}>
-          Everything you need to know
-        </Text>
+    <View style={[styles.container, { backgroundColor: t.bg }]}>
+      <ThemeToggle variant="auto" />
+
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: t.bg2, borderBottomColor: t.hairline, paddingTop: insets.top + 12 },
+        ]}
+      >
+        <View style={styles.headerRings}>
+          <Rings369 size={150} stroke={1} color={t.accent} />
+        </View>
+        <Text style={[styles.eyebrow, { color: t.accent }]}>SOVRA EDITION · ESSENTIALS</Text>
+        <Text style={[styles.h1, { color: t.ink }]}>Know Before{'\n'}You Go</Text>
       </View>
 
       <ScrollView
-        style={styles.scrollView}
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {festivalSections.map(section => (
-          <AccordionSection
-            key={section.id}
-            section={section}
-            isExpanded={expandedSections.has(section.id)}
-            onToggle={() => toggleSection(section.id)}
-          />
-        ))}
+        <View style={styles.facts}>
+          {QUICK_FACTS.map(f => (
+            <QuickFact key={f.label} fact={f} t={t} />
+          ))}
+        </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Questions? Find a festival crew member{'\n'}or visit the main info point.
-          </Text>
+        <View style={styles.accList}>
+          {festivalSections.map(section => (
+            <Accordion
+              key={section.id}
+              section={section}
+              open={openId === section.id}
+              onToggle={() => toggle(section.id)}
+              t={t}
+            />
+          ))}
+        </View>
+
+        <View style={styles.contact}>
+          <PyramidMark size={28} stroke={1.4} color={t.ink} />
+          <Text style={[styles.contactTitle, { color: t.ink }]}>Still need a hand?</Text>
+          <TouchableOpacity onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)} activeOpacity={0.7}>
+            <Text style={[styles.contactMail, { color: t.accent2 }]}>{CONTACT_EMAIL}</Text>
+          </TouchableOpacity>
+          <Text style={[styles.contactPlace, { color: t.ink3 }]}>{PLACE}</Text>
         </View>
       </ScrollView>
     </View>
@@ -110,82 +156,57 @@ export default function InfoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.screen,
-  },
+  container: { flex: 1 },
+
   header: {
-    padding: spacing.md,
-    backgroundColor: colors.navyDark,
-  },
-  headerTitle: {
-    ...typography.textStyles.h2,
-    color: colors.text.inverse,
-  },
-  headerSubtitle: {
-    ...typography.textStyles.body,
-    color: colors.tealLight,
-    marginTop: spacing.xs,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  sectionContainer: {
-    backgroundColor: colors.background.card,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.md,
+    position: 'relative',
     overflow: 'hidden',
-    ...shadows.sm,
+    borderBottomWidth: 1,
+    paddingHorizontal: 20,
+    paddingRight: 60,
+    paddingBottom: 18,
   },
-  sectionHeader: {
+  headerRings: { position: 'absolute', top: -50, right: -44, opacity: 0.22 },
+  eyebrow: { fontFamily: fonts.bodyBold, fontSize: 11, letterSpacing: 2.4 },
+  h1: { fontFamily: fonts.display, fontSize: 30, lineHeight: 31, marginTop: 6 },
+
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 90 },
+
+  facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 22 },
+  fact: {
+    width: '47.5%',
+    flexGrow: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.md,
+    gap: 11,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 13,
   },
-  sectionHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconContainer: {
+  factIcon: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary.teal + '15',
+    borderRadius: radius.sm,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
   },
-  sectionTitle: {
-    ...typography.textStyles.h5,
-    color: colors.text.primary,
-    flex: 1,
-  },
-  sectionContent: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.neutral.grayLightest,
-  },
-  paragraph: {
-    ...typography.textStyles.bodySmall,
-    color: colors.text.secondary,
-    lineHeight: 22,
-    marginTop: spacing.sm,
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  footerText: {
-    ...typography.textStyles.bodySmall,
-    color: colors.text.tertiary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  factText: { flex: 1 },
+  factLabel: { fontFamily: fonts.bodyBold, fontSize: 10, letterSpacing: 0.8 },
+  factValue: { fontFamily: fonts.bodyBold, fontSize: 14, marginTop: 2 },
+
+  accList: { gap: 10 },
+  acc: { borderWidth: 1, borderRadius: radius.md, overflow: 'hidden' },
+  accHead: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15 },
+  accTitle: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 15.5 },
+  chevClosed: { transform: [{ rotate: '0deg' }] },
+  chevOpen: { transform: [{ rotate: '180deg' }] },
+  accBody: { paddingLeft: 51, paddingRight: 16, paddingBottom: 16 },
+  para: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 22, marginBottom: 10 },
+
+  contact: { alignItems: 'center', paddingTop: 30, paddingBottom: 12 },
+  contactTitle: { fontFamily: fonts.displayBold, fontSize: 17, marginTop: 12 },
+  contactMail: { fontFamily: fonts.bodyBold, fontSize: 14, marginTop: 8 },
+  contactPlace: { fontFamily: fonts.body, fontSize: 11.5, marginTop: 8, textAlign: 'center' },
 });

@@ -1,88 +1,185 @@
 /**
- * ScheduleScreen - Main event list with day picker, filters, and happening now
+ * ScheduleScreen — "Set Times" lineup (timeline layout) on the Pyramid theme.
+ *
+ * Presentation rebuilt to match the design's schedule.jsx; ALL data wiring,
+ * reminder/save mapping, offline + loading states preserved. Saving a set now
+ * uses the reminder system (star = hasReminder).
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
-  SectionList,
+  ScrollView,
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import DayPicker from '../components/DayPicker';
-import StageFilter from '../components/StageFilter';
-import HappeningNow from '../components/HappeningNow';
-import EventCard from '../components/EventCard';
-import ReminderPicker from '../components/ReminderPicker';
+import { useTheme } from '../contexts/ThemeContext';
+import { fonts, radius } from '../theme/tokens';
+import { Rings369, PyramidMark } from '../components/geometry/Geometry';
+import { IconStar } from '../components/ui/Icons';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
 import OfflineFirstLaunch from '../components/OfflineFirstLaunch';
 
-import { useTimelineEvents, useCategories, useEventsForDate, useHappeningNow } from '../hooks/useEvents';
+import { useTimelineEvents, useCategories, useEventsForDate } from '../hooks/useEvents';
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { useReminders } from '../hooks/useReminders';
 import { useNetwork } from '../contexts/NetworkContext';
-import { groupEventsByHour, getUniqueDates, parseDate, isSameDay } from '../utils/dateHelpers';
-import { TIMELINE_ID } from '../utils/constants';
+import {
+  formatTime,
+  getUniqueDates,
+  parseDate,
+  isSameDay,
+} from '../utils/dateHelpers';
+import { TIMELINE_ID, DEFAULT_REMINDER_MINUTES } from '../utils/constants';
+
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const ALL = 'all';
+const isPowerDay = (date) => [3, 6, 9].includes(new Date(date).getDate());
+
+// ── Day picker ──────────────────────────────────────────────────────────────
+function DayPicker({ t, dates, selected, onSelect }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.dayRow}
+    >
+      {dates.map(date => {
+        const on = selected && isSameDay(date, selected);
+        const power = isPowerDay(date);
+        return (
+          <TouchableOpacity
+            key={date.toISOString()}
+            activeOpacity={0.8}
+            onPress={() => onSelect(date)}
+            style={[
+              styles.dayPill,
+              { backgroundColor: on ? t.accent : t.surface, borderColor: on ? t.accent : t.hairlineStrong },
+            ]}
+          >
+            <Text style={[styles.dayDow, { color: on ? t.onAccent : t.ink3 }]}>
+              {DOW[date.getDay()]}
+            </Text>
+            <Text style={[styles.dayNum, { color: on ? t.onAccent : t.ink }]}>
+              {date.getDate()}
+            </Text>
+            {power ? (
+              <View style={[styles.powerDot, { backgroundColor: on ? t.onAccent : t.accent }]} />
+            ) : null}
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+// ── Stage filter ────────────────────────────────────────────────────────────
+function StageFilter({ t, stages, selected, onSelect }) {
+  const Chip = ({ id, label, color }) => {
+    const on = selected === id;
+    // "All stages" inverse fix: bg t.ink / text t.bg in selected state.
+    const bg = on ? (color || t.ink) : 'transparent';
+    const border = on ? (color || t.ink) : t.hairlineStrong;
+    const text = on ? (color ? '#fff' : t.bg) : t.ink2;
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => onSelect(id)}
+        style={[styles.chip, { backgroundColor: bg, borderColor: border }]}
+      >
+        {color ? <View style={[styles.chipDot, { backgroundColor: on ? '#fff' : color }]} /> : null}
+        <Text style={[styles.chipText, { color: text }]}>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.chipRow}
+    >
+      <Chip id={ALL} label="All stages" color={null} />
+      {stages.map(s => <Chip key={s.id} id={s.id} label={s.name} color={s.color} />)}
+    </ScrollView>
+  );
+}
+
+// ── Timeline event row ──────────────────────────────────────────────────────
+function EventRow({ t, ev, saved, onPress, onSave }) {
+  const color = ev.categoryColor;
+  return (
+    <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={styles.tlRow}>
+      <View style={styles.tlTimeCol}>
+        <Text style={[styles.tlStart, { color: t.ink }]}>{formatTime(ev.time)}</Text>
+        {ev.endTime ? <Text style={[styles.tlEnd, { color: t.ink3 }]}>{formatTime(ev.endTime)}</Text> : null}
+      </View>
+
+      <View style={styles.tlRail}>
+        <View style={[styles.tlLine, { backgroundColor: t.hairlineStrong }]} />
+        <View style={[styles.tlNode, { backgroundColor: t.bg, borderColor: color }]} />
+      </View>
+
+      <View style={[styles.tlCard, { backgroundColor: t.surface, borderColor: t.hairline, borderLeftColor: color }, t.cardShadow]}>
+        <View style={styles.tlCardBody}>
+          <Text style={[styles.cardStage, { color }]} numberOfLines={1}>
+            {ev.categoryName.toUpperCase()}
+          </Text>
+          <Text style={[styles.cardTitle, { color: t.ink }]} numberOfLines={2}>
+            {ev.title}
+          </Text>
+        </View>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onSave}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={styles.favBtn}
+        >
+          <IconStar size={20} stroke={1.8} filled={saved} color={saved ? t.accent : t.ink3} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function ScheduleScreen({ navigation }) {
-  // State - use hardcoded timeline ID
+  const { t } = useTheme();
+  const insets = useSafeAreaInsets();
   const timelineId = TIMELINE_ID;
-  const [selectedDate, setSelectedDate] = useState(null); // Will be set once events load
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-  const [reminderModalVisible, setReminderModalVisible] = useState(false);
-  const [selectedEventForReminder, setSelectedEventForReminder] = useState(null);
 
-  // Current time for live updates
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null); // null === "all"
+
   const currentTime = useCurrentTime();
 
-  // Network state for offline handling
   const { isConnected, isInternetReachable } = useNetwork();
   const isOffline = !isConnected || !isInternetReachable;
 
-  // API queries using hardcoded timeline ID
-  const { data: events, isLoading: eventsLoading, isError, error, refetch: refetchEvents } = useTimelineEvents(timelineId);
+  const { data: events, isLoading: eventsLoading, isError, refetch: refetchEvents } = useTimelineEvents(timelineId);
   const { data: categories } = useCategories(timelineId);
 
-  // Reminders
-  const { hasReminder, getReminder, setReminder, removeReminder } = useReminders();
+  const { hasReminder, setReminder, removeReminder } = useReminders();
 
-  // Get unique dates with events
-  const availableDates = useMemo(() => {
-    if (!events) return [];
-    return getUniqueDates(events);
-  }, [events]);
+  // Unique festival dates with events.
+  const availableDates = useMemo(() => (events ? getUniqueDates(events) : []), [events]);
 
-  // Smart initial date selection once events load
+  // Smart initial date selection (preserved logic): today if it has events, else first day.
   useEffect(() => {
     if (availableDates.length > 0 && selectedDate === null) {
       const today = new Date();
-      const firstDay = availableDates[0];
-      const lastDay = availableDates[availableDates.length - 1];
-
-      // Check if today has events in the festival
       const todayHasEvents = availableDates.some(d => isSameDay(d, today));
-
-      if (todayHasEvents) {
-        // Today is a festival day with events - select it
-        setSelectedDate(today);
-      } else {
-        // Today is not a festival day - default to first festival day
-        setSelectedDate(firstDay);
-      }
+      setSelectedDate(todayHasEvents ? today : availableDates[0]);
     }
   }, [availableDates, selectedDate]);
 
-  // Filter events for selected date and category
+  // Filter + sort events for the selected day & stage.
   const filteredEvents = useEventsForDate(events, selectedDate, selectedCategoryId);
 
-  // Enrich events with category info
+  // Enrich with category info (preserved pattern).
   const enrichedEvents = useMemo(() => {
     if (!filteredEvents || !categories) return [];
     return filteredEvents.map(event => {
@@ -90,206 +187,188 @@ export default function ScheduleScreen({ navigation }) {
       return {
         ...event,
         categoryName: category?.name || 'Event',
-        categoryColor: category?.color || colors.teal,
+        categoryColor: category?.color || t.accent2,
       };
     });
-  }, [filteredEvents, categories]);
+  }, [filteredEvents, categories, t.accent2]);
 
-  // Group events by hour for section list
-  const sections = useMemo(() => groupEventsByHour(enrichedEvents), [enrichedEvents]);
+  // Count of saved sets among ALL of the selected day's events.
+  const savedCount = useMemo(() => {
+    if (!events || !selectedDate) return 0;
+    return events.filter(e => isSameDay(parseDate(e.date), selectedDate) && hasReminder(e.id)).length;
+  }, [events, selectedDate, hasReminder]);
 
-  // Get happening now events (always visible regardless of selected day)
-  const happeningNowEvents = useMemo(() => {
-    if (!events || !categories) return [];
-    const live = useHappeningNow(events, currentTime);
-    return live.map(event => {
-      const category = categories.find(c => c.id === event.categoryId);
-      return {
-        ...event,
-        categoryName: category?.name || 'Event',
-        categoryColor: category?.color || colors.teal,
-      };
-    });
-  }, [events, categories, currentTime]);
-
-  // Handlers
   const handleEventPress = useCallback((event) => {
     navigation.navigate('EventDetail', { event });
   }, [navigation]);
 
-  const handleReminderPress = useCallback((event) => {
-    setSelectedEventForReminder(event);
-    setReminderModalVisible(true);
-  }, []);
-
-  const handleSetReminder = useCallback(async (minutes) => {
-    if (selectedEventForReminder) {
-      try {
-        await setReminder(selectedEventForReminder, minutes);
-      } catch (error) {
-        console.error('Error setting reminder:', error);
-      }
+  // Star toggles a saved set (mapped to the reminder system).
+  const handleSave = useCallback(async (event) => {
+    try {
+      if (hasReminder(event.id)) await removeReminder(event.id);
+      else await setReminder(event, DEFAULT_REMINDER_MINUTES);
+    } catch (err) {
+      console.error('Error toggling saved set:', err);
     }
-  }, [selectedEventForReminder, setReminder]);
+  }, [hasReminder, removeReminder, setReminder]);
 
-  const handleRemoveReminder = useCallback(async () => {
-    if (selectedEventForReminder) {
-      try {
-        await removeReminder(selectedEventForReminder.id);
-      } catch (error) {
-        console.error('Error removing reminder:', error);
-      }
-    }
-  }, [selectedEventForReminder, removeReminder]);
-
-  // Offline first launch - no cached data and offline
+  // Offline first launch — no cached data and offline.
   if (!events && isError && isOffline) {
     return <OfflineFirstLaunch onRetry={refetchEvents} />;
   }
 
-  // Loading state - show while events are loading or date is being determined
-  if (eventsLoading && !events) {
+  // Loading / awaiting date selection.
+  if ((eventsLoading && !events) || selectedDate === null) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.teal} />
-        <Text style={styles.loadingText}>Loading schedule...</Text>
+      <View style={[styles.loading, { backgroundColor: t.bg }]}>
+        <ActivityIndicator size="large" color={t.accent} />
+        <Text style={[styles.loadingText, { color: t.ink2 }]}>Loading schedule...</Text>
       </View>
     );
   }
 
-  // Waiting for date selection after events loaded
-  if (selectedDate === null) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.teal} />
-        <Text style={styles.loadingText}>Loading schedule...</Text>
-      </View>
-    );
-  }
+  const dayLabel = `${DOW[selectedDate.getDay()]} ${selectedDate.getDate()} Aug`;
+  const power = isPowerDay(selectedDate);
 
   return (
-    <View style={styles.container}>
-      {/* Day picker */}
-      <DayPicker
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        availableDates={availableDates}
-      />
+    <View style={[styles.container, { backgroundColor: t.bg }]}>
+      <ThemeToggle variant="auto" />
 
-      {/* Happening now banner (only on today) */}
-      <HappeningNow
-        events={happeningNowEvents}
-        onEventPress={handleEventPress}
-        currentTime={currentTime}
-      />
+      {/* Header */}
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: t.bg2, borderBottomColor: t.hairline, paddingTop: insets.top + 10 },
+        ]}
+      >
+        <View style={styles.rings} pointerEvents="none">
+          <Rings369 size={150} stroke={1} color={t.accent} />
+        </View>
+        <View style={styles.headerInner}>
+          <Text style={[styles.eyebrow, { color: t.accent }]}>SOVRA EDITION · LINEUP</Text>
+          <Text style={[styles.h1, { color: t.ink }]}>Set Times</Text>
+        </View>
 
-      {/* Stage filter */}
+        <DayPicker t={t} dates={availableDates} selected={selectedDate} onSelect={setSelectedDate} />
+      </View>
+
       <StageFilter
-        categories={categories || []}
-        selectedCategoryId={selectedCategoryId}
-        onCategorySelect={setSelectedCategoryId}
+        t={t}
+        stages={categories || []}
+        selected={selectedCategoryId ?? ALL}
+        onSelect={(id) => setSelectedCategoryId(id === ALL ? null : id)}
       />
 
-      {/* Event list */}
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <EventCard
-            event={item}
-            onPress={() => handleEventPress(item)}
-            hasReminder={hasReminder(item.id)}
-            onReminderPress={() => handleReminderPress(item)}
-            currentTime={currentTime}
-          />
-        )}
-        renderSectionHeader={({ section: { title } }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>{title}</Text>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyList}>
-            <Text style={styles.emptyListText}>No events scheduled</Text>
-            <Text style={styles.emptyListSubtext}>for this day</Text>
-          </View>
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={eventsLoading}
-            onRefresh={refetchEvents}
-            tintColor={colors.teal}
-          />
-        }
+      <ScrollView
+        style={styles.list}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        stickySectionHeadersEnabled
-      />
+        refreshControl={
+          <RefreshControl refreshing={eventsLoading} onRefresh={refetchEvents} tintColor={t.accent} />
+        }
+      >
+        {/* Day head */}
+        <View style={styles.dayHead}>
+          <Text style={[styles.dayHeadLabel, { color: t.ink }]}>{dayLabel}</Text>
+          {power ? (
+            <Text style={[styles.dayHeadTag, { color: t.accent }]}>369 · power day</Text>
+          ) : null}
+          <View style={[styles.savedPill, { backgroundColor: t.surface, borderColor: t.hairlineStrong }]}>
+            <IconStar size={14} stroke={1.6} filled color={t.accent} />
+            <Text style={[styles.savedPillText, { color: t.accent }]}>{savedCount} saved</Text>
+          </View>
+        </View>
 
-      {/* Reminder picker modal */}
-      <ReminderPicker
-        visible={reminderModalVisible}
-        onClose={() => setReminderModalVisible(false)}
-        onSetReminder={handleSetReminder}
-        onRemoveReminder={handleRemoveReminder}
-        event={selectedEventForReminder}
-        existingReminder={selectedEventForReminder ? getReminder(selectedEventForReminder.id) : null}
-      />
+        {enrichedEvents.length === 0 ? (
+          <View style={styles.empty}>
+            <PyramidMark size={40} stroke={1.2} color={t.ink3} />
+            <Text style={[styles.emptyText, { color: t.ink3 }]}>No sets for this filter yet.</Text>
+          </View>
+        ) : (
+          <View style={styles.tlCol}>
+            {enrichedEvents.map(ev => (
+              <EventRow
+                key={ev.id}
+                t={t}
+                ev={ev}
+                saved={hasReminder(ev.id)}
+                onPress={() => handleEventPress(ev)}
+                onSave={() => handleSave(ev)}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.screen,
+  container: { flex: 1 },
+
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { fontFamily: fonts.body, fontSize: 14, marginTop: 14 },
+
+  // Header
+  header: { position: 'relative', overflow: 'hidden', borderBottomWidth: 1, paddingBottom: 12 },
+  rings: { position: 'absolute', top: -50, right: -40, opacity: 0.25 },
+  headerInner: { paddingTop: 4, paddingBottom: 14, paddingLeft: 20, paddingRight: 60 },
+  eyebrow: { fontFamily: fonts.bodyBold, fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase' },
+  h1: { fontFamily: fonts.display, fontSize: 32, marginTop: 6, letterSpacing: -0.5 },
+
+  // Day picker
+  dayRow: { flexDirection: 'row', gap: 9, paddingHorizontal: 20, paddingBottom: 2 },
+  dayPill: {
+    width: 52, height: 64, borderRadius: radius.md, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center', gap: 2, position: 'relative',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background.screen,
+  dayDow: { fontFamily: fonts.bodyBold, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
+  dayNum: { fontFamily: fonts.display, fontSize: 22, lineHeight: 24 },
+  powerDot: { position: 'absolute', bottom: 8, width: 4, height: 4, borderRadius: 2 },
+
+  // Stage filter
+  chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingVertical: 12 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1,
   },
-  loadingText: {
-    ...typography.textStyles.body,
-    color: colors.text.secondary,
-    marginTop: spacing.md,
+  chipDot: { width: 7, height: 7, borderRadius: 4 },
+  chipText: { fontFamily: fonts.bodyBold, fontSize: 13 },
+
+  // List
+  list: { flex: 1 },
+  listContent: { paddingTop: 4, paddingBottom: 90 },
+  dayHead: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background.screen,
+  dayHeadLabel: { fontFamily: fonts.bodyExtra, fontSize: 13, letterSpacing: 0.2 },
+  dayHeadTag: { fontFamily: fonts.bodyBold, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase' },
+  savedPill: {
+    marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 11, paddingVertical: 5, borderRadius: radius.pill, borderWidth: 1,
   },
-  emptyText: {
-    ...typography.textStyles.h4,
-    color: colors.text.secondary,
+  savedPillText: { fontFamily: fonts.bodyExtra, fontSize: 12 },
+
+  // Timeline rows
+  tlCol: { paddingRight: 20 },
+  tlRow: { flexDirection: 'row', alignItems: 'stretch', minHeight: 64 },
+  tlTimeCol: { width: 58, paddingRight: 10, paddingTop: 2, alignItems: 'flex-end' },
+  tlStart: { fontFamily: fonts.bodyExtra, fontSize: 13 },
+  tlEnd: { fontFamily: fonts.bodyMed, fontSize: 11, marginTop: 2 },
+  tlRail: { width: 18, alignItems: 'center', position: 'relative' },
+  tlLine: { position: 'absolute', top: 0, bottom: 0, width: 2 },
+  tlNode: { width: 11, height: 11, borderRadius: 6, borderWidth: 2.5, marginTop: 4 },
+  tlCard: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12,
+    borderWidth: 1, borderLeftWidth: 3, borderRadius: radius.sm, paddingVertical: 11, paddingHorizontal: 13,
   },
-  sectionHeader: {
-    backgroundColor: colors.background.screen,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral.grayLight,
-  },
-  sectionHeaderText: {
-    ...typography.textStyles.label,
-    color: colors.text.tertiary,
-  },
-  listContent: {
-    paddingBottom: spacing.xl,
-  },
-  emptyList: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: spacing['3xl'],
-  },
-  emptyListText: {
-    ...typography.textStyles.h4,
-    color: colors.text.tertiary,
-  },
-  emptyListSubtext: {
-    ...typography.textStyles.body,
-    color: colors.text.tertiary,
-  },
+  tlCardBody: { flex: 1, minWidth: 0 },
+  cardStage: { fontFamily: fonts.bodyExtra, fontSize: 11, letterSpacing: 0.5 },
+  cardTitle: { fontFamily: fonts.bodyBold, fontSize: 16, lineHeight: 20, marginTop: 3 },
+  favBtn: { padding: 4 },
+
+  // Empty
+  empty: { alignItems: 'center', gap: 12, paddingVertical: 60, paddingHorizontal: 20 },
+  emptyText: { fontFamily: fonts.body, fontSize: 14 },
 });

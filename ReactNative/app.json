@@ -35,7 +35,8 @@
           "color": "#4592AA",
           "sounds": []
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

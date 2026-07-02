@@ -1,14 +1,13 @@
 /**
- * AppNavigator - Bottom tabs with Home, Schedule, Map, Info, and My Events
+ * AppNavigator - Bottom tabs (Home, Lineup, Map, Info, My Plan) with themed stacks.
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet } from 'react-native';
-import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
+import { Animated } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from '../screens/HomeScreen';
 import ScheduleScreen from '../screens/ScheduleScreen';
@@ -18,117 +17,75 @@ import MyEventsScreen from '../screens/MyEventsScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
 import BlogPostScreen from '../screens/BlogPostScreen';
 
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing } from '../theme/spacing';
+import PyramidTabBar from './PyramidTabBar';
+import { useTheme } from '../contexts/ThemeContext';
+import { fonts } from '../theme/tokens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-const stackScreenOptions = {
-  headerStyle: {
-    backgroundColor: colors.navyDark,
-  },
-  headerTintColor: colors.text.inverse,
-  headerTitleStyle: {
-    ...typography.textStyles.h4,
-  },
-};
+function useStackScreenOptions() {
+  const { t } = useTheme();
+  return {
+    headerStyle: { backgroundColor: t.bg2 },
+    headerTintColor: t.ink,
+    headerTitleStyle: { fontFamily: fonts.displayBold, fontSize: 18 },
+    contentStyle: { backgroundColor: t.bg },
+  };
+}
 
-// Home stack with event detail and blog post navigation
 function HomeStack() {
+  const opts = useStackScreenOptions();
   return (
-    <Stack.Navigator screenOptions={stackScreenOptions}>
-      <Stack.Screen
-        name="HomeMain"
-        component={HomeScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="EventDetail"
-        component={EventDetailScreen}
-        options={{ title: 'Event Details' }}
-      />
+    <Stack.Navigator screenOptions={opts}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="BlogPost"
         component={BlogPostScreen}
-        options={({ route }) => ({
-          title: route.params?.title || 'News',
-          headerBackTitle: 'Home',
-        })}
+        options={({ route }) => ({ title: route.params?.title || 'News', headerBackTitle: 'Home' })}
       />
     </Stack.Navigator>
   );
 }
 
-// Schedule stack with event detail
 function ScheduleStack() {
+  const opts = useStackScreenOptions();
   return (
-    <Stack.Navigator screenOptions={stackScreenOptions}>
-      <Stack.Screen
-        name="ScheduleMain"
-        component={ScheduleScreen}
-        options={{
-          title: 'PYRAMID FESTIVAL',
-          headerTitleStyle: {
-            ...typography.textStyles.h4,
-            letterSpacing: 2,
-          },
-        }}
-      />
-      <Stack.Screen
-        name="EventDetail"
-        component={EventDetailScreen}
-        options={{ title: 'Event Details' }}
-      />
+    <Stack.Navigator screenOptions={opts}>
+      <Stack.Screen name="ScheduleMain" component={ScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
 
-// Map stack (no nested screens for now)
 function MapStack() {
+  const opts = useStackScreenOptions();
   return (
-    <Stack.Navigator screenOptions={{ ...stackScreenOptions, headerShown: false }}>
-      <Stack.Screen
-        name="MapMain"
-        component={MapScreen}
-      />
+    <Stack.Navigator screenOptions={{ ...opts, headerShown: false }}>
+      <Stack.Screen name="MapMain" component={MapScreen} />
     </Stack.Navigator>
   );
 }
 
-// Info stack (no nested screens for now)
 function InfoStack() {
+  const opts = useStackScreenOptions();
   return (
-    <Stack.Navigator screenOptions={{ ...stackScreenOptions, headerShown: false }}>
-      <Stack.Screen
-        name="InfoMain"
-        component={InfoScreen}
-      />
+    <Stack.Navigator screenOptions={{ ...opts, headerShown: false }}>
+      <Stack.Screen name="InfoMain" component={InfoScreen} />
     </Stack.Navigator>
   );
 }
 
-// My Events stack
 function MyEventsStack() {
+  const opts = useStackScreenOptions();
   return (
-    <Stack.Navigator screenOptions={{ ...stackScreenOptions, headerShown: false }}>
-      <Stack.Screen
-        name="MyEventsMain"
-        component={MyEventsScreen}
-        options={{ title: 'My Events' }}
-      />
+    <Stack.Navigator screenOptions={{ ...opts, headerShown: false }}>
+      <Stack.Screen name="MyEventsMain" component={MyEventsScreen} options={{ title: 'My Plan' }} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
-
-const TAB_ICONS = {
-  Home: { focused: 'home', unfocused: 'home-outline' },
-  Schedule: { focused: 'calendar', unfocused: 'calendar-outline' },
-  Map: { focused: 'map', unfocused: 'map-outline' },
-  Info: { focused: 'information-circle', unfocused: 'information-circle-outline' },
-  MyEvents: { focused: 'heart', unfocused: 'heart-outline' },
-};
 
 const FULLSCREEN_ROUTES = ['BlogPost'];
 const TAB_BAR_ANIMATION_DURATION = 500;
@@ -151,17 +108,11 @@ function AnimatedTabBar(props) {
     }).start();
   }, [shouldHide, animValue]);
 
-  const height = animValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, tabBarHeight],
-  });
+  const height = animValue.interpolate({ inputRange: [0, 1], outputRange: [0, tabBarHeight] });
 
   return (
-    <Animated.View
-      style={{ height, opacity: animValue, overflow: 'hidden' }}
-      pointerEvents={shouldHide ? 'none' : 'auto'}
-    >
-      <BottomTabBar {...props} />
+    <Animated.View style={{ height, opacity: animValue, overflow: 'hidden' }} pointerEvents={shouldHide ? 'none' : 'auto'}>
+      <PyramidTabBar {...props} />
     </Animated.View>
   );
 }
@@ -170,58 +121,13 @@ export default function AppNavigator() {
   return (
     <Tab.Navigator
       tabBar={(props) => <AnimatedTabBar {...props} />}
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          const icons = TAB_ICONS[route.name];
-          const iconName = focused ? icons.focused : icons.unfocused;
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: colors.teal,
-        tabBarInactiveTintColor: colors.text.tertiary,
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabBarLabel,
-        headerShown: false,
-      })}
+      screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeStack}
-        options={{ title: 'Home' }}
-      />
-      <Tab.Screen
-        name="Schedule"
-        component={ScheduleStack}
-        options={{ title: 'Schedule' }}
-      />
-      <Tab.Screen
-        name="Map"
-        component={MapStack}
-        options={{ title: 'Map' }}
-      />
-      <Tab.Screen
-        name="Info"
-        component={InfoStack}
-        options={{ title: 'Info' }}
-      />
-      <Tab.Screen
-        name="MyEvents"
-        component={MyEventsStack}
-        options={{ title: 'My Events' }}
-      />
+      <Tab.Screen name="Home" component={HomeStack} options={{ title: 'Home' }} />
+      <Tab.Screen name="Schedule" component={ScheduleStack} options={{ title: 'Lineup' }} />
+      <Tab.Screen name="Map" component={MapStack} options={{ title: 'Map' }} />
+      <Tab.Screen name="Info" component={InfoStack} options={{ title: 'Info' }} />
+      <Tab.Screen name="MyEvents" component={MyEventsStack} options={{ title: 'My Plan' }} />
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.background.card,
-    borderTopColor: colors.neutral.grayLight,
-    height: 60,
-    paddingBottom: spacing.xs,
-    paddingTop: spacing.xs,
-  },
-  tabBarLabel: {
-    ...typography.textStyles.caption,
-    marginTop: 2,
-  },
-});
