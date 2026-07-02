@@ -15,6 +15,7 @@ import { IconChevronLeft, IconCal, IconClock, IconBell, IconStar } from '../comp
 import ReminderPicker from '../components/ReminderPicker';
 import { useReminders } from '../hooks/useReminders';
 import { formatTime, formatDateLong, parseDate, getMinutesUntilEvent } from '../utils/dateHelpers';
+import { isZone } from '../utils/categoryKind';
 
 export default function EventDetailScreen({ route, navigation }) {
   const { event } = route.params;
@@ -79,7 +80,7 @@ export default function EventDetailScreen({ route, navigation }) {
         >
           <IconChevronLeft size={22} color={t.ink} />
         </TouchableOpacity>
-        <Text style={[styles.headerEyebrow, { color: t.accent }]}>SOVRA EDITION · SET</Text>
+        <Text style={[styles.headerEyebrow, { color: t.accent }]}>SOVRA EDITION · {isZone(event.categoryName) ? 'EVENT' : 'SET'}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>

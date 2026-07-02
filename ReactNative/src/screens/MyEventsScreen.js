@@ -21,6 +21,7 @@ import { useReminders } from '../hooks/useReminders';
 import { useTimelineEvents } from '../hooks/useEvents';
 import { formatTime, parseDate, getUniqueDates, getPowerDays } from '../utils/dateHelpers';
 import { TIMELINE_ID } from '../utils/constants';
+import { isZone } from '../utils/categoryKind';
 
 const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -137,6 +138,13 @@ export default function MyEventsScreen({ navigation }) {
   const dayCount = dayGroups.length;
   const stageCount = useMemo(() => new Set(saved.map(r => r.categoryName)).size, [saved]);
 
+  // Music sets vs zone events: label the plan by its honest contents — "sets"
+  // only when everything saved is a music set, otherwise the neutral "events".
+  const allSets = total > 0 && saved.every(r => !isZone(r.categoryName));
+  const pl = (n, one) => (n === 1 ? one : `${one}s`);
+  const itemsLabel = allSets ? pl(total, 'set') : pl(total, 'event');
+  const itemsSingular = allSets ? 'set' : 'event';
+
   const handleRemove = useCallback(async (eventId) => {
     try { await removeReminder(eventId); } catch (e) { console.error('Error removing reminder:', e); }
   }, [removeReminder]);
@@ -168,11 +176,11 @@ export default function MyEventsScreen({ navigation }) {
 
         {total > 0 && (
           <View style={styles.stats}>
-            <Stat t={t} num={total} label="sets" />
+            <Stat t={t} num={total} label={itemsLabel} />
             <View style={[styles.statDiv, { backgroundColor: t.hairlineStrong }]} />
-            <Stat t={t} num={dayCount} label="days" />
+            <Stat t={t} num={dayCount} label={pl(dayCount, 'day')} />
             <View style={[styles.statDiv, { backgroundColor: t.hairlineStrong }]} />
-            <Stat t={t} num={stageCount} label="stages" />
+            <Stat t={t} num={stageCount} label={pl(stageCount, 'stage')} />
           </View>
         )}
       </View>
@@ -188,7 +196,7 @@ export default function MyEventsScreen({ navigation }) {
             <View style={{ opacity: 0.8 }}><PyramidMark size={52} stroke={1.2} color={t.accent} /></View>
             <Text style={[styles.emptyTitle, { color: t.ink }]}>Your plan is empty</Text>
             <Text style={[styles.emptyText, { color: t.ink2 }]}>
-              Star the sets you can't miss in the Lineup and they'll gather here — with reminders before each one.
+              Star the events you can't miss in the Lineup and they'll gather here — with reminders before each one.
             </Text>
             <TouchableOpacity activeOpacity={0.85} onPress={handleBrowse} style={[styles.emptyCta, t.glow, { backgroundColor: t.accent }]}>
               <Text style={[styles.emptyCtaText, { color: t.onAccent }]}>Browse the lineup</Text>
@@ -199,7 +207,7 @@ export default function MyEventsScreen({ navigation }) {
           <>
             <View style={[styles.note, { backgroundColor: t.surface, borderColor: t.hairline }]}>
               <IconBell size={16} color={t.ink2} />
-              <Text style={[styles.noteText, { color: t.ink2 }]}>We'll nudge you 15 minutes before each saved set.</Text>
+              <Text style={[styles.noteText, { color: t.ink2 }]}>We'll nudge you 15 minutes before each saved {itemsSingular}.</Text>
             </View>
 
             {dayGroups.map(g => (

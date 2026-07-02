@@ -37,7 +37,8 @@ import {
   getUniqueDates,
   formatDateRange,
 } from '../utils/dateHelpers';
-import { TIMELINE_ID } from '../utils/constants';
+import { TIMELINE_ID, GATES_OPEN } from '../utils/constants';
+import { itemNoun } from '../utils/categoryKind';
 
 const HERO_INK = '#F7F3EA';
 const FESTIVAL = {
@@ -47,6 +48,9 @@ const FESTIVAL = {
   // TODO: paste real destinations. Empty string = friendly "coming soon" note.
   ticketUrl: 'https://pyramidfestival.com/tickets/',
   filmUrl: 'https://www.youtube.com/watch?v=42COXoz1Slk', // last edition's aftermovie
+  // Gates open the day before the programme starts — authoritative, not derived
+  // from the schedule. Single source of truth in constants (GATES_OPEN).
+  gatesOpen: GATES_OPEN,
 };
 
 // Open an external link. Until the URL is configured, show a friendly
@@ -70,17 +74,23 @@ function useFestivalTiming(events) {
     const dates = events && events.length ? getUniqueDates(events) : [];
     if (!dates.length) return { hasDates: false, startMs: 0, live: false, past: false, dateLabel: '' };
 
-    const first = dates[0];
     const last = dates[dates.length - 1];
 
-    // Gates = earliest set time on the first festival day (fallback 10:00).
-    const firstDayTimes = events
-      .filter(e => e.time && isSameDay(parseDate(e.date), first))
-      .map(e => e.time)
-      .sort();
-    const start = new Date(first);
-    const [gh, gm] = (firstDayTimes[0] || '10:00').split(':').map(Number);
-    start.setHours(gh, gm, 0, 0);
+    // Gates open is authoritative from config (day before the programme). Fall
+    // back to the earliest set on the first day only if it isn't configured.
+    let start;
+    if (FESTIVAL.gatesOpen) {
+      start = new Date(FESTIVAL.gatesOpen);
+    } else {
+      const first = dates[0];
+      const firstDayTimes = events
+        .filter(e => e.time && isSameDay(parseDate(e.date), first))
+        .map(e => e.time)
+        .sort();
+      start = new Date(first);
+      const [gh, gm] = (firstDayTimes[0] || '10:00').split(':').map(Number);
+      start.setHours(gh, gm, 0, 0);
+    }
 
     const end = new Date(last);
     end.setHours(23, 59, 59, 999);
@@ -239,7 +249,7 @@ function StageCard({ t, stage, count, onPress }) {
       </View>
       <View style={[hs.stageDot, { backgroundColor: stage.color }]} />
       <Text style={[hs.stageName, { color: t.ink }]} numberOfLines={1}>{stage.name}</Text>
-      <Text style={[hs.stageKind, { color: t.ink3 }]}>{count} set{count === 1 ? '' : 's'}</Text>
+      <Text style={[hs.stageKind, { color: t.ink3 }]}>{count} {itemNoun(stage.name, count)}</Text>
     </TouchableOpacity>
   );
 }
@@ -487,11 +497,13 @@ const hs = StyleSheet.create({
   cdScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(12,10,28,0.34)' },
   cdContent: { paddingVertical: 14, paddingHorizontal: 16 },
   cdGatesLabel: { fontFamily: fonts.bodyBold, fontSize: 10.5, letterSpacing: 2.3, textTransform: 'uppercase', opacity: 0.7 },
-  cdRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 8 },
+  cdRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 6 },
   cdUnit: { alignItems: 'center', minWidth: 44 },
-  cdValue: { fontFamily: fonts.display, fontSize: 30, lineHeight: 30, fontVariant: ['tabular-nums'] },
-  cdLabel: { fontFamily: fonts.body, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', opacity: 0.62, marginTop: 5 },
-  cdSep: { fontFamily: fonts.displayBold, fontSize: 26, opacity: 0.4, lineHeight: 30 },
+  // lineHeight > fontSize gives the display glyphs headroom so tall numerals
+  // aren't clipped at the top of their line box.
+  cdValue: { fontFamily: fonts.display, fontSize: 30, lineHeight: 38, fontVariant: ['tabular-nums'] },
+  cdLabel: { fontFamily: fonts.body, fontSize: 9.5, letterSpacing: 1.7, textTransform: 'uppercase', opacity: 0.62, marginTop: 2 },
+  cdSep: { fontFamily: fonts.displayBold, fontSize: 26, opacity: 0.4, lineHeight: 38 },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   liveDot: { width: 9, height: 9, borderRadius: 999 },
   liveText: { fontFamily: fonts.bodyBold, fontSize: 16 },

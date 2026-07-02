@@ -23,8 +23,8 @@ import { PyramidMark, Rings369 } from '../components/geometry/Geometry';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import { festivalSections } from '../data/festivalInfo';
 import { useTimelineEvents } from '../hooks/useEvents';
-import { getUniqueDates, formatTime, parseDate, isSameDay } from '../utils/dateHelpers';
-import { TIMELINE_ID } from '../utils/constants';
+import { getUniqueDates, formatTime } from '../utils/dateHelpers';
+import { TIMELINE_ID, GATES_OPEN } from '../utils/constants';
 
 // Enable LayoutAnimation on Android.
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -105,20 +105,14 @@ export default function InfoScreen() {
   const [openId, setOpenId] = useState(festivalSections[0]?.id ?? null);
   const { data: events } = useTimelineEvents(TIMELINE_ID);
 
-  // Quick facts — dates + gates derived from the live schedule.
+  // Quick facts — programme dates from the live schedule; gates from the
+  // authoritative GATES_OPEN (the day before, not the first set).
   const quickFacts = useMemo(() => {
     const dates = events && events.length ? getUniqueDates(events) : [];
-    let datesVal = 'Coming soon';
-    let gatesVal = 'TBA';
-    if (dates.length) {
-      datesVal = compactRange(dates);
-      const first = dates[0];
-      const times = events
-        .filter(e => e.time && isSameDay(parseDate(e.date), first))
-        .map(e => e.time)
-        .sort();
-      if (times.length) gatesVal = `Open ${formatTime(times[0])}`;
-    }
+    const datesVal = dates.length ? compactRange(dates) : 'Coming soon';
+    const g = new Date(GATES_OPEN);
+    const gTime = `${String(g.getHours()).padStart(2, '0')}:${String(g.getMinutes()).padStart(2, '0')}`;
+    const gatesVal = `${MON[g.getMonth()]} ${g.getDate()} · ${formatTime(gTime)}`;
     return [
       { icon: 'cal', label: 'Dates', value: datesVal },
       { icon: 'pin', label: 'Where', value: 'Rtanj, Serbia' },

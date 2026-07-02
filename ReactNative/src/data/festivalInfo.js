@@ -9,7 +9,7 @@ export const festivalSections = [
     title: 'Essential Info',
     icon: 'star',
     content: [
-      'Pyramid Festival 2026 takes place over multiple days of music, art, and community. Gates open at 10:00 AM on the first day.',
+      'Pyramid Festival 2026 takes place over multiple days of music, art, and community. Gates open at 12:00 PM on August 2, the day before the programme begins.',
       'Your wristband is your access pass for the entire festival. Do not remove it once applied - lost wristbands cannot be replaced.',
       'Please bring a valid photo ID (passport or driver\'s license). You will need it at check-in and may be asked to show it at any time.',
       'The festival is a cashless event. Top up your wristband at designated stations throughout the venue.',
