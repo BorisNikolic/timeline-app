@@ -12,6 +12,8 @@ import {
   StyleSheet,
   RefreshControl,
   Image,
+  Linking,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -42,7 +44,24 @@ const FESTIVAL = {
   edition: 'SOVRA EDITION',
   dateLabel: 'Dates coming soon',
   place: 'Pyramid Village · Rtanj Mountain, Serbia',
+  // TODO: paste real destinations. Empty string = friendly "coming soon" note.
+  ticketUrl: 'https://pyramidfestival.com/tickets/',
+  filmUrl: 'https://www.youtube.com/watch?v=42COXoz1Slk', // last edition's aftermovie
 };
+
+// Open an external link. Until the URL is configured, show a friendly
+// "coming soon" note instead of a dead tap.
+async function openExternal(url, comingSoon) {
+  if (!url) {
+    if (comingSoon) Alert.alert(comingSoon.title, comingSoon.message);
+    return;
+  }
+  try {
+    await Linking.openURL(url);
+  } catch (e) {
+    console.warn('Could not open link:', e?.message || e);
+  }
+}
 
 // — Festival timing + date label derived from the live schedule —
 function useFestivalTiming(events) {
@@ -160,20 +179,27 @@ function Hero({ t, insets, timing }) {
           </View>
         </View>
 
-        {/* CTAs */}
+        {/* CTAs — Buy ticket is always live (next-year sales open right after the
+            festival); the film button becomes the aftermovie once it's over */}
         <View style={hs.heroCtas}>
           <TouchableOpacity
             style={[hs.ctaPrimary, { backgroundColor: t.accent }, t.glow]}
             activeOpacity={0.85}
+            onPress={() => openExternal(FESTIVAL.ticketUrl, { title: 'Tickets', message: 'Ticket sales open soon — check back shortly.' })}
           >
-            <Text style={[hs.ctaPrimaryText, { color: t.onAccent }]}>Buy ticket</Text>
+            <Text style={[hs.ctaPrimaryText, { color: t.onAccent }]} numberOfLines={1}>Buy ticket</Text>
             <IconArrow size={17} color={t.onAccent} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[hs.ctaGhost, { borderColor: 'rgba(247,243,234,0.28)' }]}
             activeOpacity={0.8}
+            onPress={() => openExternal(FESTIVAL.filmUrl, showPast
+              ? { title: 'Aftermovie', message: "The aftermovie is being edited — it'll land here soon." }
+              : { title: 'Festival film', message: 'The teaser is on its way — check back soon.' })}
           >
-            <Text style={[hs.ctaGhostText, { color: HERO_INK }]}>Watch film</Text>
+            <Text style={[hs.ctaGhostText, { color: HERO_INK }]} numberOfLines={1}>
+              {showPast ? 'Watch aftermovie' : 'Watch film'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
