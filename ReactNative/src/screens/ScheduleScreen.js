@@ -34,15 +34,16 @@ import {
   getUniqueDates,
   parseDate,
   isSameDay,
+  formatDateForApi,
+  getPowerDays,
 } from '../utils/dateHelpers';
 import { TIMELINE_ID, DEFAULT_REMINDER_MINUTES } from '../utils/constants';
 
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const ALL = 'all';
-const isPowerDay = (date) => [3, 6, 9].includes(new Date(date).getDate());
 
 // ── Day picker ──────────────────────────────────────────────────────────────
-function DayPicker({ t, dates, selected, onSelect }) {
+function DayPicker({ t, dates, selected, onSelect, powerDays }) {
   return (
     <ScrollView
       horizontal
@@ -51,7 +52,7 @@ function DayPicker({ t, dates, selected, onSelect }) {
     >
       {dates.map(date => {
         const on = selected && isSameDay(date, selected);
-        const power = isPowerDay(date);
+        const power = !!powerDays[formatDateForApi(date)];
         return (
           <TouchableOpacity
             key={date.toISOString()}
@@ -101,6 +102,7 @@ function StageFilter({ t, stages, selected, onSelect }) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.chipScroll}
       contentContainerStyle={styles.chipRow}
     >
       <Chip id={ALL} label="All stages" color={null} />
@@ -115,8 +117,8 @@ function EventRow({ t, ev, saved, onPress, onSave }) {
   return (
     <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={styles.tlRow}>
       <View style={styles.tlTimeCol}>
-        <Text style={[styles.tlStart, { color: t.ink }]}>{formatTime(ev.time)}</Text>
-        {ev.endTime ? <Text style={[styles.tlEnd, { color: t.ink3 }]}>{formatTime(ev.endTime)}</Text> : null}
+        <Text style={[styles.tlStart, { color: t.ink }]} numberOfLines={1} adjustsFontSizeToFit>{formatTime(ev.time)}</Text>
+        {ev.endTime ? <Text style={[styles.tlEnd, { color: t.ink3 }]} numberOfLines={1} adjustsFontSizeToFit>{formatTime(ev.endTime)}</Text> : null}
       </View>
 
       <View style={styles.tlRail}>
@@ -164,8 +166,9 @@ export default function ScheduleScreen({ navigation }) {
 
   const { hasReminder, setReminder, removeReminder } = useReminders();
 
-  // Unique festival dates with events.
+  // Unique festival dates with events + the 3·6·9 power-day anchors.
   const availableDates = useMemo(() => (events ? getUniqueDates(events) : []), [events]);
+  const powerDays = useMemo(() => getPowerDays(availableDates), [availableDates]);
 
   // Smart initial date selection (preserved logic): today if it has events, else first day.
   useEffect(() => {
@@ -227,8 +230,9 @@ export default function ScheduleScreen({ navigation }) {
     );
   }
 
-  const dayLabel = `${DOW[selectedDate.getDay()]} ${selectedDate.getDate()} Aug`;
-  const power = isPowerDay(selectedDate);
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dayLabel = `${DOW[selectedDate.getDay()]} ${selectedDate.getDate()} ${MON[selectedDate.getMonth()]}`;
+  const powerLabel = powerDays[formatDateForApi(selectedDate)];
 
   return (
     <View style={[styles.container, { backgroundColor: t.bg }]}>
@@ -249,7 +253,7 @@ export default function ScheduleScreen({ navigation }) {
           <Text style={[styles.h1, { color: t.ink }]}>Set Times</Text>
         </View>
 
-        <DayPicker t={t} dates={availableDates} selected={selectedDate} onSelect={setSelectedDate} />
+        <DayPicker t={t} dates={availableDates} selected={selectedDate} onSelect={setSelectedDate} powerDays={powerDays} />
       </View>
 
       <StageFilter
@@ -270,8 +274,8 @@ export default function ScheduleScreen({ navigation }) {
         {/* Day head */}
         <View style={styles.dayHead}>
           <Text style={[styles.dayHeadLabel, { color: t.ink }]}>{dayLabel}</Text>
-          {power ? (
-            <Text style={[styles.dayHeadTag, { color: t.accent }]}>369 · power day</Text>
+          {powerLabel ? (
+            <Text style={[styles.dayHeadTag, { color: t.accent }]}>{powerLabel} · power day</Text>
           ) : null}
           <View style={[styles.savedPill, { backgroundColor: t.surface, borderColor: t.hairlineStrong }]}>
             <IconStar size={14} stroke={1.6} filled color={t.accent} />
@@ -326,11 +330,13 @@ const styles = StyleSheet.create({
   dayNum: { fontFamily: fonts.display, fontSize: 22, lineHeight: 24 },
   powerDot: { position: 'absolute', bottom: 8, width: 4, height: 4, borderRadius: 2 },
 
-  // Stage filter
-  chipRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingVertical: 12 },
+  // Stage filter — fixed-height row so the horizontal ScrollView can't
+  // stretch vertically (which was ballooning the chips into tall pills).
+  chipScroll: { flexGrow: 0, height: 62 },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20 },
   chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 7,
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 7, height: 38,
+    paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1,
   },
   chipDot: { width: 7, height: 7, borderRadius: 4 },
   chipText: { fontFamily: fonts.bodyBold, fontSize: 13 },
@@ -353,8 +359,8 @@ const styles = StyleSheet.create({
   // Timeline rows
   tlCol: { paddingRight: 20 },
   tlRow: { flexDirection: 'row', alignItems: 'stretch', minHeight: 64 },
-  tlTimeCol: { width: 58, paddingRight: 10, paddingTop: 2, alignItems: 'flex-end' },
-  tlStart: { fontFamily: fonts.bodyExtra, fontSize: 13 },
+  tlTimeCol: { width: 68, paddingRight: 10, paddingTop: 2, alignItems: 'flex-end' },
+  tlStart: { fontFamily: fonts.bodyExtra, fontSize: 12.5 },
   tlEnd: { fontFamily: fonts.bodyMed, fontSize: 11, marginTop: 2 },
   tlRail: { width: 18, alignItems: 'center', position: 'relative' },
   tlLine: { position: 'absolute', top: 0, bottom: 0, width: 2 },

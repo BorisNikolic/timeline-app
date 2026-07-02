@@ -33,34 +33,43 @@ import {
   parseDate,
   isSameDay,
   getUniqueDates,
+  formatDateRange,
 } from '../utils/dateHelpers';
 import { TIMELINE_ID } from '../utils/constants';
 
 const HERO_INK = '#F7F3EA';
 const FESTIVAL = {
   edition: 'SOVRA EDITION',
-  dateLabel: '3 – 9 August 2026',
+  dateLabel: 'Dates coming soon',
   place: 'Pyramid Village · Rtanj Mountain, Serbia',
 };
 
-// — Festival timing derived from the live schedule —
+// — Festival timing + date label derived from the live schedule —
 function useFestivalTiming(events) {
   const now = useCurrentTime();
   return useMemo(() => {
     const dates = events && events.length ? getUniqueDates(events) : [];
-    if (!dates.length) return { hasDates: false, startMs: 0, live: false, past: false };
+    if (!dates.length) return { hasDates: false, startMs: 0, live: false, past: false, dateLabel: '' };
 
     const first = dates[0];
     const last = dates[dates.length - 1];
+
+    // Gates = earliest set time on the first festival day (fallback 10:00).
+    const firstDayTimes = events
+      .filter(e => e.time && isSameDay(parseDate(e.date), first))
+      .map(e => e.time)
+      .sort();
     const start = new Date(first);
-    start.setHours(16, 0, 0, 0); // gates open 16:00
+    const [gh, gm] = (firstDayTimes[0] || '10:00').split(':').map(Number);
+    start.setHours(gh, gm, 0, 0);
+
     const end = new Date(last);
     end.setHours(23, 59, 59, 999);
 
     const isFestivalDay = dates.some(d => isSameDay(d, now));
-    const live = isFestivalDay || (now >= first && now <= end);
+    const live = isFestivalDay || (now >= start && now <= end);
     const past = now > end;
-    return { hasDates: true, startMs: start.getTime(), live, past };
+    return { hasDates: true, startMs: start.getTime(), live, past, dateLabel: formatDateRange(dates) };
   }, [events, now]);
 }
 
@@ -109,11 +118,11 @@ function Hero({ t, insets, timing }) {
           <Text style={[hs.eyebrowText, { color: t.accent }]}>{FESTIVAL.edition}</Text>
         </View>
 
-        <Text style={[hs.heroTitle, { color: HERO_INK }]}>PYRAMID</Text>
-        <Text style={[hs.heroTitle, hs.heroTitleAccent, { color: t.accent }]}>FESTIVAL</Text>
+        <Text style={[hs.heroTitle, { color: HERO_INK }]} numberOfLines={1} adjustsFontSizeToFit>PYRAMID</Text>
+        <Text style={[hs.heroTitle, hs.heroTitleAccent, { color: t.accent }]} numberOfLines={1} adjustsFontSizeToFit>FESTIVAL</Text>
 
         <View style={hs.heroMeta}>
-          <Text style={[hs.heroDate, { color: HERO_INK }]}>{FESTIVAL.dateLabel}</Text>
+          <Text style={[hs.heroDate, { color: HERO_INK }]}>{timing.dateLabel || FESTIVAL.dateLabel}</Text>
           <View style={hs.heroPlace}>
             <IconPin size={13} color={HERO_INK} />
             <Text style={[hs.heroPlaceText, { color: HERO_INK }]}>{FESTIVAL.place}</Text>
@@ -389,9 +398,7 @@ export default function HomeScreen({ navigation }) {
         {/* From the Village */}
         {blogPosts && blogPosts.length > 0 && (
           <View style={hs.sectionGap}>
-            <SectionTitle action="All news" onAction={() => navigateToTab('Info')}>
-              From the Village
-            </SectionTitle>
+            <SectionTitle>From the Village</SectionTitle>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -435,7 +442,7 @@ const hs = StyleSheet.create({
   heroInner: { position: 'relative', paddingHorizontal: 22, paddingTop: 14, paddingBottom: 30, zIndex: 2 },
   heroEyebrow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   eyebrowText: { fontFamily: fonts.bodyBold, fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase' },
-  heroTitle: { fontFamily: fonts.display, fontSize: 50, lineHeight: 50, letterSpacing: -1.4 },
+  heroTitle: { fontFamily: fonts.display, fontSize: 44, lineHeight: 48, letterSpacing: -1 },
   heroTitleAccent: { marginBottom: 16 },
   heroMeta: { gap: 4, marginBottom: 22 },
   heroDate: { fontFamily: fonts.bodyBold, fontSize: 14 },

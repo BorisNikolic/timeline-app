@@ -3,7 +3,7 @@
  * Static festival facts + accordion sections sourced from ../data/festivalInfo.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,9 @@ import { InfoIcon, IconChevron } from '../components/ui/Icons';
 import { PyramidMark, Rings369 } from '../components/geometry/Geometry';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import { festivalSections } from '../data/festivalInfo';
+import { useTimelineEvents } from '../hooks/useEvents';
+import { getUniqueDates, formatTime, parseDate, isSameDay } from '../utils/dateHelpers';
+import { TIMELINE_ID } from '../utils/constants';
 
 // Enable LayoutAnimation on Android.
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -30,13 +33,17 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const PLACE = 'Pyramid Village · Rtanj Mountain, Serbia';
 const CONTACT_EMAIL = 'info@pyramidfestival.com';
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const QUICK_FACTS = [
-  { icon: 'cal', label: 'Dates', value: '3–9 Aug 2026' },
-  { icon: 'pin', label: 'Where', value: 'Rtanj, Serbia' },
-  { icon: 'gate', label: 'Gates', value: 'Open 16:00' },
-  { icon: 'card', label: 'Payments', value: 'Cashless' },
-];
+// Compact festival range for the quick-fact card, e.g. "23–26 Jan 2026".
+function compactRange(dates) {
+  const a = dates[0];
+  const b = dates[dates.length - 1];
+  if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) {
+    return `${a.getDate()}–${b.getDate()} ${MON[a.getMonth()]} ${a.getFullYear()}`;
+  }
+  return `${a.getDate()} ${MON[a.getMonth()]} – ${b.getDate()} ${MON[b.getMonth()]}`;
+}
 
 // Map the data's Ionicons names to our stroke InfoIcon names.
 const ICON_MAP = {
@@ -58,7 +65,7 @@ function QuickFact({ fact, t }) {
       </View>
       <View style={styles.factText}>
         <Text style={[styles.factLabel, { color: t.ink3 }]}>{fact.label.toUpperCase()}</Text>
-        <Text style={[styles.factValue, { color: t.ink }]} numberOfLines={1}>{fact.value}</Text>
+        <Text style={[styles.factValue, { color: t.ink }]} numberOfLines={1} adjustsFontSizeToFit>{fact.value}</Text>
       </View>
     </View>
   );
@@ -96,6 +103,29 @@ export default function InfoScreen() {
   const { t } = useTheme();
   const insets = useSafeAreaInsets();
   const [openId, setOpenId] = useState(festivalSections[0]?.id ?? null);
+  const { data: events } = useTimelineEvents(TIMELINE_ID);
+
+  // Quick facts — dates + gates derived from the live schedule.
+  const quickFacts = useMemo(() => {
+    const dates = events && events.length ? getUniqueDates(events) : [];
+    let datesVal = 'Coming soon';
+    let gatesVal = 'TBA';
+    if (dates.length) {
+      datesVal = compactRange(dates);
+      const first = dates[0];
+      const times = events
+        .filter(e => e.time && isSameDay(parseDate(e.date), first))
+        .map(e => e.time)
+        .sort();
+      if (times.length) gatesVal = `Open ${formatTime(times[0])}`;
+    }
+    return [
+      { icon: 'cal', label: 'Dates', value: datesVal },
+      { icon: 'pin', label: 'Where', value: 'Rtanj, Serbia' },
+      { icon: 'gate', label: 'Gates', value: gatesVal },
+      { icon: 'card', label: 'Payments', value: 'Cashless' },
+    ];
+  }, [events]);
 
   const toggle = useCallback((id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -125,7 +155,7 @@ export default function InfoScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.facts}>
-          {QUICK_FACTS.map(f => (
+          {quickFacts.map(f => (
             <QuickFact key={f.label} fact={f} t={t} />
           ))}
         </View>

@@ -36,17 +36,18 @@ export const radius = { sm: 12, md: 18, lg: 26, xl: 36, pill: 999 };
 // Sacred-geometry intensity (fixed "balanced").
 export const motif = 0.65;
 
-// Font families (loaded via @expo-google-fonts in App.js). Weight is baked into
-// the family name, so pair these with fontWeight:'normal' (RN default).
+// Font families — Poppins (the app's brand font), loaded via @expo-google-fonts
+// in App.js. Weight is baked into the family name, so pair these with the RN
+// default fontWeight.
 export const fonts = {
-  display: 'Syne_800ExtraBold',
-  displayBold: 'Syne_700Bold',
-  displaySemi: 'Syne_600SemiBold',
-  body: 'OpenSans_400Regular',
-  bodyMed: 'OpenSans_500Medium',
-  bodySemi: 'OpenSans_600SemiBold',
-  bodyBold: 'OpenSans_700Bold',
-  bodyExtra: 'OpenSans_800ExtraBold',
+  display: 'Poppins_800ExtraBold',
+  displayBold: 'Poppins_700Bold',
+  displaySemi: 'Poppins_600SemiBold',
+  body: 'Poppins_400Regular',
+  bodyMed: 'Poppins_500Medium',
+  bodySemi: 'Poppins_600SemiBold',
+  bodyBold: 'Poppins_700Bold',
+  bodyExtra: 'Poppins_800ExtraBold',
 };
 
 const dark = {

@@ -92,7 +92,7 @@ const TAB_BAR_ANIMATION_DURATION = 500;
 
 function AnimatedTabBar(props) {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = 60 + insets.bottom;
+  const tabBarHeight = 50 + insets.bottom;
 
   const currentTabRoute = props.state.routes[props.state.index];
   const focused = getFocusedRouteNameFromRoute(currentTabRoute);

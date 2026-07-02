@@ -19,12 +19,11 @@ import ThemeToggle from '../components/ui/ThemeToggle';
 
 import { useReminders } from '../hooks/useReminders';
 import { useTimelineEvents } from '../hooks/useEvents';
-import { formatTime, parseDate } from '../utils/dateHelpers';
+import { formatTime, parseDate, getUniqueDates, getPowerDays } from '../utils/dateHelpers';
 import { TIMELINE_ID } from '../utils/constants';
 
 const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const POWER_LABEL = { 3: 'Opening', 6: 'Solstice', 9: 'Closing' };
 
 const toMin = (t) => { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; };
 const overlaps = (a, b) => {
@@ -86,6 +85,9 @@ export default function MyEventsScreen({ navigation }) {
     return m;
   }, [events]);
 
+  // 3·6·9 power-day anchors from the full festival schedule.
+  const powerDays = useMemo(() => getPowerDays(events ? getUniqueDates(events) : []), [events]);
+
   // Group saved sets by day, compute end label + overlap clashes within each day.
   const dayGroups = useMemo(() => {
     const byDate = {};
@@ -119,17 +121,16 @@ export default function MyEventsScreen({ navigation }) {
       });
 
       const d = parseDate(dateKey);
-      const dayOfMonth = d.getDate();
       return {
         dateKey,
         dow: DOW[d.getDay()],
-        dayNum: String(dayOfMonth).padStart(2, '0'),
+        dayNum: String(d.getDate()).padStart(2, '0'),
         month: MONTH[d.getMonth()],
-        powerLabel: POWER_LABEL[dayOfMonth] || null,
+        powerLabel: powerDays[dateKey] || null,
         sets: full,
       };
     });
-  }, [saved, eventsById, t.accent2]);
+  }, [saved, eventsById, powerDays, t.accent2]);
 
   // Stats
   const total = saved.length;

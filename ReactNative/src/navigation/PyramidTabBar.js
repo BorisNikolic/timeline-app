@@ -63,8 +63,8 @@ export default function PyramidTabBar({ state, navigation }) {
 
 const styles = StyleSheet.create({
   wrap: { borderTopWidth: 1, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingTop: 8 },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 2, paddingBottom: 6 },
-  dot: { position: 'absolute', top: -2, width: 4, height: 4, borderRadius: 999 },
+  row: { flexDirection: 'row', alignItems: 'center', height: 50, paddingHorizontal: 6 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  dot: { position: 'absolute', top: 2, width: 4, height: 4, borderRadius: 999 },
   label: { fontSize: 10, letterSpacing: 0.2 },
 });
