@@ -433,7 +433,8 @@ const hs = StyleSheet.create({
   hero: {
     position: 'relative',
     overflow: 'hidden',
-    minHeight: 530,
+    // Height follows content: tall when the full gates-open countdown shows,
+    // compact in the live/"see you next year" states (no dead space below CTAs).
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
   },
