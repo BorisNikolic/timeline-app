@@ -6,6 +6,7 @@ import React, { useRef, useState } from 'react';
 import {
   Image,
   StyleSheet,
+  Text,
   View,
   Animated,
   TouchableOpacity,
@@ -19,8 +20,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '../theme/colors';
-import { spacing, shadows } from '../theme/spacing';
+import { useTheme } from '../contexts/ThemeContext';
+import { fonts } from '../theme/tokens';
+import { Rings369 } from '../components/geometry/Geometry';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
 
 const MAP_SOURCE = require('../../assets/festival-map.png');
 const MAP_ASPECT_RATIO = 1920 / 1080;
@@ -30,6 +33,7 @@ const MAX_SCALE = 5;
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTheme();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const [isRotated, setIsRotated] = useState(true);
@@ -106,14 +110,14 @@ export default function MapScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: t.bg }]}>
       <PinchGestureHandler
         ref={pinchRef}
         simultaneousHandlers={panRef}
         onGestureEvent={onPinchEvent}
         onHandlerStateChange={onPinchStateChange}
       >
-        <Animated.View style={styles.flexCenter}>
+        <Animated.View style={[styles.flexCenter, { paddingTop: insets.top }]}>
           <PanGestureHandler
             ref={panRef}
             simultaneousHandlers={pinchRef}
@@ -150,8 +154,21 @@ export default function MapScreen() {
         </Animated.View>
       </PinchGestureHandler>
 
+      {/* Floating decorative header — out of the way of gestures */}
+      <View
+        pointerEvents="none"
+        style={[styles.header, { top: insets.top + 8 }]}
+      >
+        <View style={styles.rings}>
+          <Rings369 size={92} color={t.accent} />
+        </View>
+        <Text style={[styles.eyebrow, { color: t.accent }]}>FESTIVAL MAP</Text>
+      </View>
+
+      <ThemeToggle variant="auto" />
+
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, t.glow, { bottom: insets.bottom + 24, backgroundColor: t.accent }]}
         onPress={toggleRotation}
         activeOpacity={0.85}
         accessibilityLabel="Toggle map rotation"
@@ -160,7 +177,7 @@ export default function MapScreen() {
         <Ionicons
           name={isRotated ? 'phone-portrait-outline' : 'phone-landscape-outline'}
           size={24}
-          color={colors.text.inverse}
+          color={t.onAccent}
         />
       </TouchableOpacity>
     </View>
@@ -170,24 +187,36 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.navyDark,
   },
   flexCenter: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  header: {
+    position: 'absolute',
+    left: 18,
+    zIndex: 20,
+  },
+  rings: {
+    position: 'absolute',
+    left: -24,
+    top: -26,
+    opacity: 0.18,
+  },
+  eyebrow: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 11,
+    letterSpacing: 2.4,
+  },
   fab: {
     position: 'absolute',
-    bottom: spacing.lg,
-    right: spacing.lg,
+    right: 20,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.coral,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.lg,
-    elevation: 6,
+    elevation: 9,
   },
 });

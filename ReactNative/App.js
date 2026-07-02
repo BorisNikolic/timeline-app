@@ -1,9 +1,9 @@
 /**
  * Pyramid Festival App
- * Main entry point with navigation and providers
+ * Main entry point with navigation, theme, fonts and data providers
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
@@ -13,10 +13,20 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useFonts } from 'expo-font';
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
+} from '@expo-google-fonts/poppins';
+
 import AppNavigator from './src/navigation/AppNavigator';
 import { NetworkProvider } from './src/contexts/NetworkContext';
-import { colors } from './src/theme';
-import { typography } from './src/theme/typography';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+import { RemindersProvider } from './src/contexts/RemindersContext';
+import { fonts } from './src/theme/tokens';
 import {
   addNotificationReceivedListener,
   addNotificationResponseListener,
@@ -43,51 +53,62 @@ const queryClient = new QueryClient({
   },
 });
 
-// Navigation theme (extend DefaultTheme to include required fonts)
-const navigationTheme = {
-  ...DefaultTheme,
-  dark: false,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: colors.teal,
-    background: colors.background.screen,
-    card: colors.background.card,
-    text: colors.text.primary,
-    border: colors.neutral.grayLight,
-    notification: colors.coral,
-  },
-};
-
 function HydrationSplash() {
+  const { t } = useTheme();
   return (
-    <View style={splashStyles.container}>
-      <Text style={splashStyles.brand}>PYRAMID</Text>
-      <Text style={splashStyles.brandAccent}>FESTIVAL</Text>
-      <ActivityIndicator
-        size="small"
-        color={colors.tealLight}
-        style={splashStyles.spinner}
-      />
+    <View style={[splashStyles.container, { backgroundColor: t.bg }]}>
+      <Text style={[splashStyles.brand, { color: t.ink }]}>PYRAMID</Text>
+      <Text style={[splashStyles.brandAccent, { color: t.accent }]}>FESTIVAL</Text>
+      <ActivityIndicator size="small" color={t.accent2} style={splashStyles.spinner} />
     </View>
+  );
+}
+
+// Theme-aware navigation shell.
+function Root({ ready }) {
+  const { t, mode } = useTheme();
+
+  const navigationTheme = useMemo(() => ({
+    ...DefaultTheme,
+    dark: mode === 'dark',
+    colors: {
+      ...DefaultTheme.colors,
+      primary: t.accent,
+      background: t.bg,
+      card: t.surface,
+      text: t.ink,
+      border: t.hairline,
+      notification: t.hot,
+    },
+  }), [t, mode]);
+
+  return (
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar style={t.statusBar} />
+      {ready ? <AppNavigator /> : <HydrationSplash />}
+    </NavigationContainer>
   );
 }
 
 export default function App() {
   const [isHydrated, setIsHydrated] = useState(false);
 
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_800ExtraBold,
+  });
+
   // Setup notification listeners
   useEffect(() => {
-    // Handle notification received while app is foregrounded
     const receivedSubscription = addNotificationReceivedListener(notification => {
       console.log('Notification received:', notification);
     });
-
-    // Handle notification tap
     const responseSubscription = addNotificationResponseListener(response => {
       console.log('Notification tapped:', response);
-      // Could navigate to event detail here based on response.notification.request.content.data
     });
-
     return () => {
       receivedSubscription.remove();
       responseSubscription.remove();
@@ -97,18 +118,19 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{ persister: asyncStoragePersister }}
-          onSuccess={() => setIsHydrated(true)}
-        >
-          <NetworkProvider>
-            <NavigationContainer theme={navigationTheme}>
-              <StatusBar style="light" />
-              {isHydrated ? <AppNavigator /> : <HydrationSplash />}
-            </NavigationContainer>
-          </NetworkProvider>
-        </PersistQueryClientProvider>
+        <ThemeProvider>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{ persister: asyncStoragePersister }}
+            onSuccess={() => setIsHydrated(true)}
+          >
+            <NetworkProvider>
+              <RemindersProvider>
+                <Root ready={isHydrated && fontsLoaded} />
+              </RemindersProvider>
+            </NetworkProvider>
+          </PersistQueryClientProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -117,20 +139,19 @@ export default function App() {
 const splashStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.navyDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
   brand: {
-    ...typography.textStyles.hero,
-    color: colors.text.inverse,
+    fontFamily: fonts.display,
+    fontSize: 44,
     letterSpacing: 6,
   },
   brandAccent: {
-    ...typography.textStyles.h2,
-    color: colors.accent.golden,
+    fontFamily: fonts.display,
+    fontSize: 28,
     letterSpacing: 8,
-    marginTop: -4,
+    marginTop: -2,
   },
   spinner: {
     marginTop: 40,

@@ -180,5 +180,36 @@ export function getUniqueDates(events) {
     .sort((a, b) => a - b);
 }
 
+/**
+ * Format a festival date range from a sorted Date[] (e.g. "3 – 9 August 2026").
+ */
+export function formatDateRange(dates) {
+  if (!dates || !dates.length) return '';
+  const a = dates[0];
+  const b = dates[dates.length - 1];
+  if (dates.length === 1) return format(a, 'd MMMM yyyy');
+  const sameMonth = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+  const sameYear = a.getFullYear() === b.getFullYear();
+  if (sameMonth) return `${format(a, 'd')} – ${format(b, 'd MMMM yyyy')}`;
+  if (sameYear) return `${format(a, 'd MMM')} – ${format(b, 'd MMM yyyy')}`;
+  return `${format(a, 'd MMM yyyy')} – ${format(b, 'd MMM yyyy')}`;
+}
+
+/**
+ * The three "power days" (3·6·9 motif) anchored to the festival's first, middle,
+ * and last day. Returns a map of `yyyy-MM-dd` -> label.
+ */
+export function getPowerDays(dates) {
+  const out = {};
+  if (!dates || !dates.length) return out;
+  const key = d => format(d, 'yyyy-MM-dd');
+  const last = dates.length - 1;
+  out[key(dates[0])] = 'Opening';
+  out[key(dates[last])] = 'Closing';
+  const mid = key(dates[Math.floor(last / 2)]);
+  if (dates.length >= 3 && !out[mid]) out[mid] = 'Solstice';
+  return out;
+}
+
 // Re-export date-fns utilities we use
 export { isToday, isSameDay, addDays, subDays };

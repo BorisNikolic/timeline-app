@@ -1,18 +1,16 @@
 /**
- * EventDetailScreen - Full event details with reminder picker
+ * EventDetailScreen — full event details with reminder picker (Pyramid theme redesign).
+ * headerShown:false — renders its own back header. All reminder logic preserved.
  */
 
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing, borderRadius, shadows } from '../theme/spacing';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useTheme } from '../contexts/ThemeContext';
+import { fonts, radius } from '../theme/tokens';
+import { Rings369 } from '../components/geometry/Geometry';
+import { IconChevronLeft, IconCal, IconClock, IconBell, IconStar } from '../components/ui/Icons';
 
 import ReminderPicker from '../components/ReminderPicker';
 import { useReminders } from '../hooks/useReminders';
@@ -20,6 +18,8 @@ import { formatTime, formatDateLong, parseDate, getMinutesUntilEvent } from '../
 
 export default function EventDetailScreen({ route, navigation }) {
   const { event } = route.params;
+  const { t } = useTheme();
+  const insets = useSafeAreaInsets();
   const [reminderModalVisible, setReminderModalVisible] = useState(false);
   const { hasReminder, getReminder, setReminder, removeReminder } = useReminders();
 
@@ -44,86 +44,101 @@ export default function EventDetailScreen({ route, navigation }) {
     }
   }, [event.id, removeReminder]);
 
+  const stageColor = event.categoryColor || t.accent2;
+
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {/* Category header */}
-        <View
-          style={[
-            styles.categoryHeader,
-            { backgroundColor: event.categoryColor || colors.teal },
-          ]}
+    <View style={[styles.container, { backgroundColor: t.bg }]}>
+      {/* Own header (headerShown:false) */}
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: t.bg2, borderBottomColor: t.hairline }]}>
+        <View style={styles.headerMotif} pointerEvents="none">
+          <Rings369 size={130} stroke={1} color={t.accent} />
+        </View>
+        <TouchableOpacity
+          style={[styles.backBtn, { backgroundColor: t.surface, borderColor: t.hairlineStrong }]}
+          onPress={() => navigation.goBack()}
+          hitSlop={8}
         >
-          <Text style={styles.categoryName}>{event.categoryName || 'Event'}</Text>
+          <IconChevronLeft size={22} color={t.ink} />
+        </TouchableOpacity>
+        <Text style={[styles.headerEyebrow, { color: t.accent }]}>SOVRA EDITION · SET</Text>
+      </View>
+
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {/* Stage banner */}
+        <View style={[styles.stageBanner, { backgroundColor: stageColor }]}>
+          <Text style={styles.stageName}>{(event.categoryName || 'Event').toUpperCase()}</Text>
         </View>
 
-        {/* Event title */}
-        <Text style={styles.title}>{event.title}</Text>
+        <View style={styles.body}>
+          {/* Title */}
+          <Text style={[styles.title, { color: t.ink }]}>{event.title}</Text>
 
-        {/* Date and time */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoIcon}>📅</Text>
-            <Text style={styles.infoText}>
-              {formatDateLong(parseDate(event.date))}
-            </Text>
+          {/* Info rows */}
+          <View style={styles.infoSection}>
+            <View style={styles.infoRow}>
+              <IconCal size={20} color={t.accent2} />
+              <Text style={[styles.infoText, { color: t.ink }]}>
+                {formatDateLong(parseDate(event.date))}
+              </Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <IconClock size={20} color={t.accent2} />
+              <Text style={[styles.infoText, { color: t.ink }]}>
+                {formatTime(event.time)}
+                {event.endTime ? ` – ${formatTime(event.endTime)}` : ''}
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.infoRow}>
-            <Text style={styles.infoIcon}>🕐</Text>
-            <Text style={styles.infoText}>
-              {formatTime(event.time)}
-              {event.endTime ? ` - ${formatTime(event.endTime)}` : ''}
-            </Text>
-          </View>
-
+          {/* About */}
           {event.description && (
-            <View style={styles.descriptionSection}>
-              <Text style={styles.descriptionTitle}>About</Text>
-              <Text style={styles.description}>{event.description}</Text>
+            <View style={[styles.descriptionSection, { borderTopColor: t.hairline }]}>
+              <Text style={[styles.descriptionTitle, { color: t.ink3 }]}>ABOUT</Text>
+              <Text style={[styles.description, { color: t.ink2 }]}>{event.description}</Text>
+            </View>
+          )}
+
+          {/* Reminder status card */}
+          {eventHasReminder && !isPast && (
+            <View style={[styles.reminderStatus, { backgroundColor: t.surface, borderColor: t.hairline }, t.cardShadow]}>
+              <View style={[styles.reminderStatusIcon, { backgroundColor: t.accent2 + '22' }]}>
+                <IconBell size={22} color={t.accent2} />
+              </View>
+              <View style={styles.reminderStatusContent}>
+                <Text style={[styles.reminderStatusTitle, { color: t.ink }]}>Reminder set</Text>
+                <Text style={[styles.reminderStatusText, { color: t.ink2 }]}>
+                  {existingReminder.minutesBefore} minutes before
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.reminderEditButton, { borderColor: t.hairlineStrong }]}
+                onPress={() => setReminderModalVisible(true)}
+              >
+                <Text style={[styles.reminderEditButtonText, { color: t.accent }]}>Edit</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
-
-        {/* Reminder status - hidden for past events */}
-        {eventHasReminder && !isPast && (
-          <View style={styles.reminderStatus}>
-            <Text style={styles.reminderStatusIcon}>🔔</Text>
-            <View style={styles.reminderStatusContent}>
-              <Text style={styles.reminderStatusTitle}>Reminder set</Text>
-              <Text style={styles.reminderStatusText}>
-                {existingReminder.minutesBefore} minutes before
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.reminderEditButton}
-              onPress={() => setReminderModalVisible(true)}
-            >
-              <Text style={styles.reminderEditButtonText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </ScrollView>
 
-      {/* Bottom action bar - hidden for past events */}
+      {/* Bottom action bar — hidden for past events */}
       {!isPast && (
-        <View style={styles.actionBar}>
+        <View style={[styles.actionBar, { backgroundColor: t.bg2, borderTopColor: t.hairline, paddingBottom: insets.bottom + 14 }]}>
           <TouchableOpacity
             style={[
               styles.reminderButton,
-              eventHasReminder && styles.reminderButtonActive,
+              { backgroundColor: t.surface, borderColor: t.hairlineStrong },
+              eventHasReminder && { backgroundColor: t.accent, borderColor: t.accent },
+              eventHasReminder && t.glow,
             ]}
+            activeOpacity={0.85}
             onPress={() => setReminderModalVisible(true)}
           >
-            <Text style={styles.reminderButtonIcon}>
-              {eventHasReminder ? '🔔' : '🔕'}
-            </Text>
-            <Text
-              style={[
-                styles.reminderButtonText,
-                eventHasReminder && styles.reminderButtonTextActive,
-              ]}
-            >
+            {eventHasReminder
+              ? <IconBell size={20} color={t.onAccent} />
+              : <IconStar size={20} filled={false} color={t.ink} />}
+            <Text style={[styles.reminderButtonText, { color: eventHasReminder ? t.onAccent : t.ink }]}>
               {eventHasReminder ? 'Reminder Set' : 'Set Reminder'}
             </Text>
           </TouchableOpacity>
@@ -144,123 +159,111 @@ export default function EventDetailScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.screen,
+  container: { flex: 1 },
+
+  header: {
+    position: 'relative',
+    overflow: 'hidden',
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
   },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingBottom: spacing['3xl'],
-  },
-  categoryHeader: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  categoryName: {
-    ...typography.textStyles.label,
-    color: colors.text.inverse,
-    letterSpacing: 1,
-  },
-  title: {
-    ...typography.textStyles.h2,
-    color: colors.text.primary,
-    padding: spacing.lg,
-    paddingTop: spacing.md,
-  },
-  infoSection: {
-    paddingHorizontal: spacing.lg,
-  },
-  infoRow: {
-    flexDirection: 'row',
+  headerMotif: { position: 'absolute', top: -56, right: -42, opacity: 0.22 },
+  backBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.pill,
+    borderWidth: 1,
     alignItems: 'center',
-    marginBottom: spacing.md,
+    justifyContent: 'center',
   },
-  infoIcon: {
-    fontSize: 20,
-    marginRight: spacing.md,
+  headerEyebrow: {
+    marginTop: 12,
+    fontFamily: fonts.bodyExtra,
+    fontSize: 11,
+    letterSpacing: 2.4,
   },
-  infoText: {
-    ...typography.textStyles.body,
-    color: colors.text.primary,
+
+  scrollView: { flex: 1 },
+  content: { paddingBottom: 110 },
+
+  stageBanner: {
+    paddingVertical: 11,
+    paddingHorizontal: 20,
   },
+  stageName: {
+    fontFamily: fonts.bodyExtra,
+    fontSize: 12,
+    letterSpacing: 1.6,
+    color: '#FFFFFF',
+  },
+
+  body: { paddingHorizontal: 20, paddingTop: 18 },
+
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 30,
+    lineHeight: 36,
+    letterSpacing: -0.5,
+  },
+
+  infoSection: { marginTop: 18, gap: 14 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  infoText: { fontFamily: fonts.bodySemi, fontSize: 15.5 },
+
   descriptionSection: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
+    marginTop: 22,
+    paddingTop: 18,
     borderTopWidth: 1,
-    borderTopColor: colors.neutral.grayLight,
   },
   descriptionTitle: {
-    ...typography.textStyles.label,
-    color: colors.text.tertiary,
-    marginBottom: spacing.sm,
+    fontFamily: fonts.bodyExtra,
+    fontSize: 11,
+    letterSpacing: 1.6,
+    marginBottom: 8,
   },
-  description: {
-    ...typography.textStyles.body,
-    color: colors.text.secondary,
-    lineHeight: 24,
-  },
+  description: { fontFamily: fonts.body, fontSize: 15, lineHeight: 24 },
+
   reminderStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.teal + '15',
-    margin: spacing.lg,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
+    gap: 12,
+    marginTop: 24,
+    padding: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
   },
   reminderStatusIcon: {
-    fontSize: 24,
-    marginRight: spacing.md,
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  reminderStatusContent: {
-    flex: 1,
-  },
-  reminderStatusTitle: {
-    ...typography.textStyles.h5,
-    color: colors.teal,
-  },
-  reminderStatusText: {
-    ...typography.textStyles.bodySmall,
-    color: colors.text.secondary,
-  },
+  reminderStatusContent: { flex: 1 },
+  reminderStatusTitle: { fontFamily: fonts.displaySemi, fontSize: 16 },
+  reminderStatusText: { fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
   reminderEditButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.teal,
-    borderRadius: borderRadius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: radius.pill,
+    borderWidth: 1,
   },
-  reminderEditButtonText: {
-    ...typography.textStyles.buttonSmall,
-    color: colors.text.inverse,
-  },
+  reminderEditButtonText: { fontFamily: fonts.bodyBold, fontSize: 13 },
+
   actionBar: {
-    padding: spacing.md,
-    backgroundColor: colors.background.card,
+    paddingHorizontal: 20,
+    paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.neutral.grayLight,
-    ...shadows.md,
   },
   reminderButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.neutral.grayLighter,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
+    gap: 9,
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    borderWidth: 1,
   },
-  reminderButtonActive: {
-    backgroundColor: colors.teal,
-  },
-  reminderButtonIcon: {
-    fontSize: 24,
-    marginRight: spacing.sm,
-  },
-  reminderButtonText: {
-    ...typography.textStyles.button,
-    color: colors.text.primary,
-  },
-  reminderButtonTextActive: {
-    color: colors.text.inverse,
-  },
+  reminderButtonText: { fontFamily: fonts.displaySemi, fontSize: 16 },
 });
