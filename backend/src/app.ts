@@ -3,11 +3,16 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { errorHandler } from './middleware/error-handler';
+import { apiLimiter } from './middleware/rateLimit';
 import apiRouter from './api/index';
 
 dotenv.config();
 
 const app: Application = express();
+
+// Trust the first proxy hop (Render's load balancer) so req.ip is the real
+// client IP — required for correct per-IP rate limiting behind the proxy.
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
@@ -41,8 +46,8 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// API routes
-app.use('/api', apiRouter);
+// API routes (general rate-limit backstop across all endpoints)
+app.use('/api', apiLimiter, apiRouter);
 
 // 404 handler
 app.use((_req, res) => {

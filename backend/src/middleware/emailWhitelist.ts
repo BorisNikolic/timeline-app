@@ -18,11 +18,21 @@ export const checkEmailWhitelist = (
   // Get allowed emails from environment variable
   const allowedEmailsEnv = process.env.ALLOWED_EMAILS;
 
-  // If no whitelist configured, allow all (for development)
+  // If no whitelist configured: fail CLOSED in production (deny), open in dev.
   if (!allowedEmailsEnv || allowedEmailsEnv.trim() === '') {
+    if (process.env.NODE_ENV === 'production') {
+      console.error(
+        'ALLOWED_EMAILS is not set in production - refusing all registrations. ' +
+        'Set ALLOWED_EMAILS to enable registration.'
+      );
+      res.status(403).json({
+        error: 'Registration not allowed',
+        message: 'Registration is currently closed.',
+      });
+      return;
+    }
     console.warn(
-      'ALLOWED_EMAILS not configured - allowing all registrations. ' +
-      'Set ALLOWED_EMAILS in production to restrict registration.'
+      'ALLOWED_EMAILS not configured - allowing all registrations (development only).'
     );
     return next();
   }

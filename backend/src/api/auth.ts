@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { asyncHandler } from '../middleware/error-handler';
 import { checkEmailWhitelist } from '../middleware/emailWhitelist';
+import { authLimiter } from '../middleware/rateLimit';
 import UserService from '../services/UserService';
 
 const router = Router();
@@ -27,6 +28,7 @@ const loginSchema = z.object({
  */
 router.post(
   '/register',
+  authLimiter, // Throttle registration attempts per IP
   validate(registerSchema),
   checkEmailWhitelist, // Check if email is allowed before registration
   asyncHandler(async (req: Request, res: Response) => {
@@ -48,6 +50,7 @@ router.post(
  */
 router.post(
   '/login',
+  authLimiter, // Throttle login attempts per IP (brute-force protection)
   validate(loginSchema),
   asyncHandler(async (req: Request, res: Response) => {
     try {
