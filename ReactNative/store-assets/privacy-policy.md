@@ -46,7 +46,7 @@ version at the same URL.
 
 ## Contact
 
-Questions about this policy: **privacy@pyramidfestival.com**
+Questions about this policy: **info@pyramidfestival.com**
 
 > _This policy is published (as a styled page) via GitHub Pages at:_
 > _**https://borisnikolic.github.io/timeline-app/app-privacy.html**_
