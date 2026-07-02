@@ -3,8 +3,8 @@
  * headerShown:false — renders its own back header. All reminder logic preserved.
  */
 
-import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../contexts/ThemeContext';
@@ -23,17 +23,36 @@ export default function EventDetailScreen({ route, navigation }) {
   const [reminderModalVisible, setReminderModalVisible] = useState(false);
   const { hasReminder, getReminder, setReminder, removeReminder } = useReminders();
 
+  // Deferred-alert timer — cleared on unmount so it can't fire on another screen.
+  const alertTimer = useRef(null);
+  useEffect(() => () => clearTimeout(alertTimer.current), []);
+
   const eventHasReminder = hasReminder(event.id);
   const existingReminder = getReminder(event.id);
   const minutesUntil = getMinutesUntilEvent(event);
   const isPast = minutesUntil !== null && minutesUntil < 0;
 
   const handleSetReminder = useCallback(async (minutes) => {
-    try {
-      await setReminder(event, minutes);
-    } catch (error) {
-      console.error('Error setting reminder:', error);
-    }
+    const res = await setReminder(event, minutes);
+    if (!res || res.scheduled) return;
+    // Defer past the reminder-picker modal's slide-out (~300ms) — presenting an
+    // alert on a view controller that's still dismissing makes iOS drop it.
+    alertTimer.current = setTimeout(() => {
+      if (res.reason === 'permission') {
+        Alert.alert(
+          'Added to your plan',
+          'Turn on notifications for Pyramid Festival to get a reminder before this set.',
+          [
+            { text: 'Not now', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings().catch(() => {}) },
+          ],
+        );
+      } else if (res.reason === 'past') {
+        Alert.alert('Added to your plan', "This set has already started, so we can't send a reminder.");
+      } else if (res.reason === 'notime') {
+        Alert.alert('Added to your plan', "This set has no start time yet, so we can't send a reminder.");
+      }
+    }, 400);
   }, [event, setReminder]);
 
   const handleRemoveReminder = useCallback(async () => {

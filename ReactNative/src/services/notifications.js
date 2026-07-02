@@ -3,7 +3,6 @@
  */
 
 import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 
 // Configure how notifications appear when app is in foreground
@@ -16,63 +15,65 @@ Notifications.setNotificationHandler({
 });
 
 /**
- * Request notification permissions
+ * Request notification permissions.
+ *
+ * Local (scheduled) notifications work on simulators/emulators too — the
+ * physical-device requirement only applies to *remote* push tokens, which we
+ * don't use. Returns true when granted, false otherwise. Never throws.
  */
 export async function requestPermissions() {
-  if (!Device.isDevice) {
-    console.log('Must use physical device for Push Notifications');
+  try {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') return false;
+
+    // Configure Android notification channel
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('reminders', {
+        name: 'Event Reminders',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#4592AA',
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.warn('Notification permissions unavailable:', error?.message || error);
     return false;
   }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    console.log('Failed to get push token for push notification!');
-    return false;
-  }
-
-  // Configure Android notification channel
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('reminders', {
-      name: 'Event Reminders',
-      importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#4592AA',
-    });
-  }
-
-  return true;
 }
 
 /**
- * Schedule a local notification for an event
+ * Schedule a local notification for an event.
+ *
+ * Returns the notification identifier, or `null` when there is nothing to
+ * schedule (event has no time, or the trigger moment is already in the past).
+ * Callers treat `null` as "saved, but no reminder" rather than an error.
+ *
  * @param {Object} event - The event object
  * @param {number} minutesBefore - Minutes before the event to trigger notification
- * @returns {string} The notification identifier
+ * @returns {Promise<string|null>} The notification identifier, or null
  */
 export async function scheduleEventReminder(event, minutesBefore) {
+  if (!event?.time) return null;
+
   // Parse event date and time
   const eventDate = new Date(event.date.split('T')[0] + 'T00:00:00');
-  if (!event.time) {
-    throw new Error('Event has no time');
-  }
-
   const [hours, minutes] = event.time.split(':').map(Number);
   eventDate.setHours(hours, minutes, 0, 0);
 
   // Calculate trigger time
   const triggerTime = new Date(eventDate.getTime() - minutesBefore * 60 * 1000);
 
-  // Don't schedule if time has passed
-  if (triggerTime <= new Date()) {
-    throw new Error('Cannot schedule notification in the past');
-  }
+  // Nothing to schedule for a moment that has already passed.
+  if (triggerTime <= new Date()) return null;
 
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {

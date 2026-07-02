@@ -205,14 +205,11 @@ export default function ScheduleScreen({ navigation }) {
     navigation.navigate('EventDetail', { event });
   }, [navigation]);
 
-  // Star toggles a saved set (mapped to the reminder system).
-  const handleSave = useCallback(async (event) => {
-    try {
-      if (hasReminder(event.id)) await removeReminder(event.id);
-      else await setReminder(event, DEFAULT_REMINDER_MINUTES);
-    } catch (err) {
-      console.error('Error toggling saved set:', err);
-    }
+  // Star toggles a saved set (mapped to the reminder system). Saving always
+  // succeeds; a reminder is scheduled only when possible (see RemindersContext).
+  const handleSave = useCallback((event) => {
+    if (hasReminder(event.id)) removeReminder(event.id);
+    else setReminder(event, DEFAULT_REMINDER_MINUTES);
   }, [hasReminder, removeReminder, setReminder]);
 
   // Offline first launch — no cached data and offline.
