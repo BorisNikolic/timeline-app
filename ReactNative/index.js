@@ -3,6 +3,9 @@ import { registerRootComponent } from 'expo';
 // Must run before expo-notifications is evaluated (see the module's comment).
 import './src/config/logbox';
 
+// Cap Dynamic Type globally before any Text renders (see the module's comment).
+import './src/config/textScaling';
+
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);

@@ -248,7 +248,7 @@ function StageCard({ t, stage, count, onPress }) {
         <SeedOfLife size={92} stroke={1} color={stage.color} />
       </View>
       <View style={[hs.stageDot, { backgroundColor: stage.color }]} />
-      <Text style={[hs.stageName, { color: t.ink }]} numberOfLines={1}>{stage.name}</Text>
+      <Text style={[hs.stageName, { color: t.ink }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>{stage.name}</Text>
       <Text style={[hs.stageKind, { color: t.ink3 }]}>{count} {itemNoun(stage.name, count)}</Text>
     </TouchableOpacity>
   );
@@ -599,9 +599,9 @@ const hs = StyleSheet.create({
     paddingHorizontal: 22,
   },
   featureGeo: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  featureContent: { alignItems: 'center' },
+  featureContent: { alignItems: 'center', alignSelf: 'center', width: '100%', maxWidth: 280 },
   featureNums: { fontFamily: fonts.display, fontSize: 38, letterSpacing: 1.5 },
-  featureText: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 21.5, textAlign: 'center', opacity: 0.82, marginTop: 10, maxWidth: 280 },
+  featureText: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 21.5, textAlign: 'center', opacity: 0.82, marginTop: 10, alignSelf: 'stretch' },
 
   // News
   newsRow: { gap: 14, paddingHorizontal: 20, paddingBottom: 4 },
