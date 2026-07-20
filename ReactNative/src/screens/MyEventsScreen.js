@@ -19,7 +19,7 @@ import ThemeToggle from '../components/ui/ThemeToggle';
 
 import { useReminders } from '../hooks/useReminders';
 import { useTimelineEvents } from '../hooks/useEvents';
-import { formatTime, parseDate, getUniqueDates, getPowerDays } from '../utils/dateHelpers';
+import { formatTime, parseDate, getFestivalDays, getPowerDays } from '../utils/dateHelpers';
 import { TIMELINE_ID } from '../utils/constants';
 import { isZone } from '../utils/categoryKind';
 
@@ -87,7 +87,7 @@ export default function MyEventsScreen({ navigation }) {
   }, [events]);
 
   // 3·6·9 power-day anchors from the full festival schedule.
-  const powerDays = useMemo(() => getPowerDays(events ? getUniqueDates(events) : []), [events]);
+  const powerDays = useMemo(() => getPowerDays(events ? getFestivalDays(events) : []), [events]);
 
   // Group saved sets by day, compute end label + overlap clashes within each day.
   const dayGroups = useMemo(() => {
@@ -171,7 +171,7 @@ export default function MyEventsScreen({ navigation }) {
           <Rings369 size={150} stroke={1} color={t.accent} />
         </View>
 
-        <Text style={[styles.eyebrow, { color: t.accent }]}>SOVRA EDITION · YOURS</Text>
+        <Text style={[styles.eyebrow, { color: t.accent }]}>SOVRA EDITION · YOUR SCHEDULE</Text>
         <Text style={[styles.h1, { color: t.ink }]}>My Plan</Text>
 
         {total > 0 && (

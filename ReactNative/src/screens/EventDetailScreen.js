@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../contexts/ThemeContext';
 import { fonts, radius } from '../theme/tokens';
-import { Rings369 } from '../components/geometry/Geometry';
+import { Rings369, SeedOfLife } from '../components/geometry/Geometry';
 import { IconChevronLeft, IconCal, IconClock, IconBell, IconStar } from '../components/ui/Icons';
 
 import ReminderPicker from '../components/ReminderPicker';
@@ -140,6 +140,11 @@ export default function EventDetailScreen({ route, navigation }) {
             </View>
           )}
         </View>
+
+        {/* Themed motif fills the space below the details instead of dead area */}
+        <View style={styles.bodyGeo} pointerEvents="none">
+          <SeedOfLife size={280} stroke={1} color={stageColor} />
+        </View>
       </ScrollView>
 
       {/* Bottom action bar — hidden for past events */}
@@ -219,6 +224,8 @@ const styles = StyleSheet.create({
   },
 
   body: { paddingHorizontal: 20, paddingTop: 18 },
+
+  bodyGeo: { alignItems: 'center', justifyContent: 'center', marginTop: 28, opacity: 0.12 },
 
   title: {
     fontFamily: fonts.display,

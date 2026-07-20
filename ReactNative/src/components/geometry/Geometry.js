@@ -6,17 +6,16 @@
 import React from 'react';
 import Svg, { G, Path, Circle, Line } from 'react-native-svg';
 
-// The festival mark: a pyramid of nested triangles + an apex eye.
-export function PyramidMark({ size = 40, stroke = 1.6, color = '#F7F3EA' }) {
+// The festival mark: the real Pyramid logo (same artwork as the app icon).
+// Solid two-faced pyramid; `color` tints the fill. `stroke` is accepted but
+// unused so existing call sites need no changes.
+export function PyramidMark({ size = 40, color = '#F7F3EA' }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100">
-      <G stroke={color} strokeWidth={stroke} strokeLinejoin="round" strokeLinecap="round" fill="none">
-        <Path d="M50 8 L92 84 H8 Z" />
-        <Path d="M50 8 L50 84" opacity={0.55} />
-        <Path d="M50 38 L71 84 M50 38 L29 84" opacity={0.55} />
-        <Path d="M29 62 H71" opacity={0.4} />
-        <Circle cx="50" cy="30" r="5" fill={color} stroke="none" />
-      </G>
+    <Svg width={size} height={size} viewBox="0 0 150 150">
+      <Path
+        fill={color}
+        d="m82.22,8.08c-3.21-5.57-11.24-5.57-14.45,0L12.59,103.96c-2.34,4.07-.86,9.28,3.28,11.5l55.18,29.65c2.46,1.32,5.43,1.32,7.89,0l55.18-29.65c4.14-2.22,5.62-7.43,3.28-11.5L82.22,8.08Zm-46.21,89.2l30.5-52.99v79.12l-27.22-14.62c-4.14-2.22-5.62-7.43-3.28-11.5Zm74.69,11.5l-27.22,14.62V44.29l30.5,52.99c2.34,4.07.86,9.28-3.28,11.5Z"
+      />
     </Svg>
   );
 }

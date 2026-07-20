@@ -180,6 +180,34 @@ export function getUniqueDates(events) {
     .sort((a, b) => a - b);
 }
 
+// Sets starting before this hour count as the previous night's tail, not a new
+// festival day (e.g. a 00:00 closing after-party belongs to the last day).
+const NIGHT_CUTOFF_H = 6;
+
+/**
+ * Festival days for display/navigation: the unique event dates, minus any trailing
+ * date that has NO daytime/evening programme (only after-midnight sets). Such a
+ * date is the tail of the previous night — e.g. a lone 00:00 "after party" dated on
+ * the next calendar day — and must not show up as its own festival day (which would
+ * both stretch the headline range and misplace the 3·6·9 closing anchor).
+ * Mid-festival late-night sets (dated on their own day) are left untouched.
+ */
+export function getFestivalDays(events) {
+  const days = getUniqueDates(events);
+  if (!events || days.length < 2) return days;
+  const hasDaytime = (dayDate) => {
+    const key = formatDateForApi(dayDate);
+    return events.some(e => {
+      if ((e.date || '').split('T')[0] !== key) return false;
+      const h = parseInt((e.time || '12:00').split(':')[0], 10);
+      return h >= NIGHT_CUTOFF_H;
+    });
+  };
+  const out = [...days];
+  while (out.length >= 2 && !hasDaytime(out[out.length - 1])) out.pop();
+  return out;
+}
+
 /**
  * Format a festival date range from a sorted Date[] (e.g. "3 – 9 August 2026").
  */

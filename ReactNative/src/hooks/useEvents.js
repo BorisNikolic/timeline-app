@@ -4,7 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getTimelineEvents, getTimelineCategories } from '../services/api';
-import { isSameDay, parseDate } from '../utils/dateHelpers';
+import { isSameDay, parseDate, getFestivalDays } from '../utils/dateHelpers';
 
 /**
  * Query key factory for consistent cache keys
@@ -52,9 +52,16 @@ export function useCategories(timelineId) {
 export function useEventsForDate(events, date, categoryId = null) {
   if (!events || !date) return [];
 
+  // The last festival day also absorbs any trailing after-midnight tail (e.g. a
+  // closing after-party dated on the following calendar day), so it stays reachable
+  // even though that day isn't shown as its own pill.
+  const festivalDays = getFestivalDays(events);
+  const lastDay = festivalDays[festivalDays.length - 1];
+  const isLast = lastDay && isSameDay(date, lastDay);
+
   let filtered = events.filter(event => {
     const eventDate = parseDate(event.date);
-    return isSameDay(eventDate, date);
+    return isSameDay(eventDate, date) || (isLast && eventDate > lastDay);
   });
 
   if (categoryId) {

@@ -41,12 +41,24 @@ export default function MapScreen() {
   const availableWidth = screenWidth;
   const availableHeight = screenHeight - insets.top - insets.bottom - TAB_BAR_HEIGHT;
 
-  const aspect = isRotated ? 1 / MAP_ASPECT_RATIO : MAP_ASPECT_RATIO;
-  const widthIfFitToHeight = availableHeight * aspect;
-  const heightIfFitToWidth = availableWidth / aspect;
-  const fitToWidth = heightIfFitToWidth <= availableHeight;
-  const visualWidth = fitToWidth ? availableWidth : widthIfFitToHeight;
-  const visualHeight = fitToWidth ? heightIfFitToWidth : availableHeight;
+  // Content box the map renders into (centered), before pan/zoom.
+  // Portrait (rotated): CONTAIN the whole map — fully visible, behaves best.
+  // Landscape: fill the viewport HEIGHT and overflow width, so there are no empty
+  // bands top/bottom; you pan side-to-side to reach the edges.
+  let visualWidth, visualHeight;
+  if (isRotated) {
+    const rAspect = 1 / MAP_ASPECT_RATIO; // rotated map is portrait-shaped (w/h)
+    if (availableWidth / availableHeight < rAspect) {
+      visualWidth = availableWidth;
+      visualHeight = availableWidth / rAspect;
+    } else {
+      visualHeight = availableHeight;
+      visualWidth = availableHeight * rAspect;
+    }
+  } else {
+    visualHeight = availableHeight;
+    visualWidth = availableHeight * MAP_ASPECT_RATIO;
+  }
 
   const imageBoxWidth = isRotated ? visualHeight : visualWidth;
   const imageBoxHeight = isRotated ? visualWidth : visualHeight;
@@ -62,6 +74,24 @@ export default function MapScreen() {
   const panRef = useRef(null);
 
   const clampScale = (s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
+
+  // Max the map may be panned before an edge would pull inside the viewport:
+  // half of how much the scaled content exceeds the viewport in each axis. 0 when
+  // the content is smaller than the viewport there → panning locked in that axis.
+  const clamp = (v, max) => Math.min(max, Math.max(-max, v));
+  const panBounds = (s) => ({
+    x: Math.max(0, (visualWidth * s - availableWidth) / 2),
+    y: Math.max(0, (visualHeight * s - availableHeight) / 2),
+  });
+
+  // Let a drag pull slightly past the bounds with resistance, then spring back on
+  // release — so the map always settles fitted/centred and can never be stranded.
+  const RUBBER = 0.4;
+  const rubber = (v, max) => (v > max ? max + (v - max) * RUBBER : v < -max ? -max + (v + max) * RUBBER : v);
+  const springBack = (x, y) => Animated.parallel([
+    Animated.spring(translateX, { toValue: x, useNativeDriver: true, friction: 8, tension: 65 }),
+    Animated.spring(translateY, { toValue: y, useNativeDriver: true, friction: 8, tension: 65 }),
+  ]).start();
 
   const resetTransforms = () => {
     currentScale.current = 1;
@@ -85,27 +115,32 @@ export default function MapScreen() {
 
   const onPinchStateChange = (e) => {
     if (e.nativeEvent.oldState === State.ACTIVE) {
-      currentScale.current = clampScale(currentScale.current * e.nativeEvent.scale);
-      if (currentScale.current === MIN_SCALE) {
-        currentX.current = 0;
-        currentY.current = 0;
-        Animated.parallel([
-          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }),
-          Animated.spring(translateY, { toValue: 0, useNativeDriver: true }),
-        ]).start();
-      }
+      let s = clampScale(currentScale.current * e.nativeEvent.scale);
+      // Snap fully back to fit when zoomed out to (near) the minimum, so the map
+      // always lands perfectly fitted — never a lingering part-zoom.
+      if (s <= MIN_SCALE * 1.04) s = MIN_SCALE;
+      currentScale.current = s;
+      Animated.spring(scaleAnim, { toValue: s, useNativeDriver: true, friction: 8, tension: 65 }).start();
+      // Pull any overshoot back inside the new (smaller) bounds and recentre.
+      const b = panBounds(s);
+      currentX.current = clamp(currentX.current, b.x);
+      currentY.current = clamp(currentY.current, b.y);
+      springBack(currentX.current, currentY.current);
     }
   };
 
   const onPanEvent = (e) => {
-    translateX.setValue(currentX.current + e.nativeEvent.translationX);
-    translateY.setValue(currentY.current + e.nativeEvent.translationY);
+    const b = panBounds(currentScale.current);
+    translateX.setValue(rubber(currentX.current + e.nativeEvent.translationX, b.x));
+    translateY.setValue(rubber(currentY.current + e.nativeEvent.translationY, b.y));
   };
 
   const onPanStateChange = (e) => {
     if (e.nativeEvent.oldState === State.ACTIVE) {
-      currentX.current += e.nativeEvent.translationX;
-      currentY.current += e.nativeEvent.translationY;
+      const b = panBounds(currentScale.current);
+      currentX.current = clamp(currentX.current + e.nativeEvent.translationX, b.x);
+      currentY.current = clamp(currentY.current + e.nativeEvent.translationY, b.y);
+      springBack(currentX.current, currentY.current);
     }
   };
 

@@ -1,5 +1,5 @@
 /**
- * InfoScreen — "Know Before You Go" essentials, redesigned on the Pyramid theme.
+ * InfoScreen — "Pyramid Info" essentials, redesigned on the Pyramid theme.
  * Static festival facts + accordion sections sourced from ../data/festivalInfo.
  */
 
@@ -23,7 +23,7 @@ import { PyramidMark, Rings369 } from '../components/geometry/Geometry';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import { festivalSections } from '../data/festivalInfo';
 import { useTimelineEvents } from '../hooks/useEvents';
-import { getUniqueDates, formatTime } from '../utils/dateHelpers';
+import { getFestivalDays, formatTime } from '../utils/dateHelpers';
 import { TIMELINE_ID, GATES_OPEN } from '../utils/constants';
 
 // Enable LayoutAnimation on Android.
@@ -108,7 +108,7 @@ export default function InfoScreen() {
   // Quick facts — programme dates from the live schedule; gates from the
   // authoritative GATES_OPEN (the day before, not the first set).
   const quickFacts = useMemo(() => {
-    const dates = events && events.length ? getUniqueDates(events) : [];
+    const dates = events && events.length ? getFestivalDays(events) : [];
     const datesVal = dates.length ? compactRange(dates) : 'Coming soon';
     const g = new Date(GATES_OPEN);
     const gTime = `${String(g.getHours()).padStart(2, '0')}:${String(g.getMinutes()).padStart(2, '0')}`;
@@ -117,7 +117,7 @@ export default function InfoScreen() {
       { icon: 'cal', label: 'Dates', value: datesVal },
       { icon: 'pin', label: 'Where', value: 'Rtanj, Serbia' },
       { icon: 'gate', label: 'Gates', value: gatesVal },
-      { icon: 'card', label: 'Payments', value: 'Cashless' },
+      { icon: 'card', label: 'Payments', value: 'Cashless on site' },
     ];
   }, [events]);
 
@@ -140,7 +140,7 @@ export default function InfoScreen() {
           <Rings369 size={150} stroke={1} color={t.accent} />
         </View>
         <Text style={[styles.eyebrow, { color: t.accent }]}>SOVRA EDITION · ESSENTIALS</Text>
-        <Text style={[styles.h1, { color: t.ink }]}>Know Before{'\n'}You Go</Text>
+        <Text style={[styles.h1, { color: t.ink }]}>Pyramid Info</Text>
       </View>
 
       <ScrollView
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   headerRings: { position: 'absolute', top: -50, right: -44, opacity: 0.22 },
   eyebrow: { fontFamily: fonts.bodyBold, fontSize: 11, letterSpacing: 2.4 },
-  h1: { fontFamily: fonts.display, fontSize: 30, lineHeight: 31, marginTop: 6 },
+  h1: { fontFamily: fonts.display, fontSize: 30, lineHeight: 38, marginTop: 6 },
 
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 90 },

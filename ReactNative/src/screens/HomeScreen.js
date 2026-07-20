@@ -34,7 +34,7 @@ import {
   formatTime,
   parseDate,
   isSameDay,
-  getUniqueDates,
+  getFestivalDays,
   formatDateRange,
 } from '../utils/dateHelpers';
 import { TIMELINE_ID, GATES_OPEN } from '../utils/constants';
@@ -71,7 +71,7 @@ async function openExternal(url, comingSoon) {
 function useFestivalTiming(events) {
   const now = useCurrentTime();
   return useMemo(() => {
-    const dates = events && events.length ? getUniqueDates(events) : [];
+    const dates = events && events.length ? getFestivalDays(events) : [];
     if (!dates.length) return { hasDates: false, startMs: 0, live: false, past: false, dateLabel: '' };
 
     const last = dates[dates.length - 1];
@@ -356,6 +356,15 @@ export default function HomeScreen({ navigation }) {
     navigation.getParent()?.navigate(tabName);
   }, [navigation]);
 
+  // Jump to the Lineup tab with a stage preselected. The `ts` nonce makes the
+  // Schedule screen re-apply the filter even when the same stage is tapped twice.
+  const navigateToStage = useCallback((categoryId) => {
+    navigation.getParent()?.navigate('Schedule', {
+      screen: 'ScheduleMain',
+      params: { categoryId, ts: Date.now() },
+    });
+  }, [navigation]);
+
   // Resolve the ribbon: live first, then up-next.
   const nowEvent = happeningNowEvents[0];
   const nextEvent = upNextEvents[0];
@@ -405,7 +414,7 @@ export default function HomeScreen({ navigation }) {
                   t={t}
                   stage={s}
                   count={s.count}
-                  onPress={() => navigateToTab('Schedule')}
+                  onPress={() => navigateToStage(s.id)}
                 />
               ))}
             </View>
@@ -447,9 +456,12 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* Footer */}
+        {/* Footer — a designed close for the page, motif filling the base */}
         <View style={hs.footer}>
-          <PyramidMark size={26} stroke={1.4} color={t.ink2} />
+          <View style={[hs.footerGeo, { opacity: motif * 0.5 }]} pointerEvents="none">
+            <SeedOfLife size={280} stroke={1} color={t.accent2} />
+          </View>
+          <PyramidMark size={30} color={t.accent} />
           <Text style={[hs.footerLead, { color: t.ink2 }]}>Experience the energy of the Pyramid</Text>
           <Text style={[hs.footerPlace, { color: t.ink3 }]}>{FESTIVAL.place}</Text>
         </View>
@@ -601,7 +613,8 @@ const hs = StyleSheet.create({
   newsDate: { fontFamily: fonts.body, fontSize: 11 },
 
   // Footer
-  footer: { alignItems: 'center', paddingTop: 34, paddingHorizontal: 20, paddingBottom: 10 },
-  footerLead: { fontFamily: fonts.bodyMed, fontSize: 13, marginTop: 8 },
+  footer: { position: 'relative', overflow: 'hidden', alignItems: 'center', paddingTop: 48, paddingHorizontal: 20, paddingBottom: 40 },
+  footerGeo: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  footerLead: { fontFamily: fonts.bodyMed, fontSize: 13, marginTop: 10 },
   footerPlace: { fontFamily: fonts.body, fontSize: 11, marginTop: 4, opacity: 0.85 },
 });

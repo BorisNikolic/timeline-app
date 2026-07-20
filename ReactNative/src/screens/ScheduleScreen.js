@@ -6,7 +6,7 @@
  * uses the reminder system (star = hasReminder).
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -31,7 +31,7 @@ import { useReminders } from '../hooks/useReminders';
 import { useNetwork } from '../contexts/NetworkContext';
 import {
   formatTime,
-  getUniqueDates,
+  getFestivalDays,
   parseDate,
   isSameDay,
   formatDateForApi,
@@ -148,13 +148,15 @@ function EventRow({ t, ev, saved, onPress, onSave }) {
   );
 }
 
-export default function ScheduleScreen({ navigation }) {
+export default function ScheduleScreen({ navigation, route }) {
   const { t } = useTheme();
   const insets = useSafeAreaInsets();
   const timelineId = TIMELINE_ID;
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null); // null === "all"
+
+  const listRef = useRef(null);
 
   const currentTime = useCurrentTime();
 
@@ -167,7 +169,7 @@ export default function ScheduleScreen({ navigation }) {
   const { hasReminder, setReminder, removeReminder } = useReminders();
 
   // Unique festival dates with events + the 3·6·9 power-day anchors.
-  const availableDates = useMemo(() => (events ? getUniqueDates(events) : []), [events]);
+  const availableDates = useMemo(() => (events ? getFestivalDays(events) : []), [events]);
   const powerDays = useMemo(() => getPowerDays(availableDates), [availableDates]);
 
   // Smart initial date selection (preserved logic): today if it has events, else first day.
@@ -178,6 +180,19 @@ export default function ScheduleScreen({ navigation }) {
       setSelectedDate(todayHasEvents ? today : availableDates[0]);
     }
   }, [availableDates, selectedDate]);
+
+  // Preselect a stage when arriving from a Home "Stages & Zones" card. The `ts`
+  // nonce re-applies the filter even when the same stage is tapped again.
+  useEffect(() => {
+    const cid = route.params?.categoryId;
+    if (cid !== undefined) setSelectedCategoryId(cid);
+  }, [route.params?.categoryId, route.params?.ts]);
+
+  // Reset the list to the top whenever the day or stage changes, so switching
+  // days never leaves you stranded mid-list on unrelated sets.
+  useEffect(() => {
+    listRef.current?.scrollTo({ y: 0, animated: true });
+  }, [selectedDate, selectedCategoryId]);
 
   // Filter + sort events for the selected day & stage.
   const filteredEvents = useEventsForDate(events, selectedDate, selectedCategoryId);
@@ -194,6 +209,20 @@ export default function ScheduleScreen({ navigation }) {
       };
     });
   }, [filteredEvents, categories, t.accent2]);
+
+  // When a stage is selected but has nothing on the chosen day, find its very
+  // first programmed set across the festival so the empty state can point to
+  // when that stage actually kicks off (e.g. Tok has no sets the first days).
+  const stageFirstSet = useMemo(() => {
+    if (!selectedCategoryId || !events) return null;
+    const catEvents = events
+      .filter(e => e.categoryId === selectedCategoryId && e.time)
+      .sort((a, b) => {
+        const da = e => (e.date || '').split('T')[0];
+        return da(a) === da(b) ? a.time.localeCompare(b.time) : da(a).localeCompare(da(b));
+      });
+    return catEvents[0] || null;
+  }, [events, selectedCategoryId]);
 
   // Count of saved sets among ALL of the selected day's events.
   const savedCount = useMemo(() => {
@@ -231,6 +260,13 @@ export default function ScheduleScreen({ navigation }) {
   const dayLabel = `${DOW[selectedDate.getDay()]} ${selectedDate.getDate()} ${MON[selectedDate.getMonth()]}`;
   const powerLabel = powerDays[formatDateForApi(selectedDate)];
 
+  const selectedStageName = categories?.find(c => c.id === selectedCategoryId)?.name || 'This stage';
+  let firstSetDayLabel = null;
+  if (stageFirstSet) {
+    const d = parseDate(stageFirstSet.date);
+    firstSetDayLabel = `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`;
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: t.bg }]}>
       <ThemeToggle variant="auto" />
@@ -261,6 +297,7 @@ export default function ScheduleScreen({ navigation }) {
       />
 
       <ScrollView
+        ref={listRef}
         style={styles.list}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -283,7 +320,18 @@ export default function ScheduleScreen({ navigation }) {
         {enrichedEvents.length === 0 ? (
           <View style={styles.empty}>
             <PyramidMark size={40} stroke={1.2} color={t.ink3} />
-            <Text style={[styles.emptyText, { color: t.ink3 }]}>No sets for this filter yet.</Text>
+            {firstSetDayLabel ? (
+              <>
+                <Text style={[styles.emptyText, { color: t.ink3 }]}>
+                  No {selectedStageName} sets on {dayLabel}.
+                </Text>
+                <Text style={[styles.emptyHint, { color: t.ink2 }]}>
+                  {selectedStageName} kicks off {firstSetDayLabel} at {formatTime(stageFirstSet.time)}.
+                </Text>
+              </>
+            ) : (
+              <Text style={[styles.emptyText, { color: t.ink3 }]}>No sets for this filter yet.</Text>
+            )}
           </View>
         ) : (
           <View style={styles.tlCol}>
@@ -372,6 +420,7 @@ const styles = StyleSheet.create({
   favBtn: { padding: 4 },
 
   // Empty
-  empty: { alignItems: 'center', gap: 12, paddingVertical: 60, paddingHorizontal: 20 },
-  emptyText: { fontFamily: fonts.body, fontSize: 14 },
+  empty: { alignItems: 'center', gap: 10, paddingVertical: 60, paddingHorizontal: 30 },
+  emptyText: { fontFamily: fonts.bodyBold, fontSize: 15, textAlign: 'center' },
+  emptyHint: { fontFamily: fonts.bodySemi, fontSize: 13.5, lineHeight: 20, textAlign: 'center' },
 });
