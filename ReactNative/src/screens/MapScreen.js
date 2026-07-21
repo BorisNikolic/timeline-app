@@ -9,6 +9,7 @@ import {
   Text,
   View,
   Animated,
+  ActivityIndicator,
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
@@ -25,7 +26,12 @@ import { fonts } from '../theme/tokens';
 import { Rings369 } from '../components/geometry/Geometry';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 
-const MAP_SOURCE = require('../../assets/festival-map.png');
+// Map is loaded from GitHub Pages so it can be swapped without an app release —
+// just replace frontend/public/festival-map.png (keep 16:9) and push to main.
+// Falls back to the bundled copy when offline / the host is unreachable; RN
+// caches the remote image to disk, so it stays available after the first load.
+const REMOTE_MAP_URL = 'https://borisnikolic.github.io/timeline-app/festival-map.png';
+const BUNDLED_MAP = require('../../assets/festival-map.png');
 const MAP_ASPECT_RATIO = 1920 / 1080;
 const TAB_BAR_HEIGHT = 60;
 const MIN_SCALE = 1;
@@ -37,6 +43,8 @@ export default function MapScreen() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const [isRotated, setIsRotated] = useState(true);
+  const [mapSource, setMapSource] = useState({ uri: REMOTE_MAP_URL });
+  const [loading, setLoading] = useState(true);
 
   const availableWidth = screenWidth;
   const availableHeight = screenHeight - insets.top - insets.bottom - TAB_BAR_HEIGHT;
@@ -176,7 +184,10 @@ export default function MapScreen() {
               }}
             >
               <Image
-                source={MAP_SOURCE}
+                source={mapSource}
+                onLoadStart={() => setLoading(true)}
+                onLoadEnd={() => setLoading(false)}
+                onError={() => setMapSource(BUNDLED_MAP)}
                 style={{
                   width: imageBoxWidth,
                   height: imageBoxHeight,
@@ -188,6 +199,12 @@ export default function MapScreen() {
           </PanGestureHandler>
         </Animated.View>
       </PinchGestureHandler>
+
+      {loading && (
+        <View pointerEvents="none" style={styles.loader}>
+          <ActivityIndicator size="large" color={t.accent} />
+        </View>
+      )}
 
       {/* Floating decorative header — out of the way of gestures */}
       <View
@@ -225,6 +242,11 @@ const styles = StyleSheet.create({
   },
   flexCenter: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loader: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
   },
