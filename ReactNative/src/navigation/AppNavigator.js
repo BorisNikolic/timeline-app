@@ -16,6 +16,7 @@ import InfoScreen from '../screens/InfoScreen';
 import MyEventsScreen from '../screens/MyEventsScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
 import BlogPostScreen from '../screens/BlogPostScreen';
+import HealingTentScreen from '../screens/HealingTentScreen';
 
 import PyramidTabBar from './PyramidTabBar';
 import { useTheme } from '../contexts/ThemeContext';
@@ -45,6 +46,7 @@ function HomeStack() {
         component={BlogPostScreen}
         options={({ route }) => ({ title: route.params?.title || 'News', headerBackTitle: 'Home' })}
       />
+      <Stack.Screen name="HealingTent" component={HealingTentScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
@@ -73,6 +75,7 @@ function InfoStack() {
   return (
     <Stack.Navigator screenOptions={{ ...opts, headerShown: false }}>
       <Stack.Screen name="InfoMain" component={InfoScreen} />
+      <Stack.Screen name="HealingTent" component={HealingTentScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

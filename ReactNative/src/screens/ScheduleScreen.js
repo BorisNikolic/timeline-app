@@ -36,6 +36,7 @@ import {
   isSameDay,
   formatDateForApi,
   getPowerDays,
+  isEventHappeningNow,
 } from '../utils/dateHelpers';
 import { TIMELINE_ID, DEFAULT_REMINDER_MINUTES } from '../utils/constants';
 
@@ -112,8 +113,9 @@ function StageFilter({ t, stages, selected, onSelect }) {
 }
 
 // ── Timeline event row ──────────────────────────────────────────────────────
-function EventRow({ t, ev, saved, onPress, onSave }) {
+function EventRow({ t, ev, now, saved, onPress, onSave }) {
   const color = ev.categoryColor;
+  const live = isEventHappeningNow(ev, now);
   return (
     <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={styles.tlRow}>
       <View style={styles.tlTimeCol}>
@@ -123,14 +125,26 @@ function EventRow({ t, ev, saved, onPress, onSave }) {
 
       <View style={styles.tlRail}>
         <View style={[styles.tlLine, { backgroundColor: t.hairlineStrong }]} />
-        <View style={[styles.tlNode, { backgroundColor: t.bg, borderColor: color }]} />
+        <View style={[styles.tlNode, { backgroundColor: live ? t.hot : t.bg, borderColor: live ? t.hot : color }]} />
       </View>
 
-      <View style={[styles.tlCard, { backgroundColor: t.surface, borderColor: t.hairline, borderLeftColor: color }, t.cardShadow]}>
+      <View style={[
+        styles.tlCard,
+        { backgroundColor: t.surface, borderColor: live ? t.hot : t.hairline, borderLeftColor: live ? t.hot : color },
+        t.cardShadow,
+      ]}>
         <View style={styles.tlCardBody}>
-          <Text style={[styles.cardStage, { color }]} numberOfLines={1}>
-            {ev.categoryName.toUpperCase()}
-          </Text>
+          <View style={styles.cardStageRow}>
+            <Text style={[styles.cardStage, { color }]} numberOfLines={1}>
+              {ev.categoryName.toUpperCase()}
+            </Text>
+            {live && (
+              <View style={[styles.liveBadge, { backgroundColor: t.hot + '22' }]}>
+                <View style={[styles.liveBadgeDot, { backgroundColor: t.hot }]} />
+                <Text style={[styles.liveBadgeText, { color: t.hot }]}>LIVE</Text>
+              </View>
+            )}
+          </View>
           <Text style={[styles.cardTitle, { color: t.ink }]} numberOfLines={2}>
             {ev.title}
           </Text>
@@ -340,6 +354,7 @@ export default function ScheduleScreen({ navigation, route }) {
                 key={ev.id}
                 t={t}
                 ev={ev}
+                now={currentTime}
                 saved={hasReminder(ev.id)}
                 onPress={() => handleEventPress(ev)}
                 onSave={() => handleSave(ev)}
@@ -415,7 +430,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderLeftWidth: 3, borderRadius: radius.sm, paddingVertical: 11, paddingHorizontal: 13,
   },
   tlCardBody: { flex: 1, minWidth: 0 },
-  cardStage: { fontFamily: fonts.bodyExtra, fontSize: 11, letterSpacing: 0.5 },
+  cardStageRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardStage: { fontFamily: fonts.bodyExtra, fontSize: 11, letterSpacing: 0.5, flexShrink: 1 },
+  liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 },
+  liveBadgeDot: { width: 6, height: 6, borderRadius: 999 },
+  liveBadgeText: { fontFamily: fonts.bodyExtra, fontSize: 9, letterSpacing: 1 },
   cardTitle: { fontFamily: fonts.bodyBold, fontSize: 16, lineHeight: 20, marginTop: 3 },
   favBtn: { padding: 4 },
 

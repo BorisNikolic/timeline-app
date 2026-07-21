@@ -4,7 +4,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getTimelineEvents, getTimelineCategories } from '../services/api';
-import { isSameDay, parseDate, getFestivalDays } from '../utils/dateHelpers';
+import { isSameDay, parseDate, getFestivalDays, isEventHappeningNow } from '../utils/dateHelpers';
+import { orderAndLabelCategories } from '../utils/categoryKind';
 
 /**
  * Query key factory for consistent cache keys
@@ -43,6 +44,7 @@ export function useCategories(timelineId) {
     gcTime: Infinity, // Never garbage collect - keep cached data forever
     staleTime: 30 * 60 * 1000, // 30 minutes - categories change less often
     placeholderData: (prev) => prev,
+    select: orderAndLabelCategories, // fixed display order + "Kids Garden" label
   });
 }
 
@@ -77,31 +79,6 @@ export function useEventsForDate(events, date, categoryId = null) {
  */
 export function useHappeningNow(events, currentTime = new Date()) {
   if (!events) return [];
-
-  return events.filter(event => {
-    const eventDate = parseDate(event.date);
-    if (!isSameDay(eventDate, currentTime)) return false;
-
-    if (!event.time || !event.endTime) return false;
-
-    const [startHours, startMinutes] = event.time.split(':').map(Number);
-    const [endHours, endMinutes] = event.endTime.split(':').map(Number);
-
-    const currentHours = currentTime.getHours();
-    const currentMinutes = currentTime.getMinutes();
-    const currentDecimal = currentHours + currentMinutes / 60;
-
-    let startDecimal = startHours + startMinutes / 60;
-    let endDecimal = endHours + endMinutes / 60;
-
-    // Handle overnight events
-    if (endDecimal < startDecimal) {
-      endDecimal += 24;
-      if (currentDecimal < startDecimal) {
-        return currentDecimal + 24 >= startDecimal && currentDecimal + 24 <= endDecimal;
-      }
-    }
-
-    return currentDecimal >= startDecimal && currentDecimal <= endDecimal;
-  });
+  // Single source of truth for "is this on right now" (overnight-safe).
+  return events.filter(event => isEventHappeningNow(event, currentTime));
 }

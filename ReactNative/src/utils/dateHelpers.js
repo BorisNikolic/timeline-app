@@ -50,31 +50,23 @@ export function parseDate(dateStr) {
  * Check if event is happening now
  */
 export function isEventHappeningNow(event, currentTime = new Date()) {
-  const eventDate = parseDate(event.date);
-  if (!isSameDay(eventDate, currentTime)) return false;
-
   if (!event.time || !event.endTime) return false;
 
-  const [startHours, startMinutes] = event.time.split(':').map(Number);
-  const [endHours, endMinutes] = event.endTime.split(':').map(Number);
+  // Build absolute start/end instants so overnight sets are handled correctly
+  // regardless of which calendar day the event is dated on. (Decimal-hour +
+  // isSameDay logic wrongly flagged a 23:00–02:00 set as live at 01:00 on its
+  // OWN day, and missed it after midnight on the next day.)
+  const date = parseDate(event.date);
+  const [sh, sm] = event.time.split(':').map(Number);
+  const [eh, em] = event.endTime.split(':').map(Number);
 
-  const currentHours = currentTime.getHours();
-  const currentMinutes = currentTime.getMinutes();
-  const currentDecimal = currentHours + currentMinutes / 60;
+  const start = new Date(date);
+  start.setHours(sh, sm, 0, 0);
+  const end = new Date(date);
+  end.setHours(eh, em, 0, 0);
+  if (end < start) end.setDate(end.getDate() + 1); // crosses midnight
 
-  let startDecimal = startHours + startMinutes / 60;
-  let endDecimal = endHours + endMinutes / 60;
-
-  // Handle overnight events
-  if (endDecimal < startDecimal) {
-    endDecimal += 24;
-    if (currentDecimal < startDecimal) {
-      // Current time is after midnight
-      return currentDecimal + 24 >= startDecimal && currentDecimal + 24 <= endDecimal;
-    }
-  }
-
-  return currentDecimal >= startDecimal && currentDecimal <= endDecimal;
+  return currentTime >= start && currentTime <= end;
 }
 
 /**

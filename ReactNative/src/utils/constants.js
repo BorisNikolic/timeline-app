@@ -10,7 +10,7 @@ export const TIMELINE_ID = '297aea13-2d77-41fb-8673-f90b650e60fd';
 
 // Authoritative gates-open moment (local time) — the day before the programme
 // begins. Single source of truth for the Home countdown and the Info card.
-export const GATES_OPEN = '2026-08-02T12:00:00';
+export const GATES_OPEN = '2026-08-02T14:00:00';
 
 // Default reminder time (in minutes before event)
 export const DEFAULT_REMINDER_MINUTES = 15;

@@ -18,8 +18,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
 import { fonts, radius } from '../theme/tokens';
-import { InfoIcon, IconChevron } from '../components/ui/Icons';
-import { PyramidMark, Rings369 } from '../components/geometry/Geometry';
+import { InfoIcon, IconChevron, IconArrow } from '../components/ui/Icons';
+import { PyramidMark, Rings369, SeedOfLife } from '../components/geometry/Geometry';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import { festivalSections } from '../data/festivalInfo';
 import { useTimelineEvents } from '../hooks/useEvents';
@@ -99,7 +99,7 @@ function Accordion({ section, open, onToggle, t }) {
   );
 }
 
-export default function InfoScreen() {
+export default function InfoScreen({ navigation }) {
   const { t } = useTheme();
   const insets = useSafeAreaInsets();
   const [openId, setOpenId] = useState(festivalSections[0]?.id ?? null);
@@ -153,6 +153,27 @@ export default function InfoScreen() {
             <QuickFact key={f.label} fact={f} t={t} />
           ))}
         </View>
+
+        {/* Healing Zone — link to its own screen (not a schedule) */}
+        <TouchableOpacity
+          style={[styles.healing, { backgroundColor: t.surface, borderColor: t.hairline }, t.cardShadow]}
+          onPress={() => navigation.navigate('HealingTent')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.healingGeo} pointerEvents="none">
+            <SeedOfLife size={110} stroke={1} color={t.accent2} />
+          </View>
+          <View style={[styles.healingIcon, { backgroundColor: t.accent2 + '22' }]}>
+            <InfoIcon name="leaf" size={20} color={t.accent2} />
+          </View>
+          <View style={styles.healingBody}>
+            <Text style={[styles.healingTitle, { color: t.ink }]}>Healing Zone</Text>
+            <Text style={[styles.healingText, { color: t.ink2 }]} numberOfLines={2}>
+              Drop-in therapies & healers — meet the people holding space.
+            </Text>
+          </View>
+          <IconArrow size={18} color={t.accent2} />
+        </TouchableOpacity>
 
         <View style={styles.accList}>
           {festivalSections.map(section => (
@@ -219,6 +240,24 @@ const styles = StyleSheet.create({
   factText: { flex: 1 },
   factLabel: { fontFamily: fonts.bodyBold, fontSize: 10, letterSpacing: 0.8 },
   factValue: { fontFamily: fonts.bodyBold, fontSize: 14, marginTop: 2 },
+
+  healing: {
+    position: 'relative',
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    marginBottom: 22,
+  },
+  healingGeo: { position: 'absolute', top: -24, right: -24, opacity: 0.5 },
+  healingIcon: { width: 36, height: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  healingBody: { flex: 1 },
+  healingTitle: { fontFamily: fonts.bodyBold, fontSize: 15.5 },
+  healingText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, marginTop: 3 },
 
   accList: { gap: 10 },
   acc: { borderWidth: 1, borderRadius: radius.md, overflow: 'hidden' },

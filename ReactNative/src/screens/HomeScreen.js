@@ -1,6 +1,6 @@
 /**
  * HomeScreen — Pyramid Festival landing (SOVRA Edition redesign)
- * Hero countdown + up-next ribbon + stages grid + 3·6·9 strip + village news.
+ * Hero countdown + up-next ribbon + stages grid + village news.
  */
 
 import React, { useMemo, useCallback } from 'react';
@@ -20,7 +20,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../contexts/ThemeContext';
-import { fonts, radius, motif } from '../theme/tokens';
+import { fonts, radius, motif, brand } from '../theme/tokens';
 import { PyramidMark, Rings369, SeedOfLife, Rays } from '../components/geometry/Geometry';
 import { IconArrow, IconPin } from '../components/ui/Icons';
 import { useCountdown } from '../components/ui/useCountdown';
@@ -36,6 +36,7 @@ import {
   isSameDay,
   getFestivalDays,
   formatDateRange,
+  formatEndsIn,
 } from '../utils/dateHelpers';
 import { TIMELINE_ID, GATES_OPEN } from '../utils/constants';
 import { itemNoun } from '../utils/categoryKind';
@@ -158,60 +159,59 @@ function Hero({ t, insets, timing }) {
           </View>
         </View>
 
-        {/* countdown card */}
-        <View style={[hs.countdown, { borderColor: 'rgba(247,243,234,0.16)' }]}>
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-          <View style={hs.cdScrim} />
-          <View style={hs.cdContent}>
-            {showLive ? (
-              <View style={hs.liveRow}>
-                <View style={[hs.liveDot, { backgroundColor: t.hot }]} />
-                <Text style={[hs.liveText, { color: HERO_INK }]}>The gathering is live</Text>
-              </View>
-            ) : showPast ? (
-              <Text style={[hs.liveText, { color: HERO_INK }]}>See you next year</Text>
-            ) : (
-              <>
-                <Text style={[hs.cdGatesLabel, { color: HERO_INK }]}>Gates open in</Text>
-                {timing.hasDates ? (
-                  <View style={hs.cdRow}>
-                    <CountdownUnit value={cd.d} label="days" t={t} />
-                    <Text style={[hs.cdSep, { color: HERO_INK }]}>:</Text>
-                    <CountdownUnit value={cd.h} label="hrs" t={t} />
-                    <Text style={[hs.cdSep, { color: HERO_INK }]}>:</Text>
-                    <CountdownUnit value={cd.m} label="min" t={t} />
-                    <Text style={[hs.cdSep, { color: HERO_INK }]}>:</Text>
-                    <CountdownUnit value={cd.s} label="sec" t={t} />
-                  </View>
-                ) : null}
-              </>
-            )}
+        {/* Countdown card — only before/after the festival. While it's live we
+            hide this entirely (the live sets show below); TODO revisit the live
+            hero treatment. */}
+        {!showLive && (
+          <View style={[hs.countdown, { borderColor: 'rgba(247,243,234,0.16)' }]}>
+            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={hs.cdScrim} />
+            <View style={hs.cdContent}>
+              {showPast ? (
+                <Text style={[hs.liveText, { color: HERO_INK }]}>See you next year</Text>
+              ) : (
+                <>
+                  <Text style={[hs.cdGatesLabel, { color: HERO_INK }]}>Gates open in</Text>
+                  {timing.hasDates ? (
+                    <View style={hs.cdRow}>
+                      <CountdownUnit value={cd.d} label="days" t={t} />
+                      <Text style={[hs.cdSep, { color: HERO_INK }]}>:</Text>
+                      <CountdownUnit value={cd.h} label="hrs" t={t} />
+                      <Text style={[hs.cdSep, { color: HERO_INK }]}>:</Text>
+                      <CountdownUnit value={cd.m} label="min" t={t} />
+                      <Text style={[hs.cdSep, { color: HERO_INK }]}>:</Text>
+                      <CountdownUnit value={cd.s} label="sec" t={t} />
+                    </View>
+                  ) : null}
+                </>
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* CTAs — Buy ticket is always live (next-year sales open right after the
-            festival); the film button becomes the aftermovie once it's over */}
-        <View style={hs.heroCtas}>
-          <TouchableOpacity
-            style={[hs.ctaPrimary, { backgroundColor: t.accent }, t.glow]}
-            activeOpacity={0.85}
-            onPress={() => openExternal(FESTIVAL.ticketUrl, { title: 'Tickets', message: 'Ticket sales open soon — check back shortly.' })}
-          >
-            <Text style={[hs.ctaPrimaryText, { color: t.onAccent }]} numberOfLines={1}>Buy ticket</Text>
-            <IconArrow size={17} color={t.onAccent} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[hs.ctaGhost, { borderColor: 'rgba(247,243,234,0.28)' }]}
-            activeOpacity={0.8}
-            onPress={() => openExternal(FESTIVAL.filmUrl, showPast
-              ? { title: 'Aftermovie', message: "The aftermovie is being edited — it'll land here soon." }
-              : { title: 'Festival film', message: 'The teaser is on its way — check back soon.' })}
-          >
-            <Text style={[hs.ctaGhostText, { color: HERO_INK }]} numberOfLines={1}>
-              {showPast ? 'Watch aftermovie' : 'Watch film'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* CTAs — only in the run-up to the festival. Next-year ticket sales and
+            the aftermovie both land months later, so once the gathering is live
+            (or over) this section is hidden; a new app version re-enables it for
+            the next edition's countdown. */}
+        {!showLive && !showPast && (
+          <View style={hs.heroCtas}>
+            <TouchableOpacity
+              style={[hs.ctaPrimary, { backgroundColor: t.accent }, t.glow]}
+              activeOpacity={0.85}
+              onPress={() => openExternal(FESTIVAL.ticketUrl, { title: 'Tickets', message: 'Ticket sales open soon — check back shortly.' })}
+            >
+              <Text style={[hs.ctaPrimaryText, { color: t.onAccent }]} numberOfLines={1}>Buy ticket</Text>
+              <IconArrow size={17} color={t.onAccent} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[hs.ctaGhost, { borderColor: 'rgba(247,243,234,0.28)' }]}
+              activeOpacity={0.8}
+              onPress={() => openExternal(FESTIVAL.filmUrl, { title: 'Festival film', message: 'The teaser is on its way — check back soon.' })}
+            >
+              <Text style={[hs.ctaGhostText, { color: HERO_INK }]} numberOfLines={1}>Watch film</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </LinearGradient>
   );
@@ -234,6 +234,32 @@ function UpNext({ t, label, title, time, endTime, onPress }) {
         {endTime ? <Text style={[hs.upNextTimeEnd, { color: t.ink2 }]}>—{endTime}</Text> : null}
       </View>
     </TouchableOpacity>
+  );
+}
+
+// "Happening now" strip — lists ALL sets currently on, across stages.
+function LiveStrip({ t, events, now, onPress }) {
+  return (
+    <View>
+      <View style={hs.liveHead}>
+        <View style={[hs.liveHeadDot, { backgroundColor: t.hot }]} />
+        <Text style={[hs.liveHeadText, { color: t.hot }]}>HAPPENING NOW · {events.length}</Text>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={hs.liveRowStrip}>
+        {events.map(e => (
+          <TouchableOpacity
+            key={e.id}
+            style={[hs.liveCard, { backgroundColor: t.surface, borderColor: t.hairline, borderLeftColor: e.categoryColor }, t.cardShadow]}
+            onPress={() => onPress(e)}
+            activeOpacity={0.85}
+          >
+            <Text style={[hs.liveCat, { color: e.categoryColor }]} numberOfLines={1}>{e.categoryName.toUpperCase()}</Text>
+            <Text style={[hs.liveTitle, { color: t.ink }]} numberOfLines={2}>{e.title}</Text>
+            <Text style={[hs.liveEnds, { color: t.ink3 }]}>{formatEndsIn(e, now)}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -365,14 +391,13 @@ export default function HomeScreen({ navigation }) {
     });
   }, [navigation]);
 
-  // Resolve the ribbon: live first, then up-next.
-  const nowEvent = happeningNowEvents[0];
+  const navigateToHealing = useCallback(() => {
+    navigation.navigate('HealingTent');
+  }, [navigation]);
+
+  // Home ribbon: the LiveStrip (all sets on now) takes over when anything is
+  // live; otherwise fall back to the next upcoming set.
   const nextEvent = upNextEvents[0];
-  const ribbon = nowEvent
-    ? { event: nowEvent, label: `NOW ON ${(nowEvent.categoryName || '').toUpperCase()}` }
-    : nextEvent
-      ? { event: nextEvent, label: 'UP NEXT' }
-      : null;
 
   return (
     <View style={[styles.container, { backgroundColor: t.bg }]}>
@@ -388,15 +413,19 @@ export default function HomeScreen({ navigation }) {
       >
         <Hero t={t} insets={insets} timing={timing} />
 
-        {ribbon ? (
+        {happeningNowEvents.length ? (
+          <View style={hs.liveWrap}>
+            <LiveStrip t={t} events={happeningNowEvents} now={currentTime} onPress={handleEventPress} />
+          </View>
+        ) : nextEvent ? (
           <View style={hs.ribbonWrap}>
             <UpNext
               t={t}
-              label={ribbon.label}
-              title={ribbon.event.title}
-              time={formatTime(ribbon.event.time)}
-              endTime={ribbon.event.endTime ? formatTime(ribbon.event.endTime) : null}
-              onPress={() => handleEventPress(ribbon.event)}
+              label="UP NEXT"
+              title={nextEvent.title}
+              time={formatTime(nextEvent.time)}
+              endTime={nextEvent.endTime ? formatTime(nextEvent.endTime) : null}
+              onPress={() => handleEventPress(nextEvent)}
             />
           </View>
         ) : null}
@@ -421,24 +450,33 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* 3·6·9 feature strip */}
-        <LinearGradient
-          colors={[t.aubergine, t.cosmos2]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[hs.feature, { borderColor: t.hairlineStrong }]}
-        >
-          <View style={[hs.featureGeo, { opacity: motif * 0.4 }]} pointerEvents="none">
-            <Rings369 size={180} stroke={1} color={t.accent} />
-          </View>
-          <View style={hs.featureContent}>
-            <Text style={[hs.featureNums, { color: t.accent }]}>3 · 6 · 9</Text>
-            <Text style={[hs.featureText, { color: HERO_INK }]}>
-              Three power days. The hidden geometry of the gathering — opening, solstice, and closing
-              aligned to the pyramid of Rtanj.
-            </Text>
-          </View>
-        </LinearGradient>
+        {/* Healing Zone — drop-in therapies (not a stage; its own screen) */}
+        <View style={hs.sectionGap}>
+          <SectionTitle>Wellness</SectionTitle>
+          <TouchableOpacity
+            style={[hs.healing, hs.healingGlow]}
+            onPress={navigateToHealing}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={[brand.tealBright, brand.teal]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={hs.healingGeo} pointerEvents="none">
+              <SeedOfLife size={132} stroke={1.2} color={HERO_INK} />
+            </View>
+            <View style={hs.healingBody}>
+              <Text style={hs.healingKicker}>HEALING ZONE</Text>
+              <Text style={hs.healingTitle}>Rest &amp; repair</Text>
+              <Text style={hs.healingText} numberOfLines={2}>
+                Drop-in bodywork, energy work and therapies — no schedule, just come by.
+              </Text>
+            </View>
+            <IconArrow size={20} color={HERO_INK} />
+          </TouchableOpacity>
+        </View>
 
         {/* From the Village */}
         {blogPosts && blogPosts.length > 0 && (
@@ -545,6 +583,17 @@ const hs = StyleSheet.create({
   },
   ctaGhostText: { fontFamily: fonts.bodyBold, fontSize: 14 },
 
+  // Live "happening now" strip
+  liveWrap: { paddingTop: 18 },
+  liveHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, marginBottom: 10 },
+  liveHeadDot: { width: 8, height: 8, borderRadius: 999 },
+  liveHeadText: { fontFamily: fonts.bodyExtra, fontSize: 10, letterSpacing: 1.6 },
+  liveRowStrip: { gap: 12, paddingHorizontal: 20, paddingBottom: 4 },
+  liveCard: { width: 220, borderWidth: 1, borderLeftWidth: 3, borderRadius: radius.md, paddingVertical: 13, paddingHorizontal: 15 },
+  liveCat: { fontFamily: fonts.bodyExtra, fontSize: 10, letterSpacing: 1.4 },
+  liveTitle: { fontFamily: fonts.bodyBold, fontSize: 15, marginTop: 4 },
+  liveEnds: { fontFamily: fonts.body, fontSize: 12, marginTop: 6 },
+
   // Up next ribbon
   ribbonWrap: { paddingHorizontal: 20, paddingTop: 18 },
   upNext: {
@@ -587,21 +636,31 @@ const hs = StyleSheet.create({
   stageName: { fontFamily: fonts.display, fontSize: 22, letterSpacing: -0.2 },
   stageKind: { fontFamily: fonts.bodySemi, fontSize: 11.5, marginTop: 4 },
 
-  // 3·6·9 feature
-  feature: {
+  // Healing Zone card — teal gradient fill + glow so it stands apart from the
+  // plain stage cards.
+  healing: {
     position: 'relative',
     overflow: 'hidden',
-    marginTop: 26,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
     marginHorizontal: 20,
-    borderWidth: 1,
     borderRadius: radius.lg,
-    paddingVertical: 26,
-    paddingHorizontal: 22,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
   },
-  featureGeo: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  featureContent: { alignItems: 'center', alignSelf: 'center', width: '100%', maxWidth: 280 },
-  featureNums: { fontFamily: fonts.display, fontSize: 38, letterSpacing: 1.5 },
-  featureText: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 21.5, textAlign: 'center', opacity: 0.82, marginTop: 10, alignSelf: 'stretch' },
+  healingGlow: {
+    shadowColor: brand.tealBright,
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 9,
+  },
+  healingGeo: { position: 'absolute', top: -30, right: -24, opacity: 0.28 },
+  healingBody: { flex: 1 },
+  healingKicker: { fontFamily: fonts.bodyExtra, fontSize: 10.5, letterSpacing: 1.8, textTransform: 'uppercase', color: HERO_INK, opacity: 0.9 },
+  healingTitle: { fontFamily: fonts.display, fontSize: 22, letterSpacing: -0.2, marginTop: 3, color: HERO_INK },
+  healingText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, marginTop: 5, color: HERO_INK, opacity: 0.88 },
 
   // News
   newsRow: { gap: 14, paddingHorizontal: 20, paddingBottom: 4 },
