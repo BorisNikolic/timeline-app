@@ -147,8 +147,14 @@ export default function HealingTentScreen({ navigation }) {
           <View style={s.noteGeo} pointerEvents="none">
             <SeedOfLife size={120} stroke={1} color={t.accent2} />
           </View>
-          <Text style={[s.noteLabel, { color: t.accent2 }]}>DROP-IN, NO SCHEDULE</Text>
+          <Text style={[s.noteLabel, { color: t.accent2 }]}>SEPARATE FROM HEALING DAYS · ADDITIONAL FEE</Text>
           <Text style={[s.noteText, { color: t.ink2 }]}>{HEALING_ZONE.note}</Text>
+          {HEALING_ZONE.booking ? (
+            <View style={[s.pricing, { borderTopColor: t.hairline }]}>
+              <Text style={[s.pricingLabel, { color: t.accent }]}>BOOKING</Text>
+              <Text style={[s.pricingText, { color: t.ink2 }]}>{HEALING_ZONE.booking}</Text>
+            </View>
+          ) : null}
         </View>
 
         {HEALERS.length > 0 && (
@@ -216,6 +222,9 @@ const s = StyleSheet.create({
   noteGeo: { position: 'absolute', top: -30, right: -30, opacity: motif * 0.9 },
   noteLabel: { fontFamily: fonts.bodyExtra, fontSize: 10.5, letterSpacing: 1.8 },
   noteText: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 21.5, marginTop: 8 },
+  pricing: { marginTop: 14, paddingTop: 14, borderTopWidth: 1 },
+  pricingLabel: { fontFamily: fonts.bodyExtra, fontSize: 10.5, letterSpacing: 1.8 },
+  pricingText: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 21.5, marginTop: 8 },
 
   // Gallery grid
   listWrap: { marginTop: 28 },

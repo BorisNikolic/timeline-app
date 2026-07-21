@@ -18,13 +18,16 @@ export const HEALING_ZONE = {
   eyebrow: 'SOVRA EDITION · WELLNESS',
   title: 'Healing Zone',
   lead:
-    'A great stretch tent at the heart of the village, held for rest and repair. ' +
-    'Step in whenever you feel called — our practitioners offer bodywork, energy ' +
-    'work and quiet therapies throughout the gathering.',
+    'The Healing Zone is open throughout the entire festival week, offering ' +
+    'individual 1-on-1 sessions with experienced practitioners across a range ' +
+    'of healing techniques.',
   note:
-    'There is no fixed timetable here. Our practitioners hold space across the ' +
-    'days of the gathering — simply come by the tent, and if someone is free, ' +
-    'they will welcome you.',
+    'The Healing Zone is separate from the Healing Days programme. Healing Days ' +
+    'includes workshops, ceremonies and group experiences covered by your ' +
+    'Healing Days or Infinite Vibes festival ticket. Healing Zone sessions are ' +
+    'personal 1-on-1 treatments available for an additional fee.',
+  booking:
+    'Sessions can be booked directly at the Healing Zone during the festival.',
 };
 
 // Order follows the designer's list (alphabetical by first name).

@@ -79,6 +79,9 @@ const INFO_PATHS = {
   card: <G><Rect x="3" y="5.5" width="18" height="13" rx="2.5" /><Path d="M3 9.5h18M7 14.5h4" /></G>,
   cal: <G><Rect x="3.5" y="5" width="17" height="16" rx="3" /><Path d="M3.5 9.5h17M8 3v4M16 3v4" /></G>,
   pin: <G><Path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" /><Circle cx="12" cy="10" r="2.5" /></G>,
+  clock: <G><Circle cx="12" cy="12" r="8.5" /><Path d="M12 7.5V12l3 2" /></G>,
+  tent: <G><Path d="M3 20 12 5l9 15H3Z" /><Path d="M12 5v15M8 20l4-6 4 6" /></G>,
+  mountain: <G><Path d="M3 20 10 7l4 7 2.5-3.5L21 20H3Z" /><Path d="m10 7 1.6 2.8" /></G>,
 };
 
 export const InfoIcon = ({ name, size = 20, stroke = 1.8, color = '#F7F3EA' }) => (

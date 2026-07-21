@@ -45,18 +45,6 @@ function compactRange(dates) {
   return `${a.getDate()} ${MON[a.getMonth()]} – ${b.getDate()} ${MON[b.getMonth()]}`;
 }
 
-// Map the data's Ionicons names to our stroke InfoIcon names.
-const ICON_MAP = {
-  star: 'star',
-  car: 'car',
-  'musical-notes': 'music',
-  restaurant: 'food',
-  medkit: 'health',
-  'shield-checkmark': 'shield',
-  leaf: 'leaf',
-  'help-circle': 'help',
-};
-
 function QuickFact({ fact, t }) {
   return (
     <View style={[styles.fact, { backgroundColor: t.surface, borderColor: t.hairline }, t.cardShadow]}>
@@ -71,6 +59,60 @@ function QuickFact({ fact, t }) {
   );
 }
 
+// Render one content block — plain string → paragraph, else a typed block.
+function Block({ block, t }) {
+  if (typeof block === 'string') {
+    return <Text style={[styles.para, { color: t.ink2 }]}>{block}</Text>;
+  }
+  switch (block.t) {
+    case 'sub':
+      return <Text style={[styles.subhead, { color: t.ink }]}>{block.text}</Text>;
+    case 'note':
+      return (
+        <View style={[styles.note, { backgroundColor: t.accent2 + '14', borderColor: t.accent2 + '3a' }]}>
+          <Text style={[styles.noteText, { color: t.ink2 }]}>{block.text}</Text>
+        </View>
+      );
+    case 'hours':
+      return (
+        <View style={styles.hours}>
+          {block.rows.map((row, i) => (
+            <View key={i} style={[styles.hoursRow, { borderTopColor: t.hairline, borderTopWidth: i ? 1 : 0 }]}>
+              <Text style={[styles.hoursLabel, { color: t.ink2 }]}>{row[0]}</Text>
+              <Text style={[styles.hoursValue, { color: t.ink }]}>{row[1]}</Text>
+            </View>
+          ))}
+        </View>
+      );
+    case 'steps':
+      return (
+        <View style={styles.list}>
+          {block.items.map((it, i) => (
+            <View key={i} style={styles.listItem}>
+              <View style={[styles.stepNum, { backgroundColor: t.accent2 + '22' }]}>
+                <Text style={[styles.stepNumText, { color: t.accent2 }]}>{i + 1}</Text>
+              </View>
+              <Text style={[styles.listText, { color: t.ink2 }]}>{it}</Text>
+            </View>
+          ))}
+        </View>
+      );
+    case 'bullets':
+      return (
+        <View style={styles.list}>
+          {block.items.map((it, i) => (
+            <View key={i} style={styles.listItem}>
+              <View style={[styles.bullet, { backgroundColor: t.accent2 }]} />
+              <Text style={[styles.listText, { color: t.ink2 }]}>{it}</Text>
+            </View>
+          ))}
+        </View>
+      );
+    default:
+      return null;
+  }
+}
+
 function Accordion({ section, open, onToggle, t }) {
   return (
     <View
@@ -81,7 +123,7 @@ function Accordion({ section, open, onToggle, t }) {
       ]}
     >
       <TouchableOpacity style={styles.accHead} onPress={onToggle} activeOpacity={0.75}>
-        <InfoIcon name={ICON_MAP[section.icon] || 'help'} size={20} color={t.accent2} />
+        <InfoIcon name={section.icon} size={20} color={t.accent2} />
         <Text style={[styles.accTitle, { color: t.ink }]}>{section.title}</Text>
         <View style={open ? styles.chevOpen : styles.chevClosed}>
           <IconChevron size={18} color={t.ink3} />
@@ -90,8 +132,8 @@ function Accordion({ section, open, onToggle, t }) {
 
       {open && (
         <View style={styles.accBody}>
-          {(section.content || []).map((p, i) => (
-            <Text key={i} style={[styles.para, { color: t.ink2 }]}>{p}</Text>
+          {(section.content || []).map((block, i) => (
+            <Block key={i} block={block} t={t} />
           ))}
         </View>
       )}
@@ -267,6 +309,23 @@ const styles = StyleSheet.create({
   chevOpen: { transform: [{ rotate: '180deg' }] },
   accBody: { paddingLeft: 51, paddingRight: 16, paddingBottom: 16 },
   para: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 22, marginBottom: 10 },
+
+  subhead: { fontFamily: fonts.bodyBold, fontSize: 13.5, letterSpacing: 0.2, marginTop: 6, marginBottom: 8 },
+
+  note: { borderWidth: 1, borderRadius: radius.sm, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 12 },
+  noteText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 19 },
+
+  hours: { marginBottom: 14 },
+  hoursRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 7 },
+  hoursLabel: { flex: 1, fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
+  hoursValue: { fontFamily: fonts.bodyBold, fontSize: 13, textAlign: 'right' },
+
+  list: { marginBottom: 12, gap: 9 },
+  listItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  listText: { flex: 1, fontFamily: fonts.body, fontSize: 13.5, lineHeight: 20 },
+  bullet: { width: 5, height: 5, borderRadius: 3, marginTop: 8 },
+  stepNum: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 0 },
+  stepNumText: { fontFamily: fonts.bodyBold, fontSize: 11 },
 
   contact: { alignItems: 'center', paddingTop: 30, paddingBottom: 12 },
   contactTitle: { fontFamily: fonts.displayBold, fontSize: 17, marginTop: 12 },
