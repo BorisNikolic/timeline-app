@@ -37,6 +37,8 @@ import {
   getFestivalDays,
   formatDateRange,
   formatEndsIn,
+  getPowerDays,
+  formatDateForApi,
 } from '../utils/dateHelpers';
 import { TIMELINE_ID, GATES_OPEN } from '../utils/constants';
 import { itemNoun } from '../utils/categoryKind';
@@ -112,7 +114,7 @@ function CountdownUnit({ value, label, t }) {
   );
 }
 
-function Hero({ t, insets, timing }) {
+function Hero({ t, insets, timing, liveInfo }) {
   const cd = useCountdown(timing.hasDates ? timing.startMs : 0);
   const showLive = timing.live;
   const showPast = timing.past && !timing.live;
@@ -185,6 +187,35 @@ function Hero({ t, insets, timing }) {
                   ) : null}
                 </>
               )}
+            </View>
+          </View>
+        )}
+
+        {/* Live hero — replaces the countdown while the festival is on: sense of
+            place (which day, power-day) without a plain "it's live" label. */}
+        {showLive && liveInfo && (
+          <View style={[hs.liveHero, { borderColor: 'rgba(247,243,234,0.16)' }]}>
+            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={hs.cdScrim} />
+            <View style={hs.liveHeroContent}>
+              <View style={hs.liveHeroTop}>
+                <View style={[hs.liveHeroDot, { backgroundColor: t.hot }]} />
+                <Text style={[hs.liveHeroKicker, { color: HERO_INK }]}>LIVE NOW</Text>
+                {liveInfo.power ? (
+                  <Text style={[hs.liveHeroPower, { color: t.accent }]} numberOfLines={1}>
+                    · {liveInfo.power.toUpperCase()} · POWER DAY
+                  </Text>
+                ) : null}
+              </View>
+              <Text style={[hs.liveHeroDay, { color: HERO_INK }]}>Day {liveInfo.dayNumber} of {liveInfo.total}</Text>
+              <View style={hs.liveTrack}>
+                {Array.from({ length: liveInfo.total }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[hs.liveSeg, { backgroundColor: i < liveInfo.dayNumber ? t.accent : 'rgba(247,243,234,0.22)' }]}
+                  />
+                ))}
+              </View>
             </View>
           </View>
         )}
@@ -320,6 +351,17 @@ export default function HomeScreen({ navigation }) {
 
   const timing = useFestivalTiming(events);
 
+  // While live, the hero shows the festival day + power-day instead of a countdown.
+  const liveInfo = useMemo(() => {
+    if (!timing.live || !events || !events.length) return null;
+    const days = getFestivalDays(events);
+    if (!days.length) return null;
+    let idx = days.findIndex(d => isSameDay(d, currentTime));
+    if (idx < 0) idx = currentTime < days[0] ? 0 : days.length - 1;
+    const power = getPowerDays(days)[formatDateForApi(days[idx])] || null;
+    return { dayNumber: idx + 1, total: days.length, power };
+  }, [timing.live, events, currentTime]);
+
   // Currently happening (raw), via the shared hook at the top level.
   const liveEvents = useHappeningNow(events, currentTime);
 
@@ -411,7 +453,7 @@ export default function HomeScreen({ navigation }) {
           <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={t.accent2} />
         }
       >
-        <Hero t={t} insets={insets} timing={timing} />
+        <Hero t={t} insets={insets} timing={timing} liveInfo={liveInfo} />
 
         {happeningNowEvents.length ? (
           <View style={hs.liveWrap}>
@@ -545,6 +587,17 @@ const hs = StyleSheet.create({
     marginBottom: 18,
   },
   cdScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(12,10,28,0.34)' },
+
+  // Live hero (while the festival is on)
+  liveHero: { position: 'relative', overflow: 'hidden', borderWidth: 1, borderRadius: radius.md, marginBottom: 18 },
+  liveHeroContent: { paddingVertical: 14, paddingHorizontal: 16 },
+  liveHeroTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  liveHeroDot: { width: 8, height: 8, borderRadius: 999 },
+  liveHeroKicker: { fontFamily: fonts.bodyExtra, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase' },
+  liveHeroPower: { fontFamily: fonts.bodyExtra, fontSize: 10.5, letterSpacing: 1.1, flexShrink: 1 },
+  liveHeroDay: { fontFamily: fonts.display, fontSize: 26, letterSpacing: -0.3, marginTop: 8 },
+  liveTrack: { flexDirection: 'row', gap: 5, marginTop: 12 },
+  liveSeg: { flex: 1, height: 4, borderRadius: 999 },
   cdContent: { paddingVertical: 14, paddingHorizontal: 16 },
   cdGatesLabel: { fontFamily: fonts.bodyBold, fontSize: 10.5, letterSpacing: 2.3, textTransform: 'uppercase', opacity: 0.7 },
   cdRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 6 },
