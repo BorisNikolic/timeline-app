@@ -17,10 +17,14 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration. CORS_ORIGIN may be a comma-separated list so multiple
+// front-ends can share the API (e.g. the GitHub Pages site + the mobile web
+// build under pyramidfestival.com). A single value still works unchanged.
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: (process.env.CORS_ORIGIN || 'http://localhost:5173')
+      .split(',')
+      .map((o) => o.trim()),
     credentials: true,
   })
 );
