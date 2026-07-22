@@ -4,8 +4,14 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Web has no local notifications, so there the reminder button is a pure
+// save-to-plan toggle (like the Lineup star) — no time picker, no notification
+// promise. Native (iOS/Android) keeps the full reminder + notification flow.
+const IS_WEB = Platform.OS === 'web';
+const WEB_SAVE_MINUTES = 60; // cosmetic on web (no notification is scheduled)
 
 import { useTheme } from '../contexts/ThemeContext';
 import { fonts, radius } from '../theme/tokens';
@@ -63,6 +69,12 @@ export default function EventDetailScreen({ route, navigation }) {
       console.error('Error removing reminder:', error);
     }
   }, [event.id, removeReminder]);
+
+  // Web: toggle save-to-plan directly (no picker, no alert). Native uses the picker.
+  const handleWebToggleSave = useCallback(() => {
+    if (eventHasReminder) removeReminder(event.id);
+    else setReminder(event, WEB_SAVE_MINUTES);
+  }, [eventHasReminder, event, setReminder, removeReminder]);
 
   const stageColor = event.categoryColor || t.accent2;
 
@@ -126,17 +138,23 @@ export default function EventDetailScreen({ route, navigation }) {
                 <IconBell size={22} color={t.accent2} />
               </View>
               <View style={styles.reminderStatusContent}>
-                <Text style={[styles.reminderStatusTitle, { color: t.ink }]}>Reminder set</Text>
+                <Text style={[styles.reminderStatusTitle, { color: t.ink }]}>
+                  {IS_WEB ? 'Saved to My Plan' : 'Reminder set'}
+                </Text>
                 <Text style={[styles.reminderStatusText, { color: t.ink2 }]}>
-                  {existingReminder.minutesBefore} minutes before
+                  {IS_WEB
+                    ? 'Get the app for a reminder before it starts'
+                    : `${existingReminder.minutesBefore} minutes before`}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[styles.reminderEditButton, { borderColor: t.hairlineStrong }]}
-                onPress={() => setReminderModalVisible(true)}
-              >
-                <Text style={[styles.reminderEditButtonText, { color: t.accent }]}>Edit</Text>
-              </TouchableOpacity>
+              {!IS_WEB && (
+                <TouchableOpacity
+                  style={[styles.reminderEditButton, { borderColor: t.hairlineStrong }]}
+                  onPress={() => setReminderModalVisible(true)}
+                >
+                  <Text style={[styles.reminderEditButtonText, { color: t.accent }]}>Edit</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -158,13 +176,15 @@ export default function EventDetailScreen({ route, navigation }) {
               eventHasReminder && t.glow,
             ]}
             activeOpacity={0.85}
-            onPress={() => setReminderModalVisible(true)}
+            onPress={IS_WEB ? handleWebToggleSave : () => setReminderModalVisible(true)}
           >
             {eventHasReminder
-              ? <IconBell size={20} color={t.onAccent} />
+              ? (IS_WEB ? <IconStar size={20} filled color={t.onAccent} /> : <IconBell size={20} color={t.onAccent} />)
               : <IconStar size={20} filled={false} color={t.ink} />}
             <Text style={[styles.reminderButtonText, { color: eventHasReminder ? t.onAccent : t.ink }]}>
-              {eventHasReminder ? 'Reminder Set' : 'Set Reminder'}
+              {IS_WEB
+                ? (eventHasReminder ? 'Saved to My Plan' : 'Save to My Plan')
+                : (eventHasReminder ? 'Reminder Set' : 'Set Reminder')}
             </Text>
           </TouchableOpacity>
         </View>

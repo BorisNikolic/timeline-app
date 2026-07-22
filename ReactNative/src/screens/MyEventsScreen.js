@@ -8,7 +8,7 @@
  */
 
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../contexts/ThemeContext';
@@ -18,6 +18,10 @@ import { IconBell, IconStar, IconArrow } from '../components/ui/Icons';
 import ThemeToggle from '../components/ui/ThemeToggle';
 
 import { useReminders } from '../hooks/useReminders';
+
+// Web has no notifications, so avoid promising a "nudge"/reminder there — saving
+// is a plan/bookmark and the app is where reminders fire. Native is unchanged.
+const IS_WEB = Platform.OS === 'web';
 import { useTimelineEvents } from '../hooks/useEvents';
 import { formatTime, parseDate, getFestivalDays, getPowerDays } from '../utils/dateHelpers';
 import { TIMELINE_ID } from '../utils/constants';
@@ -196,7 +200,9 @@ export default function MyEventsScreen({ navigation }) {
             <View style={{ opacity: 0.8 }}><PyramidMark size={52} stroke={1.2} color={t.accent} /></View>
             <Text style={[styles.emptyTitle, { color: t.ink }]}>Your plan is empty</Text>
             <Text style={[styles.emptyText, { color: t.ink2 }]}>
-              Star the events you can't miss in the Lineup and they'll gather here — with reminders before each one.
+              {IS_WEB
+                ? "Star the events you can't miss in the Lineup and they'll gather here — your schedule in one place."
+                : "Star the events you can't miss in the Lineup and they'll gather here — with reminders before each one."}
             </Text>
             <TouchableOpacity activeOpacity={0.85} onPress={handleBrowse} style={[styles.emptyCta, t.glow, { backgroundColor: t.accent }]}>
               <Text style={[styles.emptyCtaText, { color: t.onAccent }]}>Browse the lineup</Text>
@@ -207,7 +213,11 @@ export default function MyEventsScreen({ navigation }) {
           <>
             <View style={[styles.note, { backgroundColor: t.surface, borderColor: t.hairline }]}>
               <IconBell size={16} color={t.ink2} />
-              <Text style={[styles.noteText, { color: t.ink2 }]}>We'll nudge you 15 minutes before each saved {itemsSingular}.</Text>
+              <Text style={[styles.noteText, { color: t.ink2 }]}>
+                {IS_WEB
+                  ? `Saved on this device. Get the app for a reminder before each ${itemsSingular}.`
+                  : `We'll nudge you 15 minutes before each saved ${itemsSingular}.`}
+              </Text>
             </View>
 
             {dayGroups.map(g => (
