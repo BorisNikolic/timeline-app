@@ -22,6 +22,7 @@ import {
   Poppins_800ExtraBold,
 } from '@expo-google-fonts/poppins';
 
+import './src/registerServiceWorker'; // web: PWA offline SW; native: no-op
 import AppNavigator from './src/navigation/AppNavigator';
 import DownloadAppBanner from './src/components/DownloadAppBanner';
 import { NetworkProvider } from './src/contexts/NetworkContext';
