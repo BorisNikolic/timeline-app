@@ -8,14 +8,22 @@ import '../config/logbox';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+// expo-notifications has no web implementation. On web every export below is a
+// safe no-op so reminders degrade gracefully: saving a set still works (it's
+// AsyncStorage-backed), only the local notification is skipped. Native (iOS /
+// Android) is completely unaffected — the guards are never taken there.
+const IS_WEB = Platform.OS === 'web';
+
 // Configure how notifications appear when app is in foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (!IS_WEB) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 /**
  * Request notification permissions.
@@ -25,6 +33,7 @@ Notifications.setNotificationHandler({
  * don't use. Returns true when granted, false otherwise. Never throws.
  */
 export async function requestPermissions() {
+  if (IS_WEB) return false;
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -65,6 +74,7 @@ export async function requestPermissions() {
  * @returns {Promise<string|null>} The notification identifier, or null
  */
 export async function scheduleEventReminder(event, minutesBefore) {
+  if (IS_WEB) return null;
   if (!event?.time) return null;
 
   // Parse event date and time
@@ -99,6 +109,7 @@ export async function scheduleEventReminder(event, minutesBefore) {
  * Cancel a scheduled notification
  */
 export async function cancelReminder(notificationId) {
+  if (IS_WEB) return;
   await Notifications.cancelScheduledNotificationAsync(notificationId);
 }
 
@@ -106,6 +117,7 @@ export async function cancelReminder(notificationId) {
  * Cancel all scheduled notifications
  */
 export async function cancelAllReminders() {
+  if (IS_WEB) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
@@ -113,6 +125,7 @@ export async function cancelAllReminders() {
  * Get all scheduled notifications
  */
 export async function getAllScheduledReminders() {
+  if (IS_WEB) return [];
   return await Notifications.getAllScheduledNotificationsAsync();
 }
 
@@ -120,6 +133,7 @@ export async function getAllScheduledReminders() {
  * Add listener for when notification is received
  */
 export function addNotificationReceivedListener(callback) {
+  if (IS_WEB) return { remove() {} };
   return Notifications.addNotificationReceivedListener(callback);
 }
 
@@ -127,5 +141,6 @@ export function addNotificationReceivedListener(callback) {
  * Add listener for when notification is tapped
  */
 export function addNotificationResponseListener(callback) {
+  if (IS_WEB) return { remove() {} };
   return Notifications.addNotificationResponseReceivedListener(callback);
 }

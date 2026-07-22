@@ -5,6 +5,7 @@
 import React, { useRef, useState } from 'react';
 import {
   Image,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -185,7 +186,10 @@ export default function MapScreen() {
             >
               <Image
                 source={mapSource}
-                onLoadStart={() => setLoading(true)}
+                // On web, react-native-web re-fires onLoadStart on every
+                // re-render (pan/zoom), which made the spinner flicker over an
+                // already-visible map. Native keeps the original behavior.
+                onLoadStart={Platform.OS === 'web' ? undefined : () => setLoading(true)}
                 onLoadEnd={() => setLoading(false)}
                 onError={() => setMapSource(BUNDLED_MAP)}
                 style={{

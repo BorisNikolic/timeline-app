@@ -1,12 +1,12 @@
 /**
- * BlogPostScreen - Renders a single blog post body in a styled WebView (native).
- * Fetches content via WP REST API and wraps it in our own minimal HTML shell via
- * buildHtml (shared with the web variant, BlogPostScreen.web.js).
+ * BlogPostScreen (web) — react-native-webview has no web implementation, so on
+ * web we render the same buildHtml document inside an isolated <iframe srcDoc>.
+ * The iframe sandboxes the post's CSS from the app shell, mirroring the native
+ * WebView. Loading/error states match BlogPostScreen.js.
  */
 
 import React, { useMemo } from 'react';
 import { View, ActivityIndicator, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
 
 import { useBlogPost } from '../hooks/useBlogPosts';
 import { useTheme } from '../contexts/ThemeContext';
@@ -48,19 +48,17 @@ export default function BlogPostScreen({ route }) {
 
   return (
     <View style={[styles.container, { backgroundColor: t.bg }]}>
-      <WebView
-        originWhitelist={['*']}
-        source={{ html, baseUrl: 'https://pyramidfestival.com' }}
-        style={[styles.webview, { backgroundColor: t.bg }]}
-        showsVerticalScrollIndicator={false}
-      />
+      {React.createElement('iframe', {
+        srcDoc: html,
+        title: post.title,
+        style: { border: 'none', width: '100%', height: '100%', background: t.bg },
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  webview: { flex: 1 },
   centered: {
     flex: 1,
     justifyContent: 'center',

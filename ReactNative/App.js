@@ -23,6 +23,7 @@ import {
 } from '@expo-google-fonts/poppins';
 
 import AppNavigator from './src/navigation/AppNavigator';
+import DownloadAppBanner from './src/components/DownloadAppBanner';
 import { NetworkProvider } from './src/contexts/NetworkContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { RemindersProvider } from './src/contexts/RemindersContext';
@@ -83,10 +84,18 @@ function Root({ ready }) {
   }), [t, mode]);
 
   return (
-    <NavigationContainer theme={navigationTheme}>
-      <StatusBar style={t.statusBar} />
-      {ready ? <AppNavigator /> : <HydrationSplash />}
-    </NavigationContainer>
+    // Column: the web-only download banner sits above the app and pushes it
+    // down (no overlap). On native DownloadAppBanner renders null, so this is
+    // just two nested flex:1 Views — layout is identical to before.
+    <View style={{ flex: 1 }}>
+      <DownloadAppBanner />
+      <View style={{ flex: 1 }}>
+        <NavigationContainer theme={navigationTheme}>
+          <StatusBar style={t.statusBar} />
+          {ready ? <AppNavigator /> : <HydrationSplash />}
+        </NavigationContainer>
+      </View>
+    </View>
   );
 }
 
