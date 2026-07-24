@@ -53,7 +53,8 @@ function DayPicker({ t, dates, selected, onSelect, powerDays }) {
     >
       {dates.map(date => {
         const on = selected && isSameDay(date, selected);
-        const power = !!powerDays[formatDateForApi(date)];
+        const powerName = powerDays[formatDateForApi(date)];
+        const power = !!powerName;
         return (
           <TouchableOpacity
             key={date.toISOString()}
@@ -74,7 +75,9 @@ function DayPicker({ t, dates, selected, onSelect, powerDays }) {
               {date.getDate()}
             </Text>
             {power ? (
-              <Text style={[styles.powerTag, { color: on ? t.onAccent : t.accent }]}>POWER</Text>
+              <Text style={[styles.powerTag, { color: on ? t.onAccent : t.accent }]} numberOfLines={1}>
+                {powerName.toUpperCase()}
+              </Text>
             ) : null}
           </TouchableOpacity>
         );
@@ -391,7 +394,7 @@ const styles = StyleSheet.create({
   },
   dayDow: { fontFamily: fonts.bodyBold, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
   dayNum: { fontFamily: fonts.display, fontSize: 22, lineHeight: 24 },
-  powerTag: { marginTop: 1, fontFamily: fonts.bodyBold, fontSize: 9, letterSpacing: 0.6 },
+  powerTag: { marginTop: 1, maxWidth: 46, fontFamily: fonts.bodyBold, fontSize: 7, letterSpacing: 0.2, textAlign: 'center' },
 
   // Stage filter — fixed-height row so the horizontal ScrollView can't
   // stretch vertically (which was ballooning the chips into tall pills).
