@@ -129,7 +129,7 @@ export default function AppNavigator() {
       <Tab.Screen name="Home" component={HomeStack} options={{ title: 'Home' }} />
       <Tab.Screen name="Schedule" component={ScheduleStack} options={{ title: 'Lineup' }} />
       <Tab.Screen name="Map" component={MapStack} options={{ title: 'Map' }} />
-      <Tab.Screen name="Info" component={InfoStack} options={{ title: 'Info' }} />
+      <Tab.Screen name="Info" component={InfoStack} options={{ title: 'Guide' }} />
       <Tab.Screen name="MyEvents" component={MyEventsStack} options={{ title: 'My Plan' }} />
     </Tab.Navigator>
   );

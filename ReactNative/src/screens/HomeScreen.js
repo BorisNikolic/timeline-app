@@ -237,9 +237,9 @@ function Hero({ t, insets, timing, liveInfo }) {
             <TouchableOpacity
               style={[hs.ctaGhost, { borderColor: 'rgba(247,243,234,0.28)' }]}
               activeOpacity={0.8}
-              onPress={() => openExternal(FESTIVAL.filmUrl, { title: 'Festival film', message: 'The teaser is on its way — check back soon.' })}
+              onPress={() => openExternal(FESTIVAL.filmUrl, { title: 'Aftermovie', message: 'The aftermovie is on its way — check back soon.' })}
             >
-              <Text style={[hs.ctaGhostText, { color: HERO_INK }]} numberOfLines={1}>Watch film</Text>
+              <Text style={[hs.ctaGhostText, { color: HERO_INK }]} numberOfLines={1}>Watch Aftermovie</Text>
             </TouchableOpacity>
           </View>
         )}

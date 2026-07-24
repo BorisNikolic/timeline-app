@@ -14,7 +14,7 @@ const TABS = {
   Home: { label: 'Home', Icon: IconHome },
   Schedule: { label: 'Lineup', Icon: IconCal },
   Map: { label: 'Map', Icon: IconMap },
-  Info: { label: 'Info', Icon: IconInfo },
+  Info: { label: 'Guide', Icon: IconInfo },
   MyEvents: { label: 'My Plan', Icon: IconUser },
 };
 

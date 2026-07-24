@@ -181,8 +181,8 @@ export default function InfoScreen({ navigation }) {
         <View style={styles.headerRings}>
           <Rings369 size={150} stroke={1} color={t.accent} />
         </View>
-        <Text style={[styles.eyebrow, { color: t.accent }]}>SOVRA EDITION · ESSENTIALS</Text>
-        <Text style={[styles.h1, { color: t.ink }]}>Pyramid Info</Text>
+        <Text style={[styles.eyebrow, { color: t.accent }]}>SOVRA EDITION</Text>
+        <Text style={[styles.h1, { color: t.ink }]}>Festival Guide</Text>
       </View>
 
       <ScrollView

@@ -61,7 +61,10 @@ function DayPicker({ t, dates, selected, onSelect, powerDays }) {
             onPress={() => onSelect(date)}
             style={[
               styles.dayPill,
-              { backgroundColor: on ? t.accent : t.surface, borderColor: on ? t.accent : t.hairlineStrong },
+              {
+                backgroundColor: on ? t.accent : power ? t.accent + '14' : t.surface,
+                borderColor: on ? t.accent : power ? t.accent : t.hairlineStrong,
+              },
             ]}
           >
             <Text style={[styles.dayDow, { color: on ? t.onAccent : t.ink3 }]}>
@@ -71,7 +74,7 @@ function DayPicker({ t, dates, selected, onSelect, powerDays }) {
               {date.getDate()}
             </Text>
             {power ? (
-              <View style={[styles.powerDot, { backgroundColor: on ? t.onAccent : t.accent }]} />
+              <Text style={[styles.powerTag, { color: on ? t.onAccent : t.accent }]}>POWER</Text>
             ) : null}
           </TouchableOpacity>
         );
@@ -388,7 +391,7 @@ const styles = StyleSheet.create({
   },
   dayDow: { fontFamily: fonts.bodyBold, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
   dayNum: { fontFamily: fonts.display, fontSize: 22, lineHeight: 24 },
-  powerDot: { position: 'absolute', bottom: 8, width: 4, height: 4, borderRadius: 2 },
+  powerTag: { marginTop: 1, fontFamily: fonts.bodyBold, fontSize: 9, letterSpacing: 0.6 },
 
   // Stage filter — fixed-height row so the horizontal ScrollView can't
   // stretch vertically (which was ballooning the chips into tall pills).

@@ -1,6 +1,6 @@
 /**
  * Festival information content for the Info screen.
- * Sourced from the organizer's FESTIVAL GUIDE (2026 SOVRA edition).
+ * Sourced from the organizer's FESTIVAL GUIDE (2026 SOVRA edition, updated).
  *
  * Each section has: id, title, icon (InfoIcon name), and `content` — an array of
  * blocks. A block is either a plain string (rendered as a paragraph) or a typed
@@ -12,22 +12,11 @@
  *   { t: 'bullets', items: [...] }    → bulleted list
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * TODO(guide) — provisional content, pending organizer decisions (docx comments):
- *   [0]  "Pyramid Village Camp" working-hours row — unclear what this refers to.
- *   [1]  Tokens "Thu–Sun 24h" — written as 00:00–24:00 for consistency; confirm.
- *   [2]  Psy-Care "14:00–14:00" — assumed 24h; confirm.
- *   [3-6] BYO: cups are NOT sold. Using Dragana's resolved copy (5% discount for
- *         own reusable cup/mug/bowl). Confirm exactly how the discount applies.
- *   [7]  Cup "swap / 42,000 cups" line dropped — idea unclear.
- *   [8]  "Food & drinks not allowed" vs Community Kitchen / cooking areas — clarify
- *         (bringing outside food vs cooking on-site).
- *   [12] Public bus — add a link to the official timetable if one exists.
- *   [13] Psy-Care copy reworded (original flagged as AI-sounding); confirm tone.
- *   [15-16] Glass/jars/candles/small stoves kept under STRICTLY PROHIBITED; decide
- *         whether some belong in the softer "please also leave at home" list.
- *   [24-25] Confiscated items (returnable?) + "refuse entry without refund" reason.
- *   [26] Healing Zone booking section intentionally OMITTED ("ovo ne gledajte").
- * RESOLVED and applied: [14] knife wording, [17-23] "Pet allowed" + pet rules.
+ * Essential Info, Stages & Venues and the FAQ are app-authored and not in the
+ * guide; everything else mirrors the guide. The Healing Zone booking flow is
+ * intentionally omitted (organizer request) — the Healing Zone has its own screen.
+ * Gate hours: the guide's "Thu 6 – Sat 9 Aug" is a day/date slip (9 Aug is a
+ * Sunday) — corrected here to "Thu 6 – Sat 8 Aug", with Sun 9 Aug on its own row.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -40,7 +29,7 @@ export const festivalSections = [
       'Gates open at 14:00 on Sunday, August 2 — the day before the programme begins.',
       'Your wristband shows you have a ticket. Depending on which one you bought, it grants access to part of the festival or the whole event. Keep it on at all times — lost wristbands cannot be replaced.',
       'Please bring a valid photo ID (passport or driver\'s license). You will need it at check-in and may be asked to show it at any time.',
-      'The festival is cashless. Pick up your festival card at registration and pay at every point on site with it — no cash or bank cards at the bars or stands. Top up with cash or card at any Top-Up station.',
+      'The festival is cashless. Pick up your festival card at the Info / Office point (registration) — marked on the map — and pay at every point on site with it, no cash or bank cards at the bars or stands. Top up with cash or card at any Top-Up station.',
     ],
   },
   {
@@ -52,12 +41,11 @@ export const festivalSections = [
       { t: 'hours', rows: [
         ['Sun 2 Aug', '14:00 – 00:00'],
         ['Mon 3 – Wed 5 Aug', '08:00 – 00:00'],
-        ['Thu 6 – Sat 9 Aug', '08:00 – 02:00'],
+        ['Thu 6 – Sat 8 Aug', '08:00 – 02:00'],
         ['Sun 9 Aug', '08:00 – 16:00'],
       ] },
       { t: 'note', text: 'If you arrive during late-night hours when the gate is closed, our gate staff will contact the responsible team member to help you with entry.' },
 
-      // TODO(guide) [0]: what exactly is "Pyramid Village Camp"?
       { t: 'sub', text: 'Pyramid Village Camp' },
       { t: 'hours', rows: [
         ['Sun 2 – Mon 10 Aug', '14:00 – 20:00'],
@@ -73,7 +61,7 @@ export const festivalSections = [
       { t: 'hours', rows: [
         ['Sun 2 Aug', '14:00 – 00:00'],
         ['Mon 3 – Wed 5 Aug', '08:00 – 00:00'],
-        ['Thu 6 – Sun 9 Aug', '00:00 – 24:00'], // TODO(guide) [1]: guide says "24h"
+        ['Thu 6 – Sun 9 Aug', '24h'],
       ] },
 
       { t: 'sub', text: 'Food Court' },
@@ -81,16 +69,17 @@ export const festivalSections = [
         ['Sun 2 Aug', '14:00 – 00:00'],
         ['Mon 3 – Sun 9 Aug', '08:00 – 02:00'],
       ] },
+      { t: 'note', text: 'Food Court breaks — Sun 2 Aug: 19:00–20:00. Mon 3 – Sun 9 Aug: 13:00–14:00 & 19:00–20:00.' },
 
       { t: 'sub', text: 'Fresh & Café' },
       { t: 'hours', rows: [
-        ['Mon 3 – Sun 9 Aug', '08:00 – 00:00'],
+        ['Mon 3 – Sun 9 Aug', '07:00 – 00:00'],
       ] },
 
       { t: 'sub', text: 'TOK Stage Bar' },
       { t: 'hours', rows: [
         ['Mon 3 – Wed 5 Aug', '08:00 – 01:00'],
-        ['Thu 6 – Sun 9 Aug', '00:00 – 24:00'], // guide says "24h"
+        ['Thu 6 – Sun 9 Aug', '24h'],
         ['Mon 10 Aug', 'until 08:00'],
       ] },
 
@@ -103,7 +92,7 @@ export const festivalSections = [
 
       { t: 'sub', text: 'Psy-Care & First Aid' },
       { t: 'hours', rows: [
-        ['Sun 2 – Mon 10 Aug', '24h'], // TODO(guide) [2]: guide says "14:00–14:00"
+        ['Sun 2 – Mon 10 Aug', '24h'],
       ] },
     ],
   },
@@ -116,7 +105,7 @@ export const festivalSections = [
 
       { t: 'sub', text: 'Get your festival card' },
       { t: 'steps', items: [
-        'Go to the registration desk — give your name and email.',
+        'Go to the Info / Office point (registration desk) — give your name and email.',
         'You\'ll receive your festival card — it\'s your wallet for the event.',
         'Use it to pay for everything — no cash or bank cards at the bars or stands.',
       ] },
@@ -150,18 +139,6 @@ export const festivalSections = [
     ],
   },
   {
-    id: 'stages',
-    title: 'Stages & Venues',
-    icon: 'music',
-    content: [
-      'The programme unfolds across several stages and zones, each with its own character.',
-      'Tok is the main stage for the headline sets, with Kolo as the second music stage.',
-      'Art Zone, Workshop Zone, Kids Garden and the Healing Zone round out the days with talks, movement, workshops and rest.',
-      'Check the Lineup tab for full stage schedules, set times, and to set reminders for your must-see acts.',
-      'Stages run from early afternoon into the early hours. Exact opening and closing times vary by day.',
-    ],
-  },
-  {
     id: 'food-drink',
     title: 'Food & Drink',
     icon: 'food',
@@ -170,8 +147,16 @@ export const festivalSections = [
       'The menu covers regular, vegetarian and vegan options (no gluten-free options are available).',
       'Fresh & Café is open daily for lighter bites and coffee.',
       'Free drinking water is available at refill stations across Pyramid Village. Bring a reusable bottle!',
-      // TODO(guide) [8]: reconcile with "food & drinks not allowed" in Restricted Items.
-      'Campers can also prepare simple meals in the Community Kitchen.',
+      'For all cooking and food preparation, use the Community Kitchen — open flames and stoves are not allowed elsewhere on site.',
+
+      { t: 'sub', text: 'Bringing your own food' },
+      { t: 'bullets', items: [
+        'You may bring small quantities of food for personal use — enough for normal daily meals during your stay.',
+        'Food for babies and young children is always permitted.',
+        'If you have special dietary requirements, allergies, medical conditions or specific nutritional needs, you may bring the food your diet requires.',
+        'Large quantities, commercial supplies, or food intended for distribution or resale are not permitted.',
+      ] },
+      { t: 'note', text: 'Bringing outside drinks into the festival grounds is not permitted.' },
     ],
   },
   {
@@ -182,12 +167,12 @@ export const festivalSections = [
       { t: 'sub', text: 'Village Camping & Tipi Tents' },
       'Travel light and arrive without your own camping equipment with our prepared accommodation options inside Pyramid Village.',
       'Choose between Village Camping packages for solo travelers, couples and groups, or the comfort of a Pyramid Village Tipi Tent.',
-      'All options include prepared sleeping arrangements, so you can focus on the music, workshops, adventures and the festival experience. Visit the Accommodation page for full details and available packages.',
+      'All options include prepared sleeping arrangements, so you can focus on the music, workshops, adventures and the festival experience.',
+      'Book your Village Camping or Tipi Tent online, or visit the Info Point during the festival for availability and assistance.',
 
       { t: 'sub', text: 'Camper Vans & Roof Tents' },
       'Stay inside Pyramid Village with our dedicated area for camper vans, converted vehicles and roof tents.',
       'Parking is free for valid festival ticket holders and available from August 2 at 14:00. Spaces are limited and allocated first-come, first-served.',
-      'Campers have access to all festival facilities — water refill points, showers, toilets, the Food Court, bars, and medical / Psy-Care services.',
       'Please follow the camper area rules and help us keep Pyramid Village clean, safe and comfortable for everyone.',
 
       { t: 'sub', text: 'Parking' },
@@ -200,7 +185,7 @@ export const festivalSections = [
     icon: 'car',
     content: [
       { t: 'sub', text: 'By car & parking' },
-      'Follow signs from the main road to Pyramid Village. Parking is free for all visitors, including camper vans. Carpooling is encouraged — share the ride where you can.',
+      'Free parking is available for all Pyramid Festival visitors, including camper vans. Carpool where you can.',
 
       { t: 'sub', text: 'Pyramid Shuttle — Belgrade → Festival' },
       { t: 'bullets', items: [
@@ -226,7 +211,6 @@ export const festivalSections = [
         ['Saturday', '05:50 · 09:45 · 15:25 · 16:20'],
         ['Sunday', '03:10 · 05:50 · 09:45 · 15:25 · 16:20'],
       ] },
-      // TODO(guide) [12]: add a link to the official timetable if available.
       { t: 'note', text: 'Please check the latest timetable before your journey, as departure times may change.' },
     ],
   },
@@ -243,13 +227,13 @@ export const festivalSections = [
       ] },
 
       { t: 'sub', text: 'Adventure Plus — 7 August · Night Ascent of Rtanj' },
-      'Climb Rtanj Mountain under the stars and witness an unforgettable sunrise from one of Serbia\'s most iconic peaks, guided by experienced mountain guides.',
+      'Climb Rtanj Mountain under the stars and witness an unforgettable sunrise from one of Serbia\'s most iconic peaks. Guided by experienced mountain guides, this is one of the most unique experiences of Pyramid Festival.',
       { t: 'bullets', items: [
         'Includes transportation and professional mountain guides.',
         'Price: 59 € per person.',
       ] },
 
-      'Book your Rtanj tour at the Info & Office point or on pyramidfestival.com.',
+      'Book your Rtanj tour online or directly at the Info Point during the festival.',
     ],
   },
   {
@@ -257,10 +241,12 @@ export const festivalSections = [
     title: 'Health & Safety',
     icon: 'health',
     content: [
-      // TODO(guide) [13]: original copy flagged as AI-sounding — reworded, confirm tone.
       { t: 'sub', text: 'Psy-Care & Harm Reduction' },
-      'Our Re Generation team runs peer-led Psy-Care and harm reduction, on site 24/7. If you feel overwhelmed, need a calm place to talk, or just want a bit of guidance, come find us — no judgement, just support.',
-      'Look after your body and mind, and look after each other. The Psy-Care tent also handles first aid and is marked on the festival map.',
+      'Our Re Generation team provides 24/7 peer-led psy-care and harm reduction throughout Pyramid Festival. Whether you\'re feeling overwhelmed, need a safe space to talk, or just want some guidance, our experienced team is here to support you through any challenging moments.',
+      'Remember to look after your body, your mind, and each other.',
+
+      { t: 'sub', text: 'Medical & First Aid' },
+      'A medical team and first aid station are available throughout the festival, marked on the festival map.',
 
       { t: 'sub', text: 'Lost & Found' },
       'Report or collect lost items at the Info / Office point, marked on the festival map.',
@@ -268,30 +254,30 @@ export const festivalSections = [
   },
   {
     id: 'sustainability',
-    title: 'Leave No Trace',
+    title: 'Pyramid Village Etiquette',
     icon: 'leaf',
     content: [
-      'Sustainability is about daily choices and collective impact. Here\'s how you can help keep Rtanj clean, protected, and magical for everyone.',
+      'Sustainability is about making daily choices and having a collective impact. Here\'s how you can help keep Rtanj clean, protected, and magical for everyone.',
 
       { t: 'sub', text: 'Bring your own (BYO)' },
-      // TODO(guide) [3-7]: cups are NOT sold; using resolved 5%-discount copy.
       { t: 'bullets', items: [
-        'Bring your bottle, cup, plate & cutlery. Seven days, several meals and drinks a day — bringing your own adds up to a real difference.',
+        'Bring your bottle, cup, plate & cutlery — reduce single-use waste.',
         'Refill water for free at our stations across the site.',
-        'Get a 5% discount on food and drinks when you bring your own reusable cup, mug, or bowl.',
+        'Get 5% off your coffee when you bring your own cup — use your own, or buy a reusable Pyramid mug or cup and keep it for the whole festival.',
       ] },
 
       { t: 'sub', text: 'Avoid single-use plastics' },
       { t: 'bullets', items: [
-        'No plastic bottles — refilling is the way.',
+        'No plastic bottles — join the refillution.',
         'Where single-use is unavoidable we use biodegradable or paper, but reusable is always better.',
+        'Keep your Pyramid cup and swap it at the bar — together we\'re saving 42,000+ cups in 7 days!',
       ] },
 
       { t: 'sub', text: 'Respect the water' },
       { t: 'bullets', items: [
         'Shower water passes through a natural biofilter — use only biodegradable soaps & cosmetics. Chemicals harm the system and your health.',
         'Use water mindfully — it\'s a shared resource.',
-        'No chemical cleaning or personal-care products anywhere in Pyramid Village.',
+        'No chemical cleaning or personal-care products anywhere in Pyramid Village — free natural shampoos, soaps and detergents are available in the showers and shared kitchen.',
       ] },
 
       { t: 'sub', text: 'Compost toilets — turn poop into soil' },
@@ -300,6 +286,7 @@ export const festivalSections = [
         'Goes in: human waste, toilet paper, a scoop of sawdust.',
         'Keep out: wet wipes, tampons, pads, diapers, trash.',
         'Always close the lid and sanitize your hands.',
+        'These toilets help create healthy soil — from waste to growth!',
       ] },
 
       { t: 'sub', text: 'Organic waste & composting' },
@@ -310,27 +297,26 @@ export const festivalSections = [
       ] },
 
       { t: 'sub', text: 'Fire safety = mountain safety' },
-      // TODO(guide) [8]: "designated cooking areas" vs "no food/drinks allowed" — clarify.
       { t: 'bullets', items: [
         'No open fires or stoves — the risk is too high.',
-        'Use designated cooking areas only.',
+        'Use the Community Kitchen for all cooking and food preparation.',
         'Smokers: use portable ashtrays — no butts on the ground!',
       ] },
 
       { t: 'sub', text: 'Responsible camping' },
       { t: 'bullets', items: [
-        'Leave your spot clean — take everything you brought.',
-        'Respect the land, the animals and the locals — Rtanj is home to more than just us.',
+        'Leave your spot clean — take everything you brought with you.',
+        '"Leave nothing but good energy" isn\'t just a saying — it\'s a responsibility.',
+        'Respect the land, animals, locals, and your fellow campers.',
+        'Keep noise down, especially at night. Portable speakers and amplified music are not allowed in the camping areas — let everyone enjoy the peace and rest that make Pyramid Village special.',
       ] },
 
       { t: 'sub', text: 'Solar power & digital detox' },
       { t: 'bullets', items: [
         'Recharge your phone at our solar-powered charging stations.',
-        'And unplug from your screen — the mountain is the best source of energy.',
+        'But also unplug from your screen and plug into nature.',
+        'Take time to recharge your own batteries — the mountain is the best source of energy.',
       ] },
-
-      // TODO(guide) [9]: closing line reworded from the original.
-      'Every choice adds up. Let\'s celebrate consciously and leave no waste behind.',
     ],
   },
   {
@@ -342,7 +328,7 @@ export const festivalSections = [
       { t: 'bullets', items: [
         'Illegal drugs and controlled substances',
         'Weapons of any kind',
-        'Knives, axes, machetes or other sharp objects that can be used as weapons', // resolved [14]
+        'Knives, axes, machetes or other sharp objects that can be used as weapons',
         'Explosives',
         'Fireworks, flares and smoke bombs',
         'Dangerous chemicals or hazardous materials',
@@ -350,38 +336,62 @@ export const festivalSections = [
 
       { t: 'sub', text: 'Strictly prohibited — fire & safety' },
       { t: 'bullets', items: [
-        'Campfires, camping stoves, gas burners',
-        'Open flames, candles, fire torches',
+        'Campfires, camping stoves and gas burners',
+        'Open flames, candles and fire torches',
         'Charcoal grills / BBQs',
         'Fuel containers and fire accelerants',
       ] },
 
-      // TODO(guide) [15-16]: decide if glass/jars/candles/small stoves belong here
-      // (strictly prohibited) or in the softer "please also leave at home" list.
-      { t: 'sub', text: 'Strictly prohibited — glass & other' },
+      { t: 'sub', text: 'Strictly prohibited — glass & hazardous objects' },
       { t: 'bullets', items: [
-        'Glass bottles, jars, containers, mirrors and other dangerous glass objects',
-        'Drones, remote-controlled aircraft and vehicles',
-        'Petrol or diesel generators, large sound systems, professional PA equipment',
-        'Goods for unauthorized sale, promotional materials, flags, flyers and commercial banners, merchandise without organizer approval',
-        'Professional photo/video or commercial audio recording equipment without accreditation',
-        'Anything security considers dangerous, anything meant to disturb others, and anything prohibited by Serbian law',
+        'Glass bottles, jars and containers',
+        'Mirrors or other dangerous glass objects',
+      ] },
+
+      { t: 'sub', text: 'Strictly prohibited — flying devices' },
+      { t: 'bullets', items: [
+        'Drones',
+        'Remote-controlled aircraft and vehicles',
+      ] },
+
+      { t: 'sub', text: 'Strictly prohibited — power & sound' },
+      { t: 'bullets', items: [
+        'Petrol or diesel generators',
+        'Large sound systems and professional PA equipment',
+      ] },
+
+      { t: 'sub', text: 'Strictly prohibited — commercial activity' },
+      { t: 'bullets', items: [
+        'Goods intended for unauthorized sale',
+        'Promotional materials, flags, flyers and commercial banners',
+        'Merchandise without organizer approval',
+      ] },
+
+      { t: 'sub', text: 'Strictly prohibited — recording equipment' },
+      { t: 'bullets', items: [
+        'Professional photo or video equipment without accreditation',
+        'Commercial audio recording equipment',
+      ] },
+
+      { t: 'sub', text: 'Strictly prohibited — other' },
+      { t: 'bullets', items: [
+        'Anything security considers dangerous',
+        'Anything intended to disturb other visitors',
+        'Anything prohibited by Serbian law',
       ] },
 
       { t: 'sub', text: 'Restricted items' },
-      // TODO(guide) [8]: reconcile "food & drinks not allowed" with Community Kitchen.
-      'Food and drinks are not allowed.',
-      // Pets: resolved thread [17-23] → "Pet allowed" + rules.
-      'Pets are allowed, but owners are fully financially and criminally liable for their dog. Dogs must be vaccinated; large or unpredictable dogs must be leashed and muzzled at all times. Security reserves the right to remove both dog and owner if the situation requires it.',
-      'Bags, vehicles and personal belongings are subject to security inspection at any entrance.',
+      { t: 'bullets', items: [
+        'Bringing outside drinks into the festival grounds is not permitted.',
+        'Pets are allowed under the full responsibility of their owners. Owners must keep them under control and properly supervised at all times, and must not let them disturb other visitors or the festival environment.',
+        'Bags, vehicles and personal belongings are subject to security inspection at any entrance.',
+      ] },
 
       { t: 'sub', text: 'At the gate, security may' },
-      // TODO(guide) [24-25]: clarify confiscated-item return + refusal-without-refund reason.
       { t: 'bullets', items: [
         'Search all bags, vehicles and personal belongings.',
-        'Confiscate prohibited items.',
-        'Refuse entry without refund.',
-        'Remove any visitor who violates the rules or endangers the safety and experience of others.',
+        'Require prohibited items to be left outside the entrance — Pyramid Festival does not provide storage or accept responsibility for them.',
+        'Deny entry without refund to anyone who breaks the rules, tries to enter with prohibited items, or poses a risk to the safety of others.',
       ] },
 
       { t: 'sub', text: 'Please also leave at home' },
@@ -391,7 +401,7 @@ export const festivalSections = [
         'Large Bluetooth speakers / soundboxes',
         'Fire poi, staffs or pyrotechnic props (unless officially authorized)',
         'Firewood, chainsaws or other power tools',
-        'Firearms, airsoft guns, bows and crossbows',
+        'Airsoft guns, bows and crossbows',
         'Sky lanterns, confetti cannons and pyrotechnic devices',
       ] },
     ],
@@ -410,11 +420,12 @@ export const festivalSections = [
       'Q: Can I pay by card at the entrance?\nA: No. Tickets bought at the festival entrance can only be paid in cash.',
       'Q: Do festival tickets include camping?\nA: Yes. All festival tickets include access to the camping area. The campsite opens on August 2, 2026 at 14:00.',
       'Q: What accommodation options are available?\nA: Free regular camping, Tipi Tents, and various tent rental packages — all listed on the Accommodation page.',
+      'Q: Can I bring my own food and drinks?\nA: You may bring small quantities of food for personal use (baby food and food for special dietary needs are always allowed). Commercial quantities and outside drinks are not permitted.',
       'Q: Is there free drinking water?\nA: Yes. Free water stations are spread throughout Pyramid Village. Bring a reusable bottle to refill.',
       'Q: Are showers available?\nA: Yes. Free showers are available for all festival visitors.',
       'Q: What food options are available?\nA: The Food Court offers regular, vegetarian and vegan meals. Campers can also prepare simple meals in the Community Kitchen.',
-      'Q: Is there medical assistance on site?\nA: Yes. Our Psy-Care tent provides first aid and emotional/psychological support, 24/7. It is marked on the festival map.',
-      'Q: Are pets allowed?\nA: Pets are allowed, but owners are fully responsible for them. Dogs must be vaccinated, and large or unpredictable dogs must be leashed and muzzled at all times.',
+      'Q: Is there medical assistance on site?\nA: Yes. A medical team and first aid station are available throughout the festival, and our Re Generation team provides 24/7 psy-care and harm reduction. Both are marked on the festival map.',
+      'Q: Are pets allowed?\nA: Pets are allowed under the full responsibility of their owners. Owners must keep them under control and properly supervised at all times, and must not let them disturb other visitors or the festival environment.',
       'Q: How do I get to the festival?\nA: By car (free parking), the Pyramid Shuttle from Belgrade or Ozora, or public bus via Boljevac. See the Getting There & Transport section.',
       'Q: Is parking available?\nA: Yes. Parking is free for all visitors, including camper vans.',
       'Q: Is there shuttle transport?\nA: Yes. Shuttles connect Belgrade ↔ Festival and Ozora Festival → Pyramid Festival. See the Getting There & Transport section.',
