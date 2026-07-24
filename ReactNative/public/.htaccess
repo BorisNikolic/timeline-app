@@ -1,0 +1,43 @@
+# Pyramid Festival web app — scoped to the /app directory only.
+# This does NOT affect the parent WordPress site: all rules below apply within
+# /app, and Apache serves this real directory before WordPress's root rewrite.
+
+Options -MultiViews
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /app/
+
+  # Serve real files and directories directly (assets, sw.js, manifest, …)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Single-page-app fallback: everything else → index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Gzip text assets
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain \
+    application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+
+# Correct MIME types (guard against host misconfig)
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType application/json .json
+  AddType image/svg+xml .svg
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Content-hashed build assets never change → cache forever
+  <FilesMatch "\.[0-9a-f]{8,}\.(js|css|woff2?|ttf|otf|png|jpe?g|gif|svg)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # Shell, service worker and manifest must always be revalidated so updates ship
+  <FilesMatch "^(index\.html|sw\.js|manifest\.json)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
