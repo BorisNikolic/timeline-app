@@ -212,6 +212,13 @@ export const festivalSections = [
         ['Sunday', '03:10 · 05:50 · 09:45 · 15:25 · 16:20'],
       ] },
       { t: 'note', text: 'Please check the latest timetable before your journey, as departure times may change.' },
+
+      { t: 'sub', text: 'Pyramid Taxi' },
+      'Need a ride to or from the festival? Pyramid Taxi operates on a regular route between Pyramid Festival and Boljevac, with return trips throughout the festival.',
+      { t: 'bullets', items: [
+        'More information is available at the Festival Gate and the Info Point.',
+        'If you\'re in Boljevac and looking for a ride back to the festival, simply look for vehicles displaying Pyramid Taxi stickers.',
+      ] },
     ],
   },
   {
@@ -263,8 +270,8 @@ export const festivalSections = [
       { t: 'bullets', items: [
         'Bring your bottle, cup, plate & cutlery — reduce single-use waste.',
         'Refill water for free at our stations across the site.',
-        'Get 5% off your coffee when you bring your own cup — use your own, or buy a reusable Pyramid mug or cup and keep it for the whole festival.',
       ] },
+      { t: 'note', title: 'Bring Your Own Reusables & Get 5% OFF Your Entire Order!', text: 'Bring your own cup, bowl, container or cutlery and enjoy a discount while helping us reduce waste.' },
 
       { t: 'sub', text: 'Avoid single-use plastics' },
       { t: 'bullets', items: [
@@ -417,7 +424,7 @@ export const festivalSections = [
       'Q: Where can I buy tickets?\nA: On the Tickets page at pyramidfestival.com. A limited number are also available at the festival entrance, subject to availability.',
       'Q: Can I buy tickets at the entrance?\nA: Yes. Gate prices vary by arrival day and go down as fewer festival days remain. Gate tickets cover all remaining days, not single days.',
       'Q: Are one-day tickets available?\nA: One-day tickets are available only for August 6 and 9 (the final Healing Days and Tribal Days). All other days require a multi-day ticket.',
-      'Q: Can I pay by card at the entrance?\nA: No. Tickets bought at the festival entrance can only be paid in cash.',
+      'Q: Can I pay by card at the entrance?\nA: Yes. Card and cash are both accepted at the entrance.',
       'Q: Do festival tickets include camping?\nA: Yes. All festival tickets include access to the camping area. The campsite opens on August 2, 2026 at 14:00.',
       'Q: What accommodation options are available?\nA: Free regular camping, Tipi Tents, and various tent rental packages — all listed on the Accommodation page.',
       'Q: Can I bring my own food and drinks?\nA: You may bring small quantities of food for personal use (baby food and food for special dietary needs are always allowed). Commercial quantities and outside drinks are not permitted.',

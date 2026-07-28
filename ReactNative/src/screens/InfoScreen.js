@@ -70,6 +70,7 @@ function Block({ block, t }) {
     case 'note':
       return (
         <View style={[styles.note, { backgroundColor: t.accent2 + '14', borderColor: t.accent2 + '3a' }]}>
+          {block.title ? <Text style={[styles.noteTitle, { color: t.ink }]}>{block.title}</Text> : null}
           <Text style={[styles.noteText, { color: t.ink2 }]}>{block.text}</Text>
         </View>
       );
@@ -313,6 +314,7 @@ const styles = StyleSheet.create({
   subhead: { fontFamily: fonts.bodyBold, fontSize: 13.5, letterSpacing: 0.2, marginTop: 6, marginBottom: 8 },
 
   note: { borderWidth: 1, borderRadius: radius.sm, paddingVertical: 10, paddingHorizontal: 12, marginBottom: 12 },
+  noteTitle: { fontFamily: fonts.bodyBold, fontSize: 12.5, lineHeight: 18, marginBottom: 4 },
   noteText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 19 },
 
   hours: { marginBottom: 14 },
