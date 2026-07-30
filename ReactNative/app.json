@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.pyramidfestival.app",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -28,7 +28,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.pyramidfestival.app",
-      "versionCode": 7
+      "versionCode": 8
     },
     "web": {
       "favicon": "./assets/favicon.png"
