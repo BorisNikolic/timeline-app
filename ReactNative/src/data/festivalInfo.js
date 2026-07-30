@@ -199,12 +199,6 @@ export const festivalSections = [
         'Price: 35 € per person.',
       ] },
 
-      { t: 'sub', text: 'Pyramid Shuttle — Ozora → Pyramid' },
-      { t: 'bullets', items: [
-        'Departure: 2 August 2026 at 22:00 from the main gate parking area of Ozora Festival.',
-        'Price: 70 € per person.',
-      ] },
-
       { t: 'sub', text: 'Public bus — Boljevac → Belgrade' },
       { t: 'hours', rows: [
         ['Mon – Fri', '03:10 · 04:45 · 05:50 · 07:55 · 09:45 · 15:25 · 16:20'],
@@ -433,9 +427,9 @@ export const festivalSections = [
       'Q: What food options are available?\nA: The Food Court offers regular, vegetarian and vegan meals. Campers can also prepare simple meals in the Community Kitchen.',
       'Q: Is there medical assistance on site?\nA: Yes. A medical team and first aid station are available throughout the festival, and our Re Generation team provides 24/7 psy-care and harm reduction. Both are marked on the festival map.',
       'Q: Are pets allowed?\nA: Pets are allowed under the full responsibility of their owners. Owners must keep them under control and properly supervised at all times, and must not let them disturb other visitors or the festival environment.',
-      'Q: How do I get to the festival?\nA: By car (free parking), the Pyramid Shuttle from Belgrade or Ozora, or public bus via Boljevac. See the Getting There & Transport section.',
+      'Q: How do I get to the festival?\nA: By car (free parking), the Pyramid Shuttle from Belgrade, or public bus via Boljevac. See the Getting There & Transport section.',
       'Q: Is parking available?\nA: Yes. Parking is free for all visitors, including camper vans.',
-      'Q: Is there shuttle transport?\nA: Yes. Shuttles connect Belgrade ↔ Festival and Ozora Festival → Pyramid Festival. See the Getting There & Transport section.',
+      'Q: Is there shuttle transport?\nA: Yes. The Pyramid Shuttle connects Belgrade ↔ Festival. See the Getting There & Transport section.',
     ],
   },
 ];
