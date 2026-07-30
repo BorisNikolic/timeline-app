@@ -187,17 +187,25 @@ export const festivalSections = [
       { t: 'sub', text: 'By car & parking' },
       'Free parking is available for all Pyramid Festival visitors, including camper vans. Carpool where you can.',
 
-      { t: 'sub', text: 'Pyramid Shuttle — Belgrade → Festival' },
-      { t: 'bullets', items: [
-        'Departures: 2 & 6 August from Belgrade Nikola Tesla Airport (16:00) and Sava Center (17:00).',
-        'Price: 35 € per person.',
-      ] },
+      { t: 'sub', text: 'Easy Travel to Pyramid Festival 2026' },
+      'To make your journey to Pyramid Festival as simple and comfortable as possible, we offer organized shuttle transportation from Belgrade directly to the festival grounds beneath Rtanj Mountain.',
+      { t: 'note', text: 'All shuttle tickets can be purchased separately and are available in limited quantities.' },
 
-      { t: 'sub', text: 'Pyramid Shuttle — Festival → Belgrade' },
+      { t: 'sub', text: 'Belgrade → Pyramid Festival' },
+      'Travel directly from Belgrade to Pyramid Festival without the hassle of changing buses or arranging additional transportation.',
       { t: 'bullets', items: [
-        'Departures: 6 & 9 August at 22:00 from the festival entrance.',
+        'Departure: 2 August 2026 — 16:00 (Belgrade Nikola Tesla Airport) / 17:00 (Sava Center parking).',
         'Price: 35 € per person.',
       ] },
+      'Departure location: the shuttle first departs from the parking area at Belgrade Nikola Tesla Airport — look for the bus marked Pyramid Festival, near the airport parking payment office. The next departure is at 17:00 from the Sava Center parking area. We recommend arriving at least 30 minutes before departure.',
+
+      { t: 'sub', text: 'Pyramid Festival → Belgrade' },
+      'For visitors returning to Belgrade after the festival, organized transportation is available directly from the festival site.',
+      { t: 'bullets', items: [
+        'Departure: 9 August 2026 at 22:00.',
+        'Price: 35 € per person.',
+      ] },
+      'Departure location: the shuttle departs from the main entrance area of Pyramid Festival. Please follow event signage and staff instructions on the day of departure.',
 
       { t: 'sub', text: 'Public bus — Boljevac → Belgrade' },
       { t: 'hours', rows: [
